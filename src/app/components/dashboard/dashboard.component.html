@@ -1,0 +1,177 @@
+<div class="space-y-6">
+  <!-- Welcome Section -->
+  <div class="bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl p-6 text-white">
+    <div class="flex items-center justify-between">
+      <div>
+        <h2 class="text-2xl font-bold">Welcome back, John!</h2>
+        <p class="text-blue-100 mt-1">Here's your financial overview for this month</p>
+      </div>
+      <div class="text-right">
+        <p class="text-blue-100 text-sm">Current Balance</p>
+        <p class="text-3xl font-bold">{{ formatCurrency(balance) }}</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Stats -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div class="bg-white dark:bg-chatgpt-light rounded-xl p-6 shadow-sm border border-gray-200 dark:border-chatgpt-border transition-colors duration-200">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-gray-600 dark:text-chatgpt-textSecondary text-sm font-medium">Income</p>
+          <p class="text-2xl font-bold text-green-600 dark:text-green-400">{{ formatCurrency(totalIncome) }}</p>
+          <p class="text-green-500 dark:text-green-400 text-sm">+12.5% from last month</p>
+        </div>
+        <div class="w-12 h-12 bg-green-100 dark:bg-green-900/20 rounded-lg flex items-center justify-center">
+          <svg class="w-6 h-6 text-green-600 dark:text-green-400" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M3.293 9.707a1 1 0 010-1.414l6-6a1 1 0 011.414 0l6 6a1 1 0 01-1.414 1.414L11 5.414V17a1 1 0 11-2 0V5.414L4.707 9.707a1 1 0 01-1.414 0z" clip-rule="evenodd"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white dark:bg-chatgpt-light rounded-xl p-6 shadow-sm border border-gray-200 dark:border-chatgpt-border transition-colors duration-200">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-gray-600 dark:text-chatgpt-textSecondary text-sm font-medium">Expenses</p>
+          <p class="text-2xl font-bold text-red-600 dark:text-red-400">{{ formatCurrency(totalExpenses) }}</p>
+          <p class="text-red-500 dark:text-red-400 text-sm">+8.2% from last month</p>
+        </div>
+        <div class="w-12 h-12 bg-red-100 dark:bg-red-900/20 rounded-lg flex items-center justify-center">
+          <svg class="w-6 h-6 text-red-600 dark:text-red-400" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M16.707 10.293a1 1 0 010 1.414l-6 6a1 1 0 01-1.414 0l-6-6a1 1 0 111.414-1.414L9 14.586V3a1 1 0 012 0v11.586l4.293-4.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white dark:bg-chatgpt-light rounded-xl p-6 shadow-sm border border-gray-200 dark:border-chatgpt-border transition-colors duration-200">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-gray-600 dark:text-chatgpt-textSecondary text-sm font-medium">Savings</p>
+          <p class="text-2xl font-bold text-blue-600 dark:text-blue-400">$2,350</p>
+          <p class="text-blue-500 dark:text-blue-400 text-sm">+15.3% from last month</p>
+        </div>
+        <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900/20 rounded-lg flex items-center justify-center">
+          <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+            <path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z"/>
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.076-2.354-1.253V5z" clip-rule="evenodd"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white dark:bg-chatgpt-light rounded-xl p-6 shadow-sm border border-gray-200 dark:border-chatgpt-border transition-colors duration-200">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-gray-600 dark:text-chatgpt-textSecondary text-sm font-medium">Budget Used</p>
+          <p class="text-2xl font-bold text-orange-600 dark:text-orange-400">78%</p>
+          <p class="text-orange-500 dark:text-orange-400 text-sm">$2,110 remaining</p>
+        </div>
+        <div class="w-12 h-12 bg-orange-100 dark:bg-orange-900/20 rounded-lg flex items-center justify-center">
+          <svg class="w-6 h-6 text-orange-600 dark:text-orange-400" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts and Recent Activity -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- Spending Chart -->
+    <div class="bg-white dark:bg-chatgpt-light rounded-xl p-6 shadow-sm border border-gray-200 dark:border-chatgpt-border transition-colors duration-200">
+      <div class="flex items-center justify-between mb-6">
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-chatgpt-text">Spending Overview</h3>
+        <select class="text-sm border border-gray-300 dark:border-chatgpt-border rounded-lg px-3 py-1 bg-white dark:bg-chatgpt-darker text-gray-900 dark:text-chatgpt-text">
+          <option>This Month</option>
+          <option>Last Month</option>
+          <option>Last 3 Months</option>
+        </select>
+      </div>
+      <div class="h-64 bg-gray-50 dark:bg-chatgpt-darker rounded-lg flex items-center justify-center">
+        <div class="text-center">
+          <svg class="w-16 h-16 text-gray-400 dark:text-chatgpt-textSecondary mx-auto mb-4" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M3 3a1 1 0 000 2v8a2 2 0 002 2h2.586l-1.293 1.293a1 1 0 101.414 1.414L10 15.414l2.293 2.293a1 1 0 001.414-1.414L12.414 15H15a2 2 0 002-2V5a1 1 0 100-2H3zm11.707 4.707a1 1 0 00-1.414-1.414L10 9.586 8.707 8.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+          </svg>
+          <p class="text-gray-500 dark:text-chatgpt-textSecondary">Chart placeholder</p>
+          <p class="text-sm text-gray-400 dark:text-chatgpt-textSecondary">Interactive spending chart will be here</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Transactions -->
+    <div class="bg-white dark:bg-chatgpt-light rounded-xl p-6 shadow-sm border border-gray-200 dark:border-chatgpt-border transition-colors duration-200">
+      <div class="flex items-center justify-between mb-6">
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-chatgpt-text">Recent Transactions</h3>
+        <a href="#" class="text-blue-600 dark:text-chatgpt-accent hover:text-blue-700 dark:hover:text-chatgpt-accentHover text-sm font-medium">View all</a>
+      </div>
+      <div class="space-y-4">
+        <div *ngFor="let transaction of getRecentTransactions()" class="flex items-center justify-between p-4 bg-gray-50 dark:bg-chatgpt-darker rounded-lg">
+          <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 rounded-lg flex items-center justify-center" 
+                 [ngClass]="transaction.type === 'income' ? 'bg-green-100 dark:bg-green-900/20' : 'bg-red-100 dark:bg-red-900/20'">
+              <svg class="w-5 h-5" 
+                   [ngClass]="transaction.type === 'income' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'"
+                   fill="currentColor" viewBox="0 0 20 20">
+                <path *ngIf="transaction.type === 'income'" fill-rule="evenodd" d="M3.293 9.707a1 1 0 010-1.414l6-6a1 1 0 011.414 0l6 6a1 1 0 01-1.414 1.414L11 5.414V17a1 1 0 11-2 0V5.414L4.707 9.707a1 1 0 01-1.414 0z" clip-rule="evenodd"/>
+                <path *ngIf="transaction.type === 'expense'" d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z"/>
+                <path *ngIf="transaction.type === 'expense'" fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.076-2.354-1.253V5z" clip-rule="evenodd"/>
+              </svg>
+            </div>
+            <div>
+              <p class="font-medium text-gray-900 dark:text-chatgpt-text">{{ transaction.title }}</p>
+              <p class="text-sm text-gray-500 dark:text-chatgpt-textSecondary">{{ formatDate(transaction.date) }}</p>
+            </div>
+          </div>
+          <span class="font-semibold" 
+                [ngClass]="transaction.type === 'income' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'">
+            {{ transaction.type === 'income' ? '+' : '-' }}{{ formatCurrency(transaction.amount) }}
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Actions -->
+  <div class="bg-white dark:bg-chatgpt-light rounded-xl p-6 shadow-sm border border-gray-200 dark:border-chatgpt-border transition-colors duration-200">
+    <h3 class="text-lg font-semibold text-gray-900 dark:text-chatgpt-text mb-4">Quick Actions</h3>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <button class="flex items-center space-x-3 p-4 border border-gray-200 dark:border-chatgpt-border rounded-lg hover:bg-gray-50 dark:hover:bg-chatgpt-darker transition-colors">
+        <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900/20 rounded-lg flex items-center justify-center">
+          <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/>
+          </svg>
+        </div>
+        <div class="text-left">
+          <p class="font-medium text-gray-900 dark:text-chatgpt-text">Add Transaction</p>
+          <p class="text-sm text-gray-500 dark:text-chatgpt-textSecondary">Record new expense</p>
+        </div>
+      </button>
+
+      <button class="flex items-center space-x-3 p-4 border border-gray-200 dark:border-chatgpt-border rounded-lg hover:bg-gray-50 dark:hover:bg-chatgpt-darker transition-colors">
+        <div class="w-10 h-10 bg-green-100 dark:bg-green-900/20 rounded-lg flex items-center justify-center">
+          <svg class="w-5 h-5 text-green-600 dark:text-green-400" fill="currentColor" viewBox="0 0 20 20">
+            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+          </svg>
+        </div>
+        <div class="text-left">
+          <p class="font-medium text-gray-900 dark:text-chatgpt-text">Set Goal</p>
+          <p class="text-sm text-gray-500 dark:text-chatgpt-textSecondary">Create savings goal</p>
+        </div>
+      </button>
+
+      <button class="flex items-center space-x-3 p-4 border border-gray-200 dark:border-chatgpt-border rounded-lg hover:bg-gray-50 dark:hover:bg-chatgpt-darker transition-colors">
+        <div class="w-10 h-10 bg-purple-100 dark:bg-purple-900/20 rounded-lg flex items-center justify-center">
+          <svg class="w-5 h-5 text-purple-600 dark:text-purple-400" fill="currentColor" viewBox="0 0 20 20">
+            <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"/>
+          </svg>
+        </div>
+        <div class="text-left">
+          <p class="font-medium text-gray-900 dark:text-chatgpt-text">View Reports</p>
+          <p class="text-sm text-gray-500 dark:text-chatgpt-textSecondary">Analyze spending</p>
+        </div>
+      </button>
+    </div>
+  </div>
+</div>

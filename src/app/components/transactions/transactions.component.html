@@ -1,0 +1,254 @@
+<div class="space-y-6">
+  <!-- Balance Input Section -->
+  <div class="bg-white dark:bg-chatgpt-darker rounded-xl shadow-sm border border-gray-100 dark:border-chatgpt-border p-6 hover:shadow-md transition-all duration-300">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-xl font-semibold text-gray-900 dark:text-chatgpt-text">Current Account Balance</h2>
+      <span class="text-sm text-gray-500 dark:text-chatgpt-textSecondary">
+        Last updated: {{ lastBalanceUpdate | date:'short' }}
+      </span>
+    </div>
+    
+    <div class="flex items-center space-x-4">
+      <div class="flex-1">
+        <label for="balance" class="block text-sm font-medium text-gray-700 dark:text-chatgpt-textSecondary mb-2">
+          Account Balance
+        </label>
+        <div class="relative">
+          <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-chatgpt-textSecondary">$</span>
+          <input
+            type="number"
+            id="balance"
+            [(ngModel)]="currentBalance"
+            (blur)="updateBalance()"
+            class="w-full pl-8 pr-4 py-3 border border-gray-300 dark:border-chatgpt-border rounded-lg bg-white dark:bg-chatgpt-dark text-gray-900 dark:text-chatgpt-text focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+            placeholder="0.00"
+            step="0.01"
+          >
+        </div>
+      </div>
+      
+      <div class="flex items-end">
+        <button
+          (click)="updateBalance()"
+          class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+        >
+          Update Balance
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Controls Section -->
+  <div class="bg-white dark:bg-chatgpt-darker rounded-xl shadow-sm border border-gray-100 dark:border-chatgpt-border p-6 hover:shadow-md transition-all duration-300">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-xl font-semibold text-gray-900 dark:text-chatgpt-text">Transaction Timeline</h2>
+      <div class="flex items-center space-x-4">
+        <div class="flex items-center space-x-2">
+          <label class="text-sm font-medium text-gray-700 dark:text-chatgpt-textSecondary">Projection Interval:</label>
+                      <select
+              [(ngModel)]="projectionInterval"
+              (change)="calculateTimeline()"
+              class="px-3 py-2 border border-gray-300 dark:border-chatgpt-border rounded-lg bg-white dark:bg-chatgpt-dark text-gray-900 dark:text-chatgpt-text focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+            >
+              <option [value]="ProjectionInterval.DAILY">Daily</option>
+              <option [value]="ProjectionInterval.WEEKLY">Weekly</option>
+              <option [value]="ProjectionInterval.BI_WEEKLY">Bi-weekly</option>
+              <option [value]="ProjectionInterval.MONTHLY">Monthly</option>
+              <option [value]="ProjectionInterval.QUARTERLY">Quarterly</option>
+              <option [value]="ProjectionInterval.YEARLY">Yearly</option>
+            </select>
+        </div>
+        
+        <button
+          (click)="showAddForm = !showAddForm"
+          class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+        >
+          {{ showAddForm ? 'Cancel' : 'Add Recurring Transaction' }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Add Recurring Transaction Form -->
+    <div *ngIf="showAddForm" class="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-chatgpt-dark dark:to-gray-900 rounded-xl p-6 mb-6 border border-gray-200 dark:border-chatgpt-border shadow-inner">
+      <h3 class="text-lg font-medium text-gray-900 dark:text-chatgpt-text mb-4">Add Recurring Transaction</h3>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-chatgpt-textSecondary mb-2">Description</label>
+          <input
+            type="text"
+            [(ngModel)]="newRecurringTransaction.description"
+            class="w-full px-3 py-2 border border-gray-300 dark:border-chatgpt-border rounded-lg bg-white dark:bg-chatgpt-dark text-gray-900 dark:text-chatgpt-text focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+            placeholder="e.g., Netflix Subscription"
+          >
+        </div>
+        
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-chatgpt-textSecondary mb-2">Amount</label>
+          <div class="relative">
+            <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-chatgpt-textSecondary">$</span>
+            <input
+              type="number"
+              [(ngModel)]="newRecurringTransaction.amount"
+              class="w-full pl-8 pr-3 py-2 border border-gray-300 dark:border-chatgpt-border rounded-lg bg-white dark:bg-chatgpt-dark text-gray-900 dark:text-chatgpt-text focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+              placeholder="0.00"
+              step="0.01"
+            >
+          </div>
+        </div>
+        
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-chatgpt-textSecondary mb-2">Type</label>
+          <select
+            [(ngModel)]="newRecurringTransaction.type"
+            class="w-full px-3 py-2 border border-gray-300 dark:border-chatgpt-border rounded-lg bg-white dark:bg-chatgpt-dark text-gray-900 dark:text-chatgpt-text focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+          >
+            <option [value]="TransactionType.EXPENSE">Expense</option>
+            <option [value]="TransactionType.INCOME">Income</option>
+          </select>
+        </div>
+        
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-chatgpt-textSecondary mb-2">Category</label>
+          <input
+            type="text"
+            [(ngModel)]="newRecurringTransaction.category"
+            class="w-full px-3 py-2 border border-gray-300 dark:border-chatgpt-border rounded-lg bg-white dark:bg-chatgpt-dark text-gray-900 dark:text-chatgpt-text focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+            placeholder="e.g., Entertainment"
+          >
+        </div>
+      </div>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-chatgpt-textSecondary mb-2">Frequency</label>
+          <select
+            [(ngModel)]="newRecurringTransaction.recurringPattern!.frequency"
+            class="w-full px-3 py-2 border border-gray-300 dark:border-chatgpt-border rounded-lg bg-white dark:bg-chatgpt-dark text-gray-900 dark:text-chatgpt-text focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+          >
+            <option [value]="RecurrenceFrequency.DAILY">Daily</option>
+            <option [value]="RecurrenceFrequency.WEEKLY">Weekly</option>
+            <option [value]="RecurrenceFrequency.BI_WEEKLY">Bi-weekly</option>
+            <option [value]="RecurrenceFrequency.MONTHLY">Monthly</option>
+            <option [value]="RecurrenceFrequency.YEARLY">Yearly</option>
+          </select>
+        </div>
+        
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-chatgpt-textSecondary mb-2">Interval</label>
+          <input
+            type="number"
+            [(ngModel)]="newRecurringTransaction.recurringPattern!.interval"
+            class="w-full px-3 py-2 border border-gray-300 dark:border-chatgpt-border rounded-lg bg-white dark:bg-chatgpt-dark text-gray-900 dark:text-chatgpt-text focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+            placeholder="1"
+            min="1"
+          >
+        </div>
+      </div>
+      
+      <div class="flex justify-end mt-6">
+        <button
+          (click)="addRecurringTransaction()"
+          class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+        >
+          Add Transaction
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chart and Timeline Section -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- Balance Chart -->
+    <app-balance-projection-chart
+      [timeline]="timeline"
+      [projectionInterval]="projectionInterval"
+      [currentBalance]="currentBalance">
+    </app-balance-projection-chart>
+
+    <!-- Timeline Section -->
+    <div class="bg-white dark:bg-chatgpt-darker rounded-xl shadow-sm border border-gray-100 dark:border-chatgpt-border p-6 hover:shadow-md transition-all duration-300">
+      <div class="flex items-center justify-between mb-6">
+        <h2 class="text-xl font-semibold text-gray-900 dark:text-chatgpt-text">Transaction Timeline</h2>
+        <div class="flex items-center space-x-2" *ngIf="getLowestProjections().length > 0">
+          <span class="text-sm text-gray-500 dark:text-gray-400 mr-2">Lowest Points:</span>
+          <div *ngFor="let point of getLowestProjections(); let i = index" 
+               class="flex items-center space-x-1 px-2 py-1 rounded-full text-xs font-medium"
+               [ngClass]="{
+                 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300': point.balance < 0,
+                 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300': point.balance >= 0 && point.balance < currentBalance * 0.5,
+                 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300': point.balance >= currentBalance * 0.5
+               }">
+            <span>{{ point.label }}</span>
+            <span class="font-semibold">${{ point.balance | number:'1.0-0' }}</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="space-y-2 max-h-80 overflow-y-auto">
+      <div *ngFor="let item of timeline; trackBy: trackByDate" class="flex items-center space-x-3 p-3 rounded-lg border border-gray-200 dark:border-chatgpt-border hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors duration-150">
+        <!-- Date Column -->
+        <div class="w-24 flex-shrink-0">
+          <div class="text-sm font-medium text-gray-900 dark:text-chatgpt-text">
+            {{ item.date | date:'MMM d' }}
+          </div>
+          <div class="text-xs text-gray-500 dark:text-chatgpt-textSecondary">
+            {{ item.date | date:'yyyy' }}
+          </div>
+        </div>
+        
+        <!-- Content Column -->
+        <div class="flex-1">
+          <div *ngIf="isTransaction(item)" class="flex items-center justify-between">
+            <div class="flex-1 min-w-0">
+              <div class="font-medium text-gray-900 dark:text-chatgpt-text text-sm">{{ item.description }}</div>
+              <div class="flex items-center space-x-2 text-xs text-gray-500 dark:text-chatgpt-textSecondary">
+                <span>{{ item.category }}</span>
+                <span>•</span>
+                <span>{{ item.recurringPattern?.frequency }} (every {{ item.recurringPattern?.interval }})</span>
+              </div>
+            </div>
+            <div class="flex items-center space-x-3 flex-shrink-0">
+              <div class="text-right">
+                <div class="font-medium text-sm" [ngClass]="{
+                  'text-red-600 dark:text-red-400': item.type === TransactionType.EXPENSE,
+                  'text-green-600 dark:text-green-400': item.type === TransactionType.INCOME
+                }">
+                  {{ item.type === TransactionType.EXPENSE ? '-' : '+' }}${{ item.amount | number:'1.2-2' }}
+                </div>
+                <div class="text-xs font-medium text-gray-700 dark:text-gray-300">
+                  ${{ item.balance | number:'1.2-2' }}
+                </div>
+              </div>
+              <button
+                (click)="deleteTransaction(item.id)"
+                class="text-red-400 hover:text-red-600 p-1 rounded transition-colors text-xs w-6 h-6 flex items-center justify-center"
+                title="Delete transaction"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+          
+          <div *ngIf="isProjectionPoint(item)" class="flex items-center justify-between">
+            <div class="flex-1 min-w-0">
+              <div class="font-medium text-blue-600 dark:text-blue-400 text-sm">{{ item.label }}</div>
+              <div class="text-xs text-gray-500 dark:text-chatgpt-textSecondary">Projected balance</div>
+            </div>
+            <div class="text-right flex-shrink-0">
+              <div class="font-medium text-blue-600 dark:text-blue-400 text-sm">
+                ${{ item.balance | number:'1.2-2' }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div *ngIf="timeline.length === 0" class="text-center py-8">
+        <div class="text-gray-500 dark:text-chatgpt-textSecondary">
+          No transactions yet. Add some recurring transactions to see your timeline!
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

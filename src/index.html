@@ -2,10 +2,20 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>MoneyMeApp2025</title>
+  <title>MoneyMe</title>
   <base href="/">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <script>
+    // Apply dark theme immediately to prevent flash of unstyled content
+    (function() {
+      const savedTheme = localStorage.getItem('theme');
+      const isDark = savedTheme === 'dark' || (!savedTheme && true); // Default to dark
+      if (isDark) {
+        document.documentElement.classList.add('dark');
+      }
+    })();
+  </script>
 </head>
 <body>
   <app-root></app-root>
