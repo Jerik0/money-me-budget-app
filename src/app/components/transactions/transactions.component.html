@@ -1,10 +1,10 @@
 <div class="h-full flex flex-col space-y-3">
- 
+
  <!-- Page Header with Current Balance and Lowest Points -->
  <div class="bg-white dark:bg-chatgpt-darker rounded-xl shadow-sm border border-gray-200 dark:border-chatgpt-border hover:shadow-md" style="padding: 12px">
   <div class="flex items-center justify-between">
    <div class="flex items-center space-x-6">
-    
+
     <!-- Current Balance Display -->
     <div class="flex items-center space-x-2">
      <span class="text-lg font-medium text-gray-700 dark:text-chatgpt-textSecondary">Current Balance:</span>
@@ -34,7 +34,7 @@
     <!-- Lowest Points Display -->
     <div class="flex items-center space-x-2" *ngIf="getLowestProjections().length > 0">
      <span class="text-sm text-gray-500 dark:text-gray-400">Lowest Points:</span>
-     <div *ngFor="let point of getLowestProjections(); let i = index" 
+     <div *ngFor="let point of getLowestProjections(); let i = index"
         class="flex items-center space-x-1 px-2 py-1 rounded-full text-xs font-medium"
         [ngClass]="{
          'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300': point.balance < 0,
@@ -76,7 +76,7 @@
       [class.-translate-x-full]="showAddForm">
      Transaction Timeline
     </h2>
-    
+
     <!-- Controls section -->
     <div class="flex items-center space-x-3">
      <!-- Add Transaction Button -->
@@ -126,26 +126,27 @@
    </div>
 
    <!-- Sliding form - animates width from button position -->
-   <div class="absolute top-0 bottom-0 right-20 overflow-hidden pointer-events-none"
+   <div class="absolute top-0 bottom-0 right-20 overflow-hidden pointer-events-none transition-all duration-300 ease-in-out"
                  [class.pointer-events-auto]="showAddForm"
            [class.w-0]="!showAddForm"
       [style.width]="showAddForm ? 'calc(100% - 80px)' : '0px'"
       style="transform-origin: right center;">
     <div class="h-full" style="width: calc(100% - 80px)">
-     
+
      <!-- Compact horizontal form -->
      <div class="flex items-center space-x-3 bg-gray-50 dark:bg-chatgpt-light rounded-lg border border-gray-300 dark:border-chatgpt-border px-4 py-2 h-full pointer-events-auto">
-     
+
      <!-- Description field -->
      <input
       #descriptionInput
+      style="&:focus { outline: none !important; }"
       type="text"
       [(ngModel)]="newRecurringTransaction.description"
       (keydown.enter)="addRecurringTransaction()"
-      class="w-32 px-2 py-1 border border-teal-300 dark:border-teal-600 rounded bg-white/70 dark:bg-gray-800/70 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-1 focus:ring-teal-500 focus:border-transparent text-xs h-7"
+              class="w-32 px-2 py-1 border border-teal-300 dark:border-teal-600 rounded bg-white/70 dark:bg-gray-800/70 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 text-xs h-7"
       placeholder="Description"
      >
-     
+
      <!-- Amount field -->
      <div class="relative w-20">
       <span class="absolute left-1.5 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400 text-xs">$</span>
@@ -153,34 +154,34 @@
        type="number"
        [(ngModel)]="newRecurringTransaction.amount"
        (keydown.enter)="addRecurringTransaction()"
-       class="w-full pl-4 pr-2 py-1 border border-green-300 dark:border-green-600 rounded bg-white/70 dark:bg-gray-800/70 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-1 focus:ring-green-500 focus:border-transparent text-xs h-7"
+       class="w-full pl-4 pr-2 py-1 border border-green-300 dark:border-green-600 rounded bg-white/70 dark:bg-gray-800/70 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 text-xs h-7"
        placeholder="0.00"
        step="0.01"
       >
      </div>
-     
+
      <!-- Type select -->
      <select
       [(ngModel)]="newRecurringTransaction.type"
-      class="w-20 px-1 py-1 border border-green-300 dark:border-green-600 rounded bg-white/70 dark:bg-gray-800/70 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-green-500 focus:border-transparent text-xs h-7"
+      class="w-20 px-1 py-1 border border-green-300 dark:border-green-600 rounded bg-white/70 dark:bg-gray-800/70 text-gray-900 dark:text-gray-100 text-xs h-7"
      >
       <option [value]="TransactionType.EXPENSE">Expense</option>
       <option [value]="TransactionType.INCOME">Income</option>
      </select>
-     
+
      <!-- Category field -->
      <input
       type="text"
       [(ngModel)]="newRecurringTransaction.category"
       (keydown.enter)="addRecurringTransaction()"
-      class="w-24 px-2 py-1 border border-teal-300 dark:border-teal-600 rounded bg-white/70 dark:bg-gray-800/70 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-1 focus:ring-teal-500 focus:border-transparent text-xs h-7"
+      class="w-24 px-2 py-1 border border-teal-300 dark:border-teal-600 rounded bg-white/70 dark:bg-gray-800/70 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 text-xs h-7"
       placeholder="Category"
      >
-     
+
      <!-- Frequency select -->
      <select
       [(ngModel)]="newRecurringTransaction.recurringPattern!.frequency"
-      class="w-20 px-1 py-1 border border-blue-300 dark:border-blue-600 rounded bg-white/70 dark:bg-gray-800/70 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-blue-500 focus:border-transparent text-xs h-7"
+      class="w-20 px-1 py-1 border border-blue-300 dark:border-blue-600 rounded bg-white/70 dark:bg-gray-800/70 text-gray-900 dark:text-gray-100 text-xs h-7"
      >
       <option [value]="RecurrenceFrequency.DAILY">Daily</option>
       <option [value]="RecurrenceFrequency.WEEKLY">Weekly</option>
@@ -188,7 +189,7 @@
       <option [value]="RecurrenceFrequency.MONTHLY">Monthly</option>
       <option [value]="RecurrenceFrequency.YEARLY">Yearly</option>
      </select>
-     
+
      <!-- Interval field with monthly controls -->
      <div class="relative w-32">
       <input
@@ -196,18 +197,18 @@
        [(ngModel)]="newRecurringTransaction.recurringPattern!.interval"
        (keydown.enter)="addRecurringTransaction()"
        [disabled]="(newRecurringTransaction.recurringPattern!.lastDayOfMonth ?? false) || (newRecurringTransaction.recurringPattern!.lastWeekdayOfMonth ?? false)"
-       class="w-full px-2 py-1 border border-blue-300 dark:border-blue-600 rounded bg-white/70 dark:bg-gray-800/70 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-transparent text-xs h-7"
+       class="w-full px-2 py-1 border border-blue-300 dark:border-blue-600 rounded bg-white/70 dark:bg-gray-800/70 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 text-xs h-7"
        [class.opacity-50]="(newRecurringTransaction.recurringPattern!.lastDayOfMonth ?? false) || (newRecurringTransaction.recurringPattern!.lastWeekdayOfMonth ?? false)"
        [class.cursor-not-allowed]="(newRecurringTransaction.recurringPattern!.lastDayOfMonth ?? false) || (newRecurringTransaction.recurringPattern!.lastWeekdayOfMonth ?? false)"
        [class.pr-20]="newRecurringTransaction.recurringPattern!.frequency === RecurrenceFrequency.MONTHLY"
        placeholder="X"
        min="1"
       >
-      
+
       <!-- Monthly controls - side by side, proper size -->
-      <div *ngIf="newRecurringTransaction.recurringPattern!.frequency === RecurrenceFrequency.MONTHLY" 
+      <div *ngIf="newRecurringTransaction.recurringPattern!.frequency === RecurrenceFrequency.MONTHLY"
          class="absolute right-1 top-1/2 transform -translate-y-1/2 flex items-center space-x-1">
-       
+
        <!-- Last Day checkbox -->
        <label class="flex items-center cursor-pointer group bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 rounded px-1 py-0.5 " title="Last day of month">
         <input
@@ -220,7 +221,7 @@
          <span class="text-[6px] font-bold text-gray-700 dark:text-gray-300 leading-none">END</span>
         </div>
        </label>
-       
+
        <!-- Last Weekday checkbox -->
        <label class="flex items-center cursor-pointer group bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 rounded px-1 py-0.5 " title="Last weekday of month">
         <input
@@ -235,7 +236,7 @@
        </label>
       </div>
      </div>
-     
+
      <!-- Submit button - now just a + icon -->
      <button
       (click)="addRecurringTransaction()"
@@ -250,10 +251,10 @@
   </div>
 
   <!-- Timeline Items - Conditional View -->
-  <div class="flex-1 overflow-y-auto">
-   
+  <div class="flex-1 overflow-y-auto transaction-timeline-scroll">
+
    <!-- Grid View (Current Calendar Layout) -->
-   <div [class.hidden]="viewMode !== 'grid'" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
+   <div [class.hidden]="viewMode !== 'grid'" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 grid-aligned-with-toggle">
     <div *ngFor="let group of getGroupedTransactions()" class="border border-gray-200 dark:border-chatgpt-border rounded-md overflow-hidden bg-white dark:bg-chatgpt-darker hover:shadow-md">
      <!-- Date Header - More Compact -->
      <div class="bg-gray-100 dark:bg-chatgpt-light px-2 py-1 border-b border-gray-200 dark:border-chatgpt-border">
@@ -271,19 +272,19 @@
        <div class="text-xs w-8"></div>
       </div>
      </div>
-     
+
      <!-- Transactions in this date card - More Compact -->
      <div class="p-1.5 space-y-1 min-h-[60px] max-h-[80px] overflow-y-auto">
-      <div *ngFor="let transaction of group.transactions" 
+      <div *ngFor="let transaction of group.transactions"
          class="group rounded px-1.5 py-1 hover:bg-gray-50 dark:hover:bg-gray-800/50 ">
-       
+
        <!-- Single Line Layout -->
        <div class="flex items-center justify-between">
         <!-- Left: Description -->
         <div class="flex-1 min-w-0">
          <div class="font-medium text-gray-900 dark:text-gray-100 truncate text-xs leading-tight">{{ transaction.description }}</div>
         </div>
-        
+
         <!-- Right: Amount + Delete -->
         <div class="flex items-center space-x-1 flex-shrink-0">
          <div class="font-medium text-xs" [ngClass]="{
@@ -302,7 +303,7 @@
         </div>
        </div>
       </div>
-      
+
       <!-- Empty state for cards with no transactions -->
       <div *ngIf="group.transactions.length === 0" class="text-center py-2 text-gray-400 dark:text-gray-500 text-xs">
        No transactions
@@ -324,12 +325,12 @@
       <div class="w-8"></div>
      </div>
     </div>
-    
+
     <!-- Scrollable Transaction Rows Container -->
     <div class="flex-1 overflow-y-auto">
      <div>
       <div *ngFor="let group of getGroupedTransactions(); let groupIndex = index">
-       <div *ngFor="let transaction of group.transactions; let transactionIndex = index" 
+       <div *ngFor="let transaction of group.transactions; let transactionIndex = index"
           class="px-4 py-1.5 group"
           [class.bg-white]="isEvenRow(groupIndex, transactionIndex)"
           [class.bg-gray-50]="!isEvenRow(groupIndex, transactionIndex)"
@@ -340,28 +341,28 @@
           [class.dark:hover:bg-gray-800]="isEvenRow(groupIndex, transactionIndex)"
           [class.dark:hover:bg-gray-700]="!isEvenRow(groupIndex, transactionIndex)">
         <div class="flex items-center justify-between">
-         
+
          <!-- Description -->
          <div class="flex-1 min-w-0">
           <div class="font-medium text-gray-900 dark:text-gray-100 truncate text-sm leading-tight">
            {{ transaction.description }}
           </div>
          </div>
-         
+
          <!-- Date -->
          <div class="w-20 text-center">
           <div class="text-xs text-gray-500 dark:text-gray-400">
            {{ transaction.date | date:'MMM d' }}
           </div>
          </div>
-         
+
          <!-- Category -->
          <div class="w-24 text-center">
           <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
            {{ transaction.category }}
           </span>
          </div>
-         
+
          <!-- Amount -->
          <div class="w-20 text-right">
           <div class="font-semibold text-sm" [ngClass]="{
@@ -371,14 +372,14 @@
            {{ transaction.type === TransactionType.EXPENSE ? '-' : '+' }}${{ transaction.amount | number:'1.0-0' }}
           </div>
          </div>
-         
+
          <!-- Frequency -->
          <div class="w-16 text-center">
           <div class="text-xs text-gray-500 dark:text-gray-400 capitalize">
            {{ transaction.recurringPattern?.frequency?.toLowerCase() || 'Once' }}
           </div>
          </div>
-         
+
          <!-- Delete Button -->
          <div class="w-8 flex justify-center">
           <button
@@ -391,14 +392,14 @@
            </svg>
           </button>
          </div>
-         
+
         </div>
        </div>
       </div>
      </div>
     </div>
    </div>
-   
+
    <!-- Empty State -->
    <div *ngIf="timeline.length === 0" class="text-center py-8">
     <div class="text-gray-500 dark:text-chatgpt-textSecondary">

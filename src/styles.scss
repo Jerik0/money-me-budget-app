@@ -72,24 +72,6 @@ body {
   display: none;
 }
 
-/* Modern focus states - subtle and clean */
-button:focus-visible,
-a:focus-visible,
-input:focus-visible,
-select:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 2px rgba(20, 184, 166, 0.3);
-  border-color: #14b8a6;
-}
-
-.dark button:focus-visible,
-.dark a:focus-visible,
-.dark input:focus-visible,
-.dark select:focus-visible {
-  box-shadow: 0 0 0 2px rgba(20, 184, 166, 0.4);
-  border-color: #0d9488;
-}
-
 /* Subtle shadows for depth in dark mode */
 .dark .shadow-sm {
   box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
@@ -165,4 +147,80 @@ html.dark .border-chatgpt-border {
 /* Custom dark mode shadow for toggle container */
 html.dark .shadow-inner {
   box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Transaction timeline scroll customization */
+.transaction-timeline-scroll {
+  margin-right: -17px;
+  padding-right: 10px;
+  scrollbar-gutter: stable;
+}
+
+.transaction-timeline-scroll::-webkit-scrollbar {
+  width: 8px;
+}
+
+.transaction-timeline-scroll::-webkit-scrollbar-track {
+  background: transparent;
+  margin: 4px 0;
+}
+
+.transaction-timeline-scroll::-webkit-scrollbar-thumb {
+  background: rgba(156, 163, 175, 0.5);
+  border-radius: 4px;
+  border: 1px solid transparent;
+  background-clip: content-box;
+}
+
+.transaction-timeline-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(156, 163, 175, 0.7);
+  background-clip: content-box;
+}
+
+/* Dark mode scrollbar */
+html.dark .transaction-timeline-scroll::-webkit-scrollbar-thumb {
+  background: rgba(75, 85, 99, 0.5);
+  background-clip: content-box;
+}
+
+html.dark .transaction-timeline-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(75, 85, 99, 0.7);
+  background-clip: content-box;
+}
+
+/* Align grid with toggle's right edge */
+.grid-aligned-with-toggle {
+  /* No additional margin/padding needed - positioning handled by scroll container */
+  margin-right: 0;
+}
+
+/* Simple outline removal */
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+}
+
+/* Subtle internal shadow for all inputs (non-dropdown) - Light mode */
+input[type="text"],
+input[type="number"],
+input[type="email"],
+input[type="password"],
+input[type="date"],
+input[type="time"],
+input[type="datetime-local"],
+textarea {
+  box-shadow: inset 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+}
+
+/* Dark mode internal shadows */
+html.dark input[type="text"],
+html.dark input[type="number"],
+html.dark input[type="email"],
+html.dark input[type="password"],
+html.dark input[type="date"],
+html.dark input[type="time"],
+html.dark input[type="datetime-local"],
+html.dark textarea {
+  box-shadow: inset 0 1px 3px 0 rgba(0, 0, 0, 0.3);
 }
