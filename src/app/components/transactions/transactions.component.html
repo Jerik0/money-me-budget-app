@@ -327,10 +327,18 @@
     
     <!-- Scrollable Transaction Rows Container -->
     <div class="flex-1 overflow-y-auto">
-     <div class="divide-y divide-gray-100 dark:divide-gray-700">
-      <div *ngFor="let group of getGroupedTransactions()">
-       <div *ngFor="let transaction of group.transactions" 
-          class="px-4 py-1.5 group hover:bg-gray-50 dark:hover:bg-gray-800/50 ">
+     <div>
+      <div *ngFor="let group of getGroupedTransactions(); let groupIndex = index">
+       <div *ngFor="let transaction of group.transactions; let transactionIndex = index" 
+          class="px-4 py-1.5 group"
+          [class.bg-white]="isEvenRow(groupIndex, transactionIndex)"
+          [class.bg-gray-50]="!isEvenRow(groupIndex, transactionIndex)"
+          [class.dark:bg-chatgpt-darker]="isEvenRow(groupIndex, transactionIndex)"
+          [class.dark:bg-chatgpt-light]="!isEvenRow(groupIndex, transactionIndex)"
+          [class.hover:bg-gray-100]="isEvenRow(groupIndex, transactionIndex)"
+          [class.hover:bg-gray-200]="!isEvenRow(groupIndex, transactionIndex)"
+          [class.dark:hover:bg-gray-800]="isEvenRow(groupIndex, transactionIndex)"
+          [class.dark:hover:bg-gray-700]="!isEvenRow(groupIndex, transactionIndex)">
         <div class="flex items-center justify-between">
          
          <!-- Description -->

@@ -247,4 +247,21 @@ export class TransactionsComponent implements OnInit {
     }
   }
 
+  // Helper method to determine if a row should have alternate background color
+  isEvenRow(groupIndex: number, transactionIndex: number): boolean {
+    // Calculate total row index across all groups
+    let totalRowIndex = 0;
+    const groups = this.getGroupedTransactions();
+    
+    // Add up all transactions from previous groups
+    for (let i = 0; i < groupIndex; i++) {
+      totalRowIndex += groups[i].transactions.length;
+    }
+    
+    // Add current transaction index
+    totalRowIndex += transactionIndex;
+    
+    return totalRowIndex % 2 === 0;
+  }
+
 }

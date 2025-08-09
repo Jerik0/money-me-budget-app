@@ -161,3 +161,8 @@ html.dark .text-chatgpt-textSecondary {
 html.dark .border-chatgpt-border {
   border-color: #454545 !important;
 }
+
+/* Custom dark mode shadow for toggle container */
+html.dark .shadow-inner {
+  box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.3) !important;
+}
