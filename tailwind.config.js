@@ -20,18 +20,18 @@ module.exports = {
           900: '#0f172a',
           950: '#020617',
         },
-        // ChatGPT-inspired dark theme colors
+        // Modern dark theme colors - balanced like Cursor/ChatGPT/Discord
         chatgpt: {
-          dark: '#343541',
-          darker: '#202123',
-          darkest: '#1a1a1a',
-          light: '#444654',
-          lighter: '#565869',
-          border: '#565869',
-          text: '#ececf1',
-          textSecondary: '#8e8ea0',
-          accent: '#10a37f',
-          accentHover: '#0d8c6d',
+          dark: '#1e1e1e',        // VS Code/Cursor dark background
+          darker: '#2d2d30',      // Card/panel background - slightly lighter
+          darkest: '#181818',     // Deepest areas
+          light: '#3e3e42',       // Hover states
+          lighter: '#484848',     // Interactive elements
+          border: '#454545',      // Visible but subtle borders
+          text: '#cccccc',        // Comfortable white text
+          textSecondary: '#969696', // Muted text - more readable
+          accent: '#14b8a6',      // Beautiful teal for currency theme
+          accentHover: '#0d9488', // Darker teal on hover
         }
       }
     },

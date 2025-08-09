@@ -21,17 +21,12 @@ body {
   box-sizing: border-box;
 }
 
-/* Dark mode body background */
+/* Dark mode body background - balanced like Cursor/Discord */
 .dark body {
-  background-color: #343541;
+  background-color: #1e1e1e;
 }
 
-/* Smooth transitions for theme switching */
-* {
-  transition-property: background-color, border-color, color, fill, stroke;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-  transition-duration: 200ms;
-}
+/* No theme transitions - instant switching for best performance */
 
 /* Custom scrollbar for light mode */
 ::-webkit-scrollbar {
@@ -61,29 +56,38 @@ body {
 }
 
 .dark ::-webkit-scrollbar-track {
-  background: #202123;
+  background: #2d2d30;
 }
 
 .dark ::-webkit-scrollbar-thumb {
-  background: #565869;
+  background: #454545;
   border-radius: 3px;
 }
 
 .dark ::-webkit-scrollbar-thumb:hover {
-  background: #8e8ea0;
+  background: #969696;
 }
 
 .dark ::-webkit-scrollbar-button {
   display: none;
 }
 
-/* Enhanced focus states for better accessibility */
-.dark button:focus,
-.dark a:focus,
-.dark input:focus,
-.dark select:focus {
-  outline: 2px solid #10a37f;
-  outline-offset: 2px;
+/* Modern focus states - subtle and clean */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(20, 184, 166, 0.3);
+  border-color: #14b8a6;
+}
+
+.dark button:focus-visible,
+.dark a:focus-visible,
+.dark input:focus-visible,
+.dark select:focus-visible {
+  box-shadow: 0 0 0 2px rgba(20, 184, 166, 0.4);
+  border-color: #0d9488;
 }
 
 /* Subtle shadows for depth in dark mode */
@@ -95,39 +99,65 @@ body {
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
 }
 
-/* Fallback dark theme styles in case Tailwind doesn't work */
-.dark .bg-white {
-  background-color: #444654 !important;
+/* Temporarily removed - will be added at the end of file */
+
+/* ========================================
+   DARK MODE OVERRIDES - HIGHEST PRIORITY
+   ======================================== */
+
+/* Force dark mode styles to override everything */
+html.dark .bg-white {
+  background-color: #2d2d30 !important;
 }
 
-.dark .bg-gray-50 {
-  background-color: #343541 !important;
+html.dark .bg-gray-50 {
+  background-color: #1e1e1e !important;
 }
 
-.dark .text-gray-900 {
-  color: #ececf1 !important;
+html.dark .bg-gray-100 {
+  background-color: #3e3e42 !important;
 }
 
-.dark .text-gray-700 {
-  color: #ececf1 !important;
+html.dark .text-gray-900 {
+  color: #cccccc !important;
 }
 
-.dark .text-gray-600 {
-  color: #8e8ea0 !important;
+html.dark .text-gray-700 {
+  color: #cccccc !important;
 }
 
-.dark .text-gray-500 {
-  color: #8e8ea0 !important;
+html.dark .text-gray-600,
+html.dark .text-gray-500,
+html.dark .text-gray-400 {
+  color: #969696 !important;
 }
 
-.dark .text-gray-400 {
-  color: #8e8ea0 !important;
+html.dark .border-gray-200,
+html.dark .border-gray-300,
+html.dark .border-gray-700 {
+  border-color: #454545 !important;
 }
 
-.dark .border-gray-200 {
-  border-color: #565869 !important;
+html.dark .bg-chatgpt-dark {
+  background-color: #1e1e1e !important;
 }
 
-.dark .border-gray-300 {
-  border-color: #565869 !important;
+html.dark .bg-chatgpt-darker {
+  background-color: #2d2d30 !important;
+}
+
+html.dark .bg-chatgpt-light {
+  background-color: #3e3e42 !important;
+}
+
+html.dark .text-chatgpt-text {
+  color: #cccccc !important;
+}
+
+html.dark .text-chatgpt-textSecondary {
+  color: #969696 !important;
+}
+
+html.dark .border-chatgpt-border {
+  border-color: #454545 !important;
 }
