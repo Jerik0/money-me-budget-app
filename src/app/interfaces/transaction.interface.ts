@@ -10,7 +10,7 @@ export interface Transaction {
   isRecurring: boolean;
   recurringPattern?: {
     frequency: RecurrenceFrequency;
-    interval: number;
+    interval: number | null;
     endDate?: Date;
     lastDayOfMonth?: boolean;
     lastWeekdayOfMonth?: boolean;

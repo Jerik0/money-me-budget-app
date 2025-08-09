@@ -24,19 +24,19 @@ export class RecurrenceService {
     switch (pattern.frequency) {
       case RecurrenceFrequency.DAILY:
         const daysDiff = Math.floor((date.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
-        return daysDiff >= 0 && daysDiff % pattern.interval === 0;
+        return daysDiff >= 0 && daysDiff % (pattern.interval || 1) === 0;
         
       case RecurrenceFrequency.WEEKLY:
         const weeksDiff = Math.floor((date.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24 * 7));
-        return weeksDiff >= 0 && weeksDiff % pattern.interval === 0;
+        return weeksDiff >= 0 && weeksDiff % (pattern.interval || 1) === 0;
         
       case RecurrenceFrequency.BI_WEEKLY:
         const daysDiffBiWeekly = Math.floor((date.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
-        return daysDiffBiWeekly >= 0 && daysDiffBiWeekly % (14 * pattern.interval) === 0;
+        return daysDiffBiWeekly >= 0 && daysDiffBiWeekly % (14 * (pattern.interval || 1)) === 0;
         
       case RecurrenceFrequency.MONTHLY:
         const monthsDiff = (date.getFullYear() - startDate.getFullYear()) * 12 + date.getMonth() - startDate.getMonth();
-        if (monthsDiff < 0 || monthsDiff % pattern.interval !== 0) return false;
+        if (monthsDiff < 0 || monthsDiff % (pattern.interval || 1) !== 0) return false;
         
         // Check if this should occur on the last day of the month
         if (pattern.lastDayOfMonth) {
@@ -62,7 +62,7 @@ export class RecurrenceService {
         
       case RecurrenceFrequency.YEARLY:
         const yearsDiff = date.getFullYear() - startDate.getFullYear();
-        return yearsDiff >= 0 && yearsDiff % pattern.interval === 0 && 
+        return yearsDiff >= 0 && yearsDiff % (pattern.interval || 1) === 0 && 
                date.getMonth() === startDate.getMonth() && 
                date.getDate() === startDate.getDate();
                

@@ -28,7 +28,7 @@ export class AppComponent implements OnInit {
         this.isDarkTheme = savedTheme === 'dark';
       }
       this.applyTheme();
-      
+
       // Listen for route changes to update page title
       this.router.events.pipe(
         filter(event => event instanceof NavigationEnd)
@@ -65,7 +65,7 @@ export class AppComponent implements OnInit {
         this.currentPageTitle = 'Dashboard';
         break;
       case '/transactions':
-        this.currentPageTitle = 'Transaction Timeline';
+        this.currentPageTitle = 'Transactions';
         break;
       case '/budgets':
         this.currentPageTitle = 'Budgets';

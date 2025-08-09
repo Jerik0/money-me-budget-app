@@ -191,7 +191,7 @@
      </select>
 
      <!-- Interval field with monthly controls -->
-     <div class="relative w-32">
+     <div class="relative w-52">
       <input
        type="number"
        [(ngModel)]="newRecurringTransaction.recurringPattern!.interval"
@@ -201,37 +201,42 @@
        [class.opacity-50]="(newRecurringTransaction.recurringPattern!.lastDayOfMonth ?? false) || (newRecurringTransaction.recurringPattern!.lastWeekdayOfMonth ?? false)"
        [class.cursor-not-allowed]="(newRecurringTransaction.recurringPattern!.lastDayOfMonth ?? false) || (newRecurringTransaction.recurringPattern!.lastWeekdayOfMonth ?? false)"
        [class.pr-20]="newRecurringTransaction.recurringPattern!.frequency === RecurrenceFrequency.MONTHLY"
-       placeholder="X"
+       [placeholder]="getIntervalPlaceholder()"
        min="1"
       >
 
       <!-- Monthly controls - side by side, proper size -->
+      <!-- Subtle vertical separator -->
       <div *ngIf="newRecurringTransaction.recurringPattern!.frequency === RecurrenceFrequency.MONTHLY"
-         class="absolute right-1 top-1/2 transform -translate-y-1/2 flex items-center space-x-1">
+         class="absolute right-0 top-1 bottom-1 w-px bg-gray-300 dark:bg-gray-600"></div>
+
+      <!-- Monthly controls with matching borders -->
+              <div *ngIf="newRecurringTransaction.recurringPattern!.frequency === RecurrenceFrequency.MONTHLY"
+           class="absolute right-0 top-0 bottom-0 flex items-center space-x-1.5 bg-transparent border-t border-r border-b rounded-r px-2 pl-3">
 
        <!-- Last Day checkbox -->
-       <label class="flex items-center cursor-pointer group bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 rounded px-1 py-0.5 " title="Last day of month">
+       <label class="flex items-center cursor-pointer group rounded px-1.5 py-1 " title="Last day of month">
         <input
          type="checkbox"
          [checked]="newRecurringTransaction.recurringPattern!.lastDayOfMonth ?? false"
          (change)="onLastDayOptionChange('lastDay', $event)"
-         class="w-2.5 h-2.5 text-teal-600 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-500 rounded focus:ring-teal-500 dark:focus:ring-teal-600 focus:ring-1 mr-0.5"
+         class="w-3.5 h-3.5 text-teal-600 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-500 rounded focus:ring-teal-500 dark:focus:ring-teal-600 focus:ring-1 mr-1"
         >
-        <div class="flex items-center justify-center w-3 h-3">
-         <span class="text-[6px] font-bold text-gray-700 dark:text-gray-300 leading-none">END</span>
+        <div class="flex items-center justify-center w-4 h-4">
+         <span class="text-[8px] font-bold text-gray-700 dark:text-gray-300 leading-none">END</span>
         </div>
        </label>
 
        <!-- Last Weekday checkbox -->
-       <label class="flex items-center cursor-pointer group bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 rounded px-1 py-0.5 " title="Last weekday of month">
+       <label class="flex items-center cursor-pointer group rounded px-1.5 py-1 " title="Last weekday of month">
         <input
          type="checkbox"
          [checked]="newRecurringTransaction.recurringPattern!.lastWeekdayOfMonth ?? false"
          (change)="onLastDayOptionChange('lastWeekday', $event)"
-         class="w-2.5 h-2.5 text-teal-600 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-500 rounded focus:ring-teal-500 dark:focus:ring-teal-600 focus:ring-1 mr-0.5"
+         class="w-3.5 h-3.5 text-teal-600 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-500 rounded focus:ring-teal-500 dark:focus:ring-teal-600 focus:ring-1 mr-1"
         >
-        <div class="flex items-center justify-center w-3 h-3">
-         <span class="text-[5px] font-bold text-blue-700 dark:text-blue-300 leading-none">M-F</span>
+        <div class="flex items-center justify-center w-4 h-4">
+         <span class="text-[8px] font-bold text-blue-700 dark:text-blue-300 leading-none">M-F</span>
         </div>
        </label>
       </div>

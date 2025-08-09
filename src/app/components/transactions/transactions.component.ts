@@ -21,7 +21,7 @@ import { TimelineService } from '../../services/timeline.service';
 })
 export class TransactionsComponent implements OnInit {
   @ViewChild('descriptionInput') descriptionInput!: ElementRef;
-  
+
   currentBalance: number = 0;
   lastBalanceUpdate: Date = new Date();
   transactions: Transaction[] = [];
@@ -29,7 +29,7 @@ export class TransactionsComponent implements OnInit {
   projectionInterval: ProjectionInterval = ProjectionInterval.MONTHLY;
   lowestProjections: ProjectionPoint[] = [];
   groupedTransactions: { date: Date, transactions: TimelineItem[] }[] = [];
-  
+
   newRecurringTransaction: Partial<Transaction> = {
     description: '',
     amount: 0,
@@ -38,7 +38,7 @@ export class TransactionsComponent implements OnInit {
     isRecurring: true,
     recurringPattern: {
       frequency: RecurrenceFrequency.MONTHLY,
-      interval: 1,
+      interval: null,
       lastDayOfMonth: false,
       lastWeekdayOfMonth: false
     }
@@ -47,7 +47,7 @@ export class TransactionsComponent implements OnInit {
   showAddForm = false;
   isEditingBalance = false;
   componentInitialized = false;
-  
+
   // View mode toggle: 'grid' for current card view, 'list' for compact list view
   viewMode: 'grid' | 'list' = 'grid';
 
@@ -107,13 +107,16 @@ export class TransactionsComponent implements OnInit {
       type: this.newRecurringTransaction.type!,
       category: this.newRecurringTransaction.category!,
       isRecurring: true,
-      recurringPattern: this.newRecurringTransaction.recurringPattern!
+      recurringPattern: {
+        ...this.newRecurringTransaction.recurringPattern!,
+        interval: this.newRecurringTransaction.recurringPattern!.interval || 1
+      }
     };
 
     this.transactions.push(transaction);
     this.calculateTimeline();
     this.resetForm();
-    
+
     // Slide form back after successful addition
     this.showAddForm = false;
   }
@@ -146,7 +149,7 @@ export class TransactionsComponent implements OnInit {
       isRecurring: true,
       recurringPattern: {
         frequency: RecurrenceFrequency.MONTHLY,
-        interval: 1,
+        interval: null,
         lastDayOfMonth: false,
         lastWeekdayOfMonth: false
       }
@@ -240,7 +243,7 @@ export class TransactionsComponent implements OnInit {
       console.log('Adding sample data - no existing transactions found');
       // Set a starting balance
       this.currentBalance = 3250.00;
-      
+
       // Get sample transactions from the service
       this.transactions = this.transactionService.getSampleTransactionsData();
       this.saveTransactions();
@@ -252,16 +255,36 @@ export class TransactionsComponent implements OnInit {
     // Calculate total row index across all groups
     let totalRowIndex = 0;
     const groups = this.getGroupedTransactions();
-    
+
     // Add up all transactions from previous groups
     for (let i = 0; i < groupIndex; i++) {
       totalRowIndex += groups[i].transactions.length;
     }
-    
+
     // Add current transaction index
     totalRowIndex += transactionIndex;
-    
+
     return totalRowIndex % 2 === 0;
+  }
+
+  // Dynamic placeholder text for interval input based on frequency
+  getIntervalPlaceholder(): string {
+    const frequency = this.newRecurringTransaction.recurringPattern?.frequency;
+
+    switch (frequency) {
+      case RecurrenceFrequency.DAILY:
+        return 'days'; // "every X days"
+      case RecurrenceFrequency.WEEKLY:
+        return 'every x weeks'; // "every X weeks" (supports "every other week" = 2)
+      case RecurrenceFrequency.BI_WEEKLY:
+        return 'every two weeks'; // Fixed for bi-weekly
+      case RecurrenceFrequency.MONTHLY:
+        return 'day of month'; // "day X of month"
+      case RecurrenceFrequency.YEARLY:
+        return 'years'; // "every X years"
+      default:
+        return '1';
+    }
   }
 
 }
