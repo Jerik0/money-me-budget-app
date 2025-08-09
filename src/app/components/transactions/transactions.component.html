@@ -71,7 +71,7 @@
    <!-- Static header - title slides out, button stays in place -->
    <div class="flex items-center justify-between">
     <!-- Title that slides out when form opens -->
-    <h2 class="text-xl font-semibold text-gray-900 dark:text-chatgpt-text  "
+            <h2 class="text-xl font-semibold text-gray-900 dark:text-chatgpt-text"
       [class.transform]="showAddForm"
       [class.-translate-x-full]="showAddForm">
      Transaction Timeline
@@ -82,7 +82,7 @@
      <!-- Add Transaction Button -->
      <button
       (click)="toggleAddForm()"
-      class="px-4 py-2 bg-chatgpt-accent hover:bg-chatgpt-accentHover text-white font-medium rounded-lg  focus:ring-2 focus:ring-chatgpt-accent focus:ring-offset-2 shadow-lg hover:shadow-xl relative z-10"
+                  class="px-4 py-2 bg-chatgpt-accent hover:bg-chatgpt-accentHover text-white font-medium rounded-lg focus:ring-2 focus:ring-chatgpt-accent focus:ring-offset-2 shadow-lg hover:shadow-xl relative z-10"
       [class.bg-red-500]="showAddForm"
       [class.hover:bg-red-600]="showAddForm"
      >
@@ -93,7 +93,7 @@
      <div class="flex items-center bg-gray-100 dark:bg-gray-800 rounded-lg p-1 shadow-inner">
       <button
        (click)="toggleViewMode()"
-       class="flex items-center justify-center w-8 h-8 rounded-md  relative group"
+                     class="flex items-center justify-center w-8 h-8 rounded-md relative group"
        [class.bg-white]="viewMode === 'grid'"
        [class.shadow-sm]="viewMode === 'grid'"
        [class.text-teal-600]="viewMode === 'grid'"
@@ -108,7 +108,7 @@
       </button>
       <button
        (click)="toggleViewMode()"
-       class="flex items-center justify-center w-8 h-8 rounded-md  relative group"
+                     class="flex items-center justify-center w-8 h-8 rounded-md relative group"
        [class.bg-white]="viewMode === 'list'"
        [class.shadow-sm]="viewMode === 'list'"
        [class.text-teal-600]="viewMode === 'list'"
@@ -127,11 +127,8 @@
 
    <!-- Sliding form - animates width from button position -->
    <div class="absolute top-0 bottom-0 right-20 overflow-hidden pointer-events-none"
-      [class.pointer-events-auto]="showAddForm"
-      [class.]="componentInitialized"
-      [class.]="componentInitialized"
-      [class.]="componentInitialized"
-      [class.w-0]="!showAddForm"
+                 [class.pointer-events-auto]="showAddForm"
+           [class.w-0]="!showAddForm"
       [style.width]="showAddForm ? 'calc(100% - 80px)' : '0px'"
       style="transform-origin: right center;">
     <div class="h-full" style="width: calc(100% - 80px)">
@@ -242,7 +239,7 @@
      <!-- Submit button - now just a + icon -->
      <button
       (click)="addRecurringTransaction()"
-      class="w-8 h-8 bg-chatgpt-accent hover:bg-chatgpt-accentHover text-white rounded-full  focus:ring-1 focus:ring-chatgpt-accent focus:ring-offset-1 shadow-sm hover:shadow-md flex items-center justify-center"
+                  class="w-8 h-8 bg-chatgpt-accent hover:bg-chatgpt-accentHover text-white rounded-full focus:ring-1 focus:ring-chatgpt-accent focus:ring-offset-1 shadow-sm hover:shadow-md flex items-center justify-center"
       title="Add Transaction"
      >
       <span class="text-sm font-bold">+</span>
