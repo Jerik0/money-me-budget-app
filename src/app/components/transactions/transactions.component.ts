@@ -1,9 +1,12 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RecurrenceFrequency, ProjectionInterval, TransactionType, ProjectionType } from '../../enums';
 import { BalanceProjectionChartComponent } from '../balance-projection-chart/balance-projection-chart.component';
 import { Transaction, ProjectionPoint, TimelineItem } from '../../interfaces';
+import { TransactionService } from '../../services/transaction.service';
+import { StorageService } from '../../services/storage.service';
+import { TimelineService } from '../../services/timeline.service';
 
 
 
@@ -17,12 +20,15 @@ import { Transaction, ProjectionPoint, TimelineItem } from '../../interfaces';
   styleUrls: ['./transactions.component.scss']
 })
 export class TransactionsComponent implements OnInit {
+  @ViewChild('descriptionInput') descriptionInput!: ElementRef;
+  
   currentBalance: number = 0;
   lastBalanceUpdate: Date = new Date();
   transactions: Transaction[] = [];
   timeline: (TimelineItem | ProjectionPoint)[] = [];
   projectionInterval: ProjectionInterval = ProjectionInterval.MONTHLY;
   lowestProjections: ProjectionPoint[] = [];
+  groupedTransactions: { date: Date, transactions: TimelineItem[] }[] = [];
   
   newRecurringTransaction: Partial<Transaction> = {
     description: '',
@@ -32,20 +38,60 @@ export class TransactionsComponent implements OnInit {
     isRecurring: true,
     recurringPattern: {
       frequency: RecurrenceFrequency.MONTHLY,
-      interval: 1
+      interval: 1,
+      lastDayOfMonth: false,
+      lastWeekdayOfMonth: false
     }
   };
 
   showAddForm = false;
+  isEditingBalance = false;
+  componentInitialized = false;
+  
+  // View mode toggle: 'grid' for current card view, 'list' for compact list view
+  viewMode: 'grid' | 'list' = 'grid';
+
+  constructor(
+    private transactionService: TransactionService,
+    private storageService: StorageService,
+    private timelineService: TimelineService
+  ) {}
 
   ngOnInit() {
     this.loadTransactions();
+    this.addSampleData();
     this.calculateTimeline();
+    // Set initialization flag after a brief delay to allow component to settle
+    setTimeout(() => {
+      this.componentInitialized = true;
+    }, 50);
   }
 
   updateBalance() {
     this.lastBalanceUpdate = new Date();
     this.calculateTimeline();
+  }
+
+  toggleAddForm() {
+    if (this.showAddForm) {
+      // If form is open and we're closing it (canceling), clear the form
+      this.resetForm();
+      this.showAddForm = false;
+    } else {
+      // If form is closed and we're opening it
+      this.showAddForm = true;
+      // Auto-focus the description input after the animation completes
+      setTimeout(() => {
+        if (this.descriptionInput) {
+          this.descriptionInput.nativeElement.focus();
+        }
+      }, 550); // Slightly after the 500ms transition
+    }
+  }
+
+  toggleViewMode() {
+    this.viewMode = this.viewMode === 'grid' ? 'list' : 'grid';
+    // No additional calculations needed - view switching is now instant
   }
 
   addRecurringTransaction() {
@@ -67,6 +113,28 @@ export class TransactionsComponent implements OnInit {
     this.transactions.push(transaction);
     this.calculateTimeline();
     this.resetForm();
+    
+    // Slide form back after successful addition
+    this.showAddForm = false;
+  }
+
+  onLastDayOptionChange(option: 'lastDay' | 'lastWeekday', event: Event) {
+    const target = event.target as HTMLInputElement;
+    const isChecked = target.checked;
+
+    if (option === 'lastDay') {
+      this.newRecurringTransaction.recurringPattern!.lastDayOfMonth = isChecked;
+      if (isChecked) {
+        // Uncheck the other option (mutual exclusivity)
+        this.newRecurringTransaction.recurringPattern!.lastWeekdayOfMonth = false;
+      }
+    } else if (option === 'lastWeekday') {
+      this.newRecurringTransaction.recurringPattern!.lastWeekdayOfMonth = isChecked;
+      if (isChecked) {
+        // Uncheck the other option (mutual exclusivity)
+        this.newRecurringTransaction.recurringPattern!.lastDayOfMonth = false;
+      }
+    }
   }
 
   private resetForm() {
@@ -78,154 +146,32 @@ export class TransactionsComponent implements OnInit {
       isRecurring: true,
       recurringPattern: {
         frequency: RecurrenceFrequency.MONTHLY,
-        interval: 1
+        interval: 1,
+        lastDayOfMonth: false,
+        lastWeekdayOfMonth: false
       }
     };
-    this.showAddForm = false;
   }
 
   private loadTransactions() {
-    // Load from localStorage or service
-    if (typeof localStorage !== 'undefined') {
-      const saved = localStorage.getItem('transactions');
-      if (saved) {
-        this.transactions = JSON.parse(saved).map((t: any) => ({
-          ...t,
-          date: new Date(t.date)
-        }));
-      }
-
-      const savedBalance = localStorage.getItem('currentBalance');
-      if (savedBalance) {
-        this.currentBalance = parseFloat(savedBalance);
-      }
-    }
+    this.transactions = this.storageService.loadTransactions();
+    this.currentBalance = this.storageService.loadCurrentBalance();
   }
 
   private saveTransactions() {
-    if (typeof localStorage !== 'undefined') {
-      localStorage.setItem('transactions', JSON.stringify(this.transactions));
-      localStorage.setItem('currentBalance', this.currentBalance.toString());
-    }
+    this.storageService.saveTransactions(this.transactions);
+    this.storageService.saveCurrentBalance(this.currentBalance);
   }
 
-    calculateTimeline() {
-    this.timeline = [];
-    let runningBalance = this.currentBalance;
-    const today = new Date();
-    const endDate = this.getProjectionEndDate();
-
-    // Add current balance as starting point
-    this.timeline.push({
-      date: today,
-      balance: runningBalance,
-      type: ProjectionType.CURRENT,
-      label: 'Current Balance'
-    });
-
-    // Generate timeline with recurring transactions
-    const currentDate = new Date(today);
-    while (currentDate <= endDate) {
-      // Add recurring transactions for this date
-      this.transactions
-        .filter(t => t.isRecurring && this.shouldOccurOnDate(t, currentDate))
-        .forEach(transaction => {
-          const amount = transaction.type === 'income' ? transaction.amount : -transaction.amount;
-          runningBalance += amount;
-          
-                      this.timeline.push({
-              ...transaction,
-              date: new Date(currentDate),
-              balance: runningBalance
-            } as TimelineItem);
-        });
-
-      // Add projection points based on interval
-      if (this.shouldAddProjectionPoint(currentDate)) {
-        this.timeline.push({
-          date: new Date(currentDate),
-          balance: runningBalance,
-          type: ProjectionType.SUMMARY,
-          label: this.getProjectionLabel(currentDate)
-        });
-      }
-
-      currentDate.setDate(currentDate.getDate() + 1);
-    }
-
-    // Sort timeline by date
-    this.timeline.sort((a, b) => a.date.getTime() - b.date.getTime());
+  calculateTimeline() {
+    this.timeline = this.timelineService.calculateTimeline(
+      this.transactions,
+      this.currentBalance,
+      this.projectionInterval
+    );
     this.saveTransactions();
     this.updateLowestProjections();
-  }
-
-  private shouldOccurOnDate(transaction: Transaction, date: Date): boolean {
-    if (!transaction.recurringPattern) return false;
-    
-    const pattern = transaction.recurringPattern;
-    const startDate = transaction.date;
-    
-    switch (pattern.frequency) {
-      case RecurrenceFrequency.DAILY:
-        return Math.floor((date.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) % pattern.interval === 0;
-      case RecurrenceFrequency.WEEKLY:
-        return Math.floor((date.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24 * 7)) % pattern.interval === 0;
-      case RecurrenceFrequency.BI_WEEKLY:
-        return Math.floor((date.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24 * 14)) % pattern.interval === 0;
-      case RecurrenceFrequency.MONTHLY:
-        const monthsDiff = (date.getFullYear() - startDate.getFullYear()) * 12 + date.getMonth() - startDate.getMonth();
-        return monthsDiff % pattern.interval === 0 && date.getDate() === startDate.getDate();
-      case RecurrenceFrequency.YEARLY:
-        const yearsDiff = date.getFullYear() - startDate.getFullYear();
-        return yearsDiff % pattern.interval === 0 && 
-               date.getMonth() === startDate.getMonth() && 
-               date.getDate() === startDate.getDate();
-      default:
-        return false;
-    }
-  }
-
-  private shouldAddProjectionPoint(date: Date): boolean {
-    const today = new Date();
-    if (date <= today) return false;
-
-    switch (this.projectionInterval) {
-      case ProjectionInterval.DAILY:
-        return true; // Every day
-      case ProjectionInterval.WEEKLY:
-        return date.getDay() === 0; // Every Sunday
-      case ProjectionInterval.BI_WEEKLY:
-        const daysSinceEpoch = Math.floor(date.getTime() / (1000 * 60 * 60 * 24));
-        return daysSinceEpoch % 14 === 0; // Every 14 days
-      case ProjectionInterval.MONTHLY:
-        return date.getDate() === 1;
-      case ProjectionInterval.QUARTERLY:
-        return date.getDate() === 1 && [0, 3, 6, 9].includes(date.getMonth());
-      case ProjectionInterval.YEARLY:
-        return date.getDate() === 1 && date.getMonth() === 0;
-      default:
-        return false;
-    }
-  }
-
-  private getProjectionLabel(date: Date): string {
-    switch (this.projectionInterval) {
-      case ProjectionInterval.DAILY:
-        return `${date.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' })} Projection`;
-      case ProjectionInterval.WEEKLY:
-        return `Week of ${date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} Projection`;
-      case ProjectionInterval.BI_WEEKLY:
-        return `Bi-weekly ${date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} Projection`;
-      case ProjectionInterval.MONTHLY:
-        return `${date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })} Projection`;
-      case ProjectionInterval.QUARTERLY:
-        const quarter = Math.floor(date.getMonth() / 3) + 1;
-        return `Q${quarter} ${date.getFullYear()} Projection`;
-      case ProjectionInterval.YEARLY:
-        return `${date.getFullYear()} Projection`;
-      default:
-        return 'Projection';
-    }
+    this.updateGroupedTransactions();
   }
 
   deleteTransaction(id: string) {
@@ -234,11 +180,11 @@ export class TransactionsComponent implements OnInit {
   }
 
   isTransaction(item: any): item is TimelineItem {
-    return 'type' in item && 'amount' in item && 'description' in item;
+    return this.timelineService.isTransaction(item);
   }
 
   isProjectionPoint(item: any): item is ProjectionPoint {
-    return 'type' in item && !('amount' in item);
+    return this.timelineService.isProjectionPoint(item);
   }
 
   trackByDate(index: number, item: any): string {
@@ -246,45 +192,11 @@ export class TransactionsComponent implements OnInit {
   }
 
   private updateLowestProjections(): void {
-    try {
-      if (this.timeline.length === 0) {
-        this.lowestProjections = [];
-        return;
-      }
-
-      const projectionEndDate = this.getProjectionEndDate();
-      
-      // Get all balance points (transactions and projections) within the chart time range
-      const balancePoints: { date: Date, balance: number }[] = [];
-      
-      // Add current balance as starting point
-      balancePoints.push({ date: new Date(), balance: this.currentBalance });
-      
-      // Add all timeline items within the projection range
-      this.timeline.forEach(item => {
-        if (item.date <= projectionEndDate) {
-          if (this.isProjectionPoint(item)) {
-            balancePoints.push({ date: item.date, balance: item.balance });
-          } else if (this.isTransaction(item)) {
-            balancePoints.push({ date: item.date, balance: item.balance });
-          }
-        }
-      });
-      
-      // Sort by balance (lowest first) and take the 3 lowest
-      this.lowestProjections = balancePoints
-        .sort((a, b) => a.balance - b.balance)
-        .slice(0, 3)
-              .map(point => ({
-        date: point.date,
-        balance: point.balance,
-        type: ProjectionType.SUMMARY,
-        label: point.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-      }));
-    } catch (error) {
-      console.error('Error updating lowest projections:', error);
-      this.lowestProjections = [];
-    }
+    this.lowestProjections = this.timelineService.calculateLowestProjections(
+      this.timeline,
+      this.currentBalance,
+      this.projectionInterval
+    );
   }
 
   getLowestProjections(): ProjectionPoint[] {
@@ -296,35 +208,43 @@ export class TransactionsComponent implements OnInit {
   get ProjectionInterval() { return ProjectionInterval; }
   get TransactionType() { return TransactionType; }
 
-  private getProjectionEndDate(): Date {
-    const today = new Date();
-    const endDate = new Date(today);
-    
-    switch (this.projectionInterval) {
-      case ProjectionInterval.DAILY:
-        endDate.setDate(today.getDate() + 30); // 1 month
-        break;
-      case ProjectionInterval.WEEKLY:
-        endDate.setDate(today.getDate() + 90); // 3 months
-        break;
-      case ProjectionInterval.BI_WEEKLY:
-        endDate.setDate(today.getDate() + 90); // 3 months (same as weekly)
-        break;
-      case ProjectionInterval.MONTHLY:
-        endDate.setFullYear(today.getFullYear() + 1); // 1 year
-        break;
-      case ProjectionInterval.QUARTERLY:
-        endDate.setFullYear(today.getFullYear() + 1); // 1 year
-        break;
-      case ProjectionInterval.YEARLY:
-        endDate.setFullYear(today.getFullYear() + 2); // 2 years
-        break;
-      default:
-        endDate.setFullYear(today.getFullYear() + 1);
-    }
-    
-    return endDate;
+
+
+  onProjectionIntervalChange(interval: ProjectionInterval) {
+    this.projectionInterval = interval;
+    this.calculateTimeline();
   }
 
+  private updateGroupedTransactions(): void {
+    this.groupedTransactions = this.timelineService.groupTransactionsByDate(this.timeline);
+  }
+
+  getGroupedTransactions(): { date: Date, transactions: TimelineItem[] }[] {
+    return this.groupedTransactions;
+  }
+
+  // Helper method for debugging - clears localStorage and reloads sample data
+  clearDataAndReload() {
+    this.storageService.clearAllData();
+    this.transactions = [];
+    this.currentBalance = 0;
+    this.loadTransactions();
+    this.addSampleData();
+    this.calculateTimeline();
+    console.log('Data cleared and sample data reloaded');
+  }
+
+  private addSampleData() {
+    // Only add sample data if no transactions exist and no data in localStorage
+    if (this.transactions.length === 0 && !this.storageService.hasExistingData()) {
+      console.log('Adding sample data - no existing transactions found');
+      // Set a starting balance
+      this.currentBalance = 3250.00;
+      
+      // Get sample transactions from the service
+      this.transactions = this.transactionService.getSampleTransactionsData();
+      this.saveTransactions();
+    }
+  }
 
 }

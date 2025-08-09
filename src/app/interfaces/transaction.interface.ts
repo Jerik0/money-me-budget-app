@@ -12,6 +12,8 @@ export interface Transaction {
     frequency: RecurrenceFrequency;
     interval: number;
     endDate?: Date;
+    lastDayOfMonth?: boolean;
+    lastWeekdayOfMonth?: boolean;
   };
 }
 

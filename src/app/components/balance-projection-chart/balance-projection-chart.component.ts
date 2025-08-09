@@ -1,5 +1,6 @@
-import { Component, Input, ViewChild, ElementRef, AfterViewInit, OnDestroy, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, Output, EventEmitter, ViewChild, ElementRef, AfterViewInit, OnDestroy, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { Chart, ChartConfiguration, ChartData, Point, TimeScale, LinearScale, PointElement, LineElement, LineController, Title, Tooltip, Legend, Filler } from 'chart.js';
 import 'chartjs-adapter-date-fns';
 import { ProjectionInterval, TimeUnit } from '../../enums';
@@ -11,27 +12,16 @@ Chart.register(TimeScale, LinearScale, PointElement, LineElement, LineController
 @Component({
   selector: 'app-balance-projection-chart',
   standalone: true,
-  imports: [CommonModule],
-  template: `
-    <div class="bg-white dark:bg-chatgpt-darker rounded-xl shadow-sm border border-gray-100 dark:border-chatgpt-border p-6 hover:shadow-md transition-all duration-300">
-      <div class="flex items-center justify-between mb-6">
-        <h2 class="text-xl font-semibold text-gray-900 dark:text-chatgpt-text">Balance Projection</h2>
-        <div class="flex items-center space-x-2">
-          <div class="w-3 h-3 bg-emerald-500 rounded-full shadow-sm"></div>
-          <span class="text-sm font-medium text-gray-600 dark:text-gray-400">Projected Growth</span>
-        </div>
-      </div>
-      <div class="h-80 relative overflow-hidden rounded-lg">
-        <canvas #balanceChart class="w-full h-full"></canvas>
-      </div>
-    </div>
-  `,
+  imports: [CommonModule, FormsModule],
+  templateUrl: './balance-projection-chart.component.html',
   styles: []
 })
 export class BalanceProjectionChartComponent implements AfterViewInit, OnDestroy, OnChanges {
   @Input() timeline: (TimelineItem | ProjectionPoint)[] = [];
   @Input() projectionInterval: ProjectionInterval = ProjectionInterval.MONTHLY;
   @Input() currentBalance: number = 0;
+
+  @Output() intervalChange = new EventEmitter<ProjectionInterval>();
 
   @ViewChild('balanceChart', { static: false }) chartCanvas!: ElementRef<HTMLCanvasElement>;
   private chart: Chart | null = null;
@@ -64,20 +54,20 @@ export class BalanceProjectionChartComponent implements AfterViewInit, OnDestroy
       const config: ChartConfiguration = {
         type: 'line',
         data: {
-          datasets: [{
-            label: 'Account Balance',
-            data: [],
-            borderColor: '#10b981',
-            backgroundColor: 'rgba(16, 185, 129, 0.08)',
+                            datasets: [{
+                    label: 'Account Balance',
+                    data: [],
+                    borderColor: '#14b8a6',
+                    backgroundColor: 'rgba(20, 184, 166, 0.08)',
             borderWidth: 3,
             fill: true,
             tension: 0.4,
-            pointBackgroundColor: '#10b981',
+            pointBackgroundColor: '#14b8a6',
             pointBorderColor: '#ffffff',
             pointBorderWidth: 2,
             pointRadius: 0,
             pointHoverRadius: 6,
-            pointHoverBackgroundColor: '#10b981',
+            pointHoverBackgroundColor: '#14b8a6',
             pointHoverBorderColor: '#ffffff',
             pointHoverBorderWidth: 3
           }]
@@ -301,5 +291,13 @@ export class BalanceProjectionChartComponent implements AfterViewInit, OnDestroy
 
   private isProjectionPoint(item: any): item is ProjectionPoint {
     return 'type' in item && !('amount' in item);
+  }
+
+  onIntervalChange() {
+    this.intervalChange.emit(this.projectionInterval);
+  }
+
+  get ProjectionInterval() {
+    return ProjectionInterval;
   }
 }

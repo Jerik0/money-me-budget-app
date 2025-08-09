@@ -1,6 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { TransactionService, Transaction } from '../../services/transaction.service';
+import { TransactionService } from '../../services/transaction.service';
+import { Transaction } from '../../interfaces';
+import { TransactionType } from '../../enums';
+import { formatCurrency, formatRelativeDate } from '../../utils/formatting.utils';
 
 @Component({
   selector: 'app-dashboard',
@@ -35,21 +38,15 @@ export class DashboardComponent implements OnInit {
   }
 
   formatCurrency(amount: number): string {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
-    }).format(amount);
+    return formatCurrency(amount);
   }
 
   formatDate(date: Date): string {
-    const now = new Date();
-    const diffTime = Math.abs(now.getTime() - new Date(date).getTime());
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
-    if (diffDays === 0) return 'Today';
-    if (diffDays === 1) return 'Yesterday';
-    if (diffDays < 7) return `${diffDays} days ago`;
-    
-    return new Date(date).toLocaleDateString();
+    return formatRelativeDate(date);
+  }
+
+  // Expose enum to template
+  get TransactionType() {
+    return TransactionType;
   }
 }
