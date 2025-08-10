@@ -23,9 +23,7 @@ export class TimelineService {
     const today = new Date();
     const endDate = this.recurrenceService.getProjectionEndDate(projectionInterval);
 
-    console.log('Calculating timeline with', transactions.length, 'transactions');
-    console.log('Current balance:', currentBalance);
-    console.log('Date range:', today, 'to', endDate);
+
 
     // Generate timeline with recurring transactions
     const currentDate = new Date(today);
@@ -35,7 +33,7 @@ export class TimelineService {
         .filter(t => t.isRecurring && this.recurrenceService.shouldOccurOnDate(t, currentDate));
       
       if (dailyTransactions.length > 0) {
-        console.log('Date:', currentDate.toDateString(), 'has', dailyTransactions.length, 'transactions');
+        // Date has transactions
       }
       
       dailyTransactions.forEach(transaction => {

@@ -3,7 +3,7 @@
     type="button"
     (click)="toggleDropdown()"
     [disabled]="disabled"
-    class="w-full flex items-center justify-between border rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-opacity-50"
+    class="w-full flex items-center justify-between border rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-opacity-50 leading-none shadow-sm hover:shadow-md"
     [ngClass]="[getSizeClasses(), getVariantClasses()]"
   >
     <span class="truncate">{{ selectedLabel }}</span>

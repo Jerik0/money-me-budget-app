@@ -76,9 +76,9 @@ export class CustomDropdownComponent implements OnInit, OnChanges {
 
   getSizeClasses(): string {
     switch (this.size) {
-      case 'sm': return 'text-sm px-2 py-1';
-      case 'lg': return 'text-base px-4 py-3';
-      default: return 'text-sm px-3 py-2';
+      case 'sm': return 'text-sm px-2 py-1 h-8';
+      case 'lg': return 'text-base px-4 py-3 h-12';
+      default: return 'text-sm px-3 py-2 h-10';
     }
   }
 

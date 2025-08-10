@@ -187,8 +187,82 @@
          </div>
        </div>
 
-       <!-- Frequency and Start Date row -->
+       <!-- Start Date, End Date, and Frequency row -->
        <div class="grid grid-cols-2 gap-4">
+         <div class="flex space-x-2">
+           <div class="flex-1">
+             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Start Date</label>
+             <div class="relative">
+               <input
+                 type="text"
+                 [(ngModel)]="startDateString"
+                 (click)="toggleDatePicker()"
+                 readonly
+                 class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-teal-500 focus:border-transparent cursor-pointer"
+                                   placeholder="start date"
+               >
+               <div class="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center space-x-1">
+                 <button
+                   *ngIf="startDateString"
+                   (click)="clearStartDate()"
+                   type="button"
+                   class="w-4 h-4 text-gray-400 hover:text-red-500 transition-colors"
+                   title="Clear start date"
+                 >
+                   <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                   </svg>
+                 </button>
+                 <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 002 2z"></path>
+                 </svg>
+               </div>
+             </div>
+             <ngb-datepicker 
+               #startDatePicker
+               [(ngModel)]="startDate"
+               (ngModelChange)="onStartDateChange($event)"
+               [class.hidden]="!showDatePicker"
+               class="absolute z-50 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg mt-1"
+             ></ngb-datepicker>
+           </div>
+           <div class="flex-1">
+             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">End Date (Optional)</label>
+             <div class="relative">
+               <input
+                 type="text"
+                 [(ngModel)]="endDateString"
+                 (click)="toggleEndDatePicker()"
+                 readonly
+                 class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-teal-500 focus:border-transparent cursor-pointer"
+                                   placeholder="end date"
+               >
+               <div class="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center space-x-1">
+                 <button
+                   *ngIf="endDateString"
+                   (click)="clearEndDate()"
+                   type="button"
+                   class="w-4 h-4 text-gray-400 hover:text-red-500 transition-colors"
+                   title="Clear end date"
+                 >
+                   <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                   </svg>
+                 </button>
+                 <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 002 2z"></path>
+                 </svg>
+               </div>
+             </div>
+             <ngb-datepicker 
+               #endDatePicker
+               [(ngModel)]="endDate"
+               (ngModelChange)="onEndDateChange($event)"
+               [class.hidden]="!showEndDatePicker"
+               class="absolute z-50 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg mt-1"
+             ></ngb-datepicker>
+           </div>
+         </div>
          <div>
            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Frequency</label>
            <app-custom-dropdown
@@ -198,54 +272,30 @@
              size="md"
              variant="outline"
            ></app-custom-dropdown>
-         </div>
-         <div>
-           <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Start Date</label>
-           <div class="relative">
-             <input
-               type="text"
-               [(ngModel)]="startDateString"
-               (click)="toggleDatePicker()"
-               readonly
-               class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-teal-500 focus:border-transparent cursor-pointer"
-               placeholder="Select start date"
-             >
-             <svg class="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-             </svg>
-           </div>
-           <ngb-datepicker 
-             #startDatePicker
-             [(ngModel)]="startDate"
-             (ngModelChange)="onStartDateChange($event)"
-             [class.hidden]="!showDatePicker"
-             class="absolute z-50 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg mt-1"
-           ></ngb-datepicker>
-         </div>
-       </div>
-
-       <!-- Monthly controls row -->
-       <div *ngIf="newRecurringTransaction.recurringPattern!.frequency === RecurrenceFrequency.MONTHLY" class="space-y-3">
-         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Monthly Options</label>
-         <div class="flex items-center space-x-4">
-           <label class="flex items-center cursor-pointer">
-             <input
-               type="checkbox"
-               [checked]="newRecurringTransaction.recurringPattern!.lastDayOfMonth ?? false"
-               (change)="onLastDayOptionChange('lastDay', $event)"
-               class="w-4 h-4 text-teal-600 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-500 rounded focus:ring-teal-500 dark:focus:ring-teal-600 focus:ring-2 mr-2"
-             >
-             <span class="text-sm text-gray-700 dark:text-gray-300">Last day of month</span>
-           </label>
-           <label class="flex items-center cursor-pointer">
-             <input
-               type="checkbox"
-               [checked]="newRecurringTransaction.recurringPattern!.lastWeekdayOfMonth ?? false"
-               (change)="onLastDayOptionChange('lastWeekday', $event)"
-               class="w-4 h-4 text-teal-600 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-500 rounded focus:ring-teal-500 dark:focus:ring-teal-600 focus:ring-2 mr-2"
-             >
-             <span class="text-sm text-gray-700 dark:text-gray-300">Last weekday of month</span>
-           </label>
+           
+            <!-- Monthly options checkboxes - directly under frequency input -->
+            <div [class.hidden]="newRecurringTransaction.recurringPattern!.frequency !== RecurrenceFrequency.MONTHLY" class="mt-2 space-y-3">
+              <div class="flex items-center space-x-4">
+                <label class="flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    [checked]="newRecurringTransaction.recurringPattern!.lastDayOfMonth ?? false"
+                    (change)="onLastDayOptionChange('lastDay', $event)"
+                    class="w-4 h-4 text-teal-600 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-500 rounded focus:ring-teal-500 dark:focus:ring-teal-600 focus:ring-2 mr-2"
+                  >
+                  <span class="text-sm text-gray-700 dark:text-gray-300">Last day</span>
+                </label>
+                <label class="flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    [checked]="newRecurringTransaction.recurringPattern!.lastWeekdayOfMonth ?? false"
+                    (change)="onLastDayOptionChange('lastWeekday', $event)"
+                    class="w-4 h-4 text-teal-600 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-500 rounded focus:ring-teal-500 dark:focus:ring-teal-600 focus:ring-2 mr-2"
+                  >
+                  <span class="text-sm text-gray-700 dark:text-gray-300">Last weekday</span>
+                </label>
+              </div>
+            </div>
          </div>
        </div>
 

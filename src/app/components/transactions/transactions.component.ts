@@ -21,6 +21,7 @@ import { CustomModalComponent } from '../shared/custom-modal/custom-modal.compon
 export class TransactionsComponent implements OnInit {
   @ViewChild('descriptionInput') descriptionInput!: ElementRef;
   @ViewChild('startDatePicker') startDatePicker!: NgbDatepicker;
+  @ViewChild('endDatePicker') endDatePicker!: NgbDatepicker;
 
   currentBalance: number = 0;
   lastBalanceUpdate: Date = new Date();
@@ -34,6 +35,9 @@ export class TransactionsComponent implements OnInit {
   startDate: NgbDate | null = null;
   startDateString: string = '';
   showDatePicker: boolean = false;
+  endDate: NgbDate | null = null;
+  endDateString: string = '';
+  showEndDatePicker: boolean = false;
 
   // Dropdown options
   transactionTypeOptions: DropdownOption[] = [
@@ -58,6 +62,7 @@ export class TransactionsComponent implements OnInit {
     recurringPattern: {
       frequency: RecurrenceFrequency.MONTHLY,
       interval: null,
+      endDate: undefined,
       lastDayOfMonth: false,
       lastWeekdayOfMonth: false
     }
@@ -169,6 +174,7 @@ export class TransactionsComponent implements OnInit {
       recurringPattern: {
         frequency: RecurrenceFrequency.MONTHLY,
         interval: null,
+        endDate: undefined,
         lastDayOfMonth: false,
         lastWeekdayOfMonth: false
       }
@@ -177,10 +183,17 @@ export class TransactionsComponent implements OnInit {
     this.startDate = null;
     this.startDateString = '';
     this.showDatePicker = false;
+    this.endDate = null;
+    this.endDateString = '';
+    this.showEndDatePicker = false;
   }
 
   toggleDatePicker() {
     this.showDatePicker = !this.showDatePicker;
+  }
+
+  toggleEndDatePicker() {
+    this.showEndDatePicker = !this.showEndDatePicker;
   }
 
   onStartDateChange(date: NgbDate | null) {
@@ -193,6 +206,30 @@ export class TransactionsComponent implements OnInit {
       // Hide the date picker after selection
       this.showDatePicker = false;
     }
+  }
+
+  clearStartDate() {
+    this.startDate = null;
+    this.startDateString = '';
+    this.newRecurringTransaction.date = undefined;
+  }
+
+  onEndDateChange(date: NgbDate | null) {
+    if (date) {
+      this.endDate = date;
+      this.endDateString = `${date.month}/${date.day}/${date.year}`;
+      // Convert NgbDate to Date and set it as the end date for the recurring pattern
+      const jsDate = new Date(date.year, date.month - 1, date.day);
+      this.newRecurringTransaction.recurringPattern!.endDate = jsDate;
+      // Hide the date picker after selection
+      this.showEndDatePicker = false;
+    }
+  }
+
+  clearEndDate() {
+    this.endDate = null;
+    this.endDateString = '';
+    this.newRecurringTransaction.recurringPattern!.endDate = undefined;
   }
 
   private loadTransactions() {
@@ -273,13 +310,13 @@ export class TransactionsComponent implements OnInit {
     this.loadTransactions();
     this.addSampleData();
     this.calculateTimeline();
-    console.log('Data cleared and sample data reloaded');
+
   }
 
   private addSampleData() {
     // Only add sample data if no transactions exist and no data in localStorage
     if (this.transactions.length === 0 && !this.storageService.hasExistingData()) {
-      console.log('Adding sample data - no existing transactions found');
+
       // Set a starting balance
       this.currentBalance = 3250.00;
 
