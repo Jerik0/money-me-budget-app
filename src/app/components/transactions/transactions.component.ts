@@ -53,6 +53,20 @@ export class TransactionsComponent implements OnInit {
     { value: RecurrenceFrequency.YEARLY, label: 'Yearly' }
   ];
 
+  categoryOptions: DropdownOption[] = [
+    { value: 'Uncategorized', label: 'Uncategorized' },
+    { value: 'Income', label: 'Income' },
+    { value: 'Housing', label: 'Housing' },
+    { value: 'Entertainment', label: 'Entertainment' },
+    { value: 'Food', label: 'Food' },
+    { value: 'Transportation', label: 'Transportation' },
+    { value: 'Utilities', label: 'Utilities' },
+    { value: 'Healthcare', label: 'Healthcare' },
+    { value: 'Shopping', label: 'Shopping' },
+    { value: 'Education', label: 'Education' },
+    { value: 'Other', label: 'Other' }
+  ];
+
   newRecurringTransaction: Partial<Transaction> = {
     description: '',
     amount: 0,
@@ -248,34 +262,52 @@ export class TransactionsComponent implements OnInit {
     event.stopPropagation();
   }
 
-  // Check if the transaction form is valid
+    // Check if the transaction form is valid
   isTransactionFormValid(): boolean {
     const transaction = this.newRecurringTransaction;
-    
+
     // Check required fields
     if (!transaction.description || !transaction.description.trim()) {
       return false;
     }
-    
+
     if (!transaction.amount || transaction.amount <= 0) {
       return false;
     }
-    
+
     if (!transaction.category || !transaction.category.trim()) {
       return false;
     }
-    
+
     // Check if start date is selected
     if (!transaction.date) {
       return false;
     }
-    
+
     // Check if frequency is selected
     if (!transaction.recurringPattern?.frequency) {
       return false;
     }
-    
+
     return true;
+  }
+
+  // Add new category to the options
+  onCategoryAdded(newCategory: string) {
+    // Don't allow adding "Uncategorized" as it's reserved
+    if (newCategory.toLowerCase() === 'uncategorized') {
+      return;
+    }
+    
+    // Check if category already exists
+    const existingCategory = this.categoryOptions.find(option => 
+      option.value.toLowerCase() === newCategory.toLowerCase()
+    );
+    
+    if (!existingCategory) {
+      // Add new category to the beginning of the list (after Uncategorized)
+      this.categoryOptions.splice(1, 0, { value: newCategory, label: newCategory });
+    }
   }
 
   private isClickInsideDatePicker(event: Event, pickerType: 'start' | 'end'): boolean {

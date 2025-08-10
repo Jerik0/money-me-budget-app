@@ -3,10 +3,10 @@
     type="button"
     (click)="toggleDropdown()"
     [disabled]="disabled"
-    class="w-full flex items-center justify-between border rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-opacity-50 leading-none shadow-sm hover:shadow-md"
+    class="w-full flex items-center justify-between border rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-opacity-50 shadow-sm hover:shadow-md"
     [ngClass]="[getSizeClasses(), getVariantClasses()]"
   >
-    <span class="truncate">{{ selectedLabel }}</span>
+    <span class="flex-1 text-left overflow-hidden leading-normal">{{ selectedLabel }}</span>
 
     <svg class="ml-2 h-4 w-4 text-gray-400 dark:text-gray-500 transition-transform duration-200" [class.rotate-180]="isOpen" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
@@ -18,11 +18,46 @@
     [class.hidden]="!isOpen" 
     class="absolute z-[9999] mt-1 w-full bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg overflow-hidden min-w-[200px]"
   >
-    <div class="max-h-60 overflow-y-auto">
+    <div class="max-h-60 overflow-y-auto overscroll-contain">
+      <!-- Add new option input (only show if allowAdd is true) -->
+      <div *ngIf="allowAdd" class="p-1.5 border-b border-gray-200 dark:border-gray-600">
+        <div class="flex items-center space-x-2">
+          <input
+            type="text"
+            [(ngModel)]="newOptionText"
+            (keydown.enter)="addNewOption()"
+            (keydown.escape)="clearNewOption()"
+            placeholder="add category"
+            class="flex-1 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-teal-500 focus:border-transparent shadow-sm"
+          >
+          <button
+            *ngIf="newOptionText.trim()"
+            (click)="addNewOption()"
+            class="p-1 text-teal-600 hover:text-teal-700 dark:text-teal-400 dark:hover:text-teal-300 transition-transform duration-100 hover:scale-105"
+            title="Add category"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+            </svg>
+          </button>
+          <button
+            *ngIf="newOptionText.trim()"
+            (click)="clearNewOption()"
+            class="p-1 text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 transition-transform duration-100 hover:scale-105"
+            title="Clear input"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+      
+      <!-- Options list -->
       <div 
         *ngFor="let option of options" 
         (click)="selectOption(option)" 
-        class="px-3 py-2 text-sm text-gray-900 dark:text-white hover:bg-teal-50 dark:hover:bg-teal-900/20 cursor-pointer transition-colors duration-150"
+        class="option-item px-3 py-2 text-sm text-gray-900 dark:text-white hover:bg-teal-50 dark:hover:bg-teal-900/20 cursor-pointer"
         [class.bg-teal-100]="option.value === selectedValue"
       >
         {{ option.label }}

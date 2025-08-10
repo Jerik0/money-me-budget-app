@@ -21,12 +21,15 @@ export class CustomDropdownComponent implements OnInit, OnChanges {
   @Input() size: 'sm' | 'md' | 'lg' = 'md';
   @Input() variant: 'outline' | 'filled' = 'outline';
   @Input() disabled: boolean = false;
+  @Input() allowAdd: boolean = false;
   
   @Output() selectedValueChange = new EventEmitter<any>();
   @Output() valueChange = new EventEmitter<any>();
+  @Output() optionAdded = new EventEmitter<string>();
 
   isOpen = false;
   selectedLabel: string = '';
+  newOptionText: string = '';
 
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: Event) {
@@ -72,6 +75,18 @@ export class CustomDropdownComponent implements OnInit, OnChanges {
     this.selectedValueChange.emit(this.selectedValue);
     this.valueChange.emit(this.selectedValue);
     this.closeDropdown();
+  }
+
+  addNewOption() {
+    const trimmedText = this.newOptionText.trim();
+    if (trimmedText) {
+      this.optionAdded.emit(trimmedText);
+      this.newOptionText = '';
+    }
+  }
+
+  clearNewOption() {
+    this.newOptionText = '';
   }
 
   getSizeClasses(): string {

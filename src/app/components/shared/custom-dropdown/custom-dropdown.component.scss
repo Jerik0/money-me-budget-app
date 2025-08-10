@@ -41,8 +41,8 @@
   background: #6b7280;
 }
 
-// Smooth transitions for all interactive elements
-* {
+// Smooth transitions for specific interactive elements only
+button, .transition-all {
   transition: all 0.2s ease-in-out;
 }
 
@@ -66,4 +66,18 @@ button:focus {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+// Performance optimizations for scrolling
+.overflow-y-auto {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: auto;
+  will-change: scroll-position;
+}
+
+// Optimize list items for better scrolling performance
+.option-item {
+  contain: layout style paint;
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
