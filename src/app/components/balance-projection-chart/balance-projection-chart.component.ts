@@ -5,13 +5,15 @@ import { Chart, ChartConfiguration, ChartData, Point, TimeScale, LinearScale, Po
 import 'chartjs-adapter-date-fns';
 import { ProjectionInterval, TimeUnit } from '../../enums';
 import { Transaction, ProjectionPoint, TimelineItem } from '../../interfaces';
+import { CustomDropdownComponent, DropdownOption } from '../shared/custom-dropdown/custom-dropdown.component';
 
 // Register Chart.js components
 Chart.register(TimeScale, LinearScale, PointElement, LineElement, LineController, Title, Tooltip, Legend, Filler);
 
 @Component({
     selector: 'app-balance-projection-chart',
-    imports: [CommonModule, FormsModule],
+    standalone: true,
+    imports: [CommonModule, FormsModule, CustomDropdownComponent],
     templateUrl: './balance-projection-chart.component.html',
     styles: []
 })
@@ -21,6 +23,16 @@ export class BalanceProjectionChartComponent implements AfterViewInit, OnDestroy
   @Input() currentBalance: number = 0;
 
   @Output() intervalChange = new EventEmitter<ProjectionInterval>();
+
+  // Dropdown options
+  projectionIntervalOptions: DropdownOption[] = [
+    { value: ProjectionInterval.DAILY, label: 'Daily' },
+    { value: ProjectionInterval.WEEKLY, label: 'Weekly' },
+    { value: ProjectionInterval.BI_WEEKLY, label: 'Bi-weekly' },
+    { value: ProjectionInterval.MONTHLY, label: 'Monthly' },
+    { value: ProjectionInterval.QUARTERLY, label: 'Quarterly' },
+    { value: ProjectionInterval.YEARLY, label: 'Yearly' }
+  ];
 
   @ViewChild('balanceChart', { static: false }) chartCanvas!: ElementRef<HTMLCanvasElement>;
   private chart: Chart | null = null;

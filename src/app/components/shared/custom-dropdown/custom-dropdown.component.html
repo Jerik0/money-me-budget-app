@@ -1,0 +1,36 @@
+<div class="relative inline-block w-full">
+  <button
+    type="button"
+    (click)="toggleDropdown()"
+    [disabled]="disabled"
+    class="w-full flex items-center justify-between border rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-opacity-50"
+    [ngClass]="[getSizeClasses(), getVariantClasses()]"
+  >
+    <span class="truncate">{{ selectedLabel }}</span>
+
+    <svg class="ml-2 h-4 w-4 text-gray-400 dark:text-gray-500 transition-transform duration-200" [class.rotate-180]="isOpen" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+    </svg>
+  </button>
+
+  <!-- Dropdown Menu -->
+  <div 
+    [class.hidden]="!isOpen" 
+    class="absolute z-[9999] mt-1 w-full bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg overflow-hidden min-w-[200px]"
+  >
+    <div class="max-h-60 overflow-y-auto">
+      <div 
+        *ngFor="let option of options" 
+        (click)="selectOption(option)" 
+        class="px-3 py-2 text-sm text-gray-900 dark:text-white hover:bg-teal-50 dark:hover:bg-teal-900/20 cursor-pointer transition-colors duration-150"
+        [class.bg-teal-100]="option.value === selectedValue"
+      >
+        {{ option.label }}
+      </div>
+      
+      <div *ngIf="options.length === 0" class="px-3 py-2 text-sm text-gray-500 dark:text-gray-400 italic">
+        No options available
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,25 +1,26 @@
 import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { NgbDatepicker, NgbDate } from '@ng-bootstrap/ng-bootstrap';
 import { RecurrenceFrequency, ProjectionInterval, TransactionType, ProjectionType } from '../../enums';
 import { BalanceProjectionChartComponent } from '../balance-projection-chart/balance-projection-chart.component';
 import { Transaction, ProjectionPoint, TimelineItem } from '../../interfaces';
 import { TransactionService } from '../../services/transaction.service';
 import { StorageService } from '../../services/storage.service';
 import { TimelineService } from '../../services/timeline.service';
-
-
-
-
+import { CustomDropdownComponent, DropdownOption } from '../shared/custom-dropdown/custom-dropdown.component';
+import { CustomModalComponent } from '../shared/custom-modal/custom-modal.component';
 
 @Component({
     selector: 'app-transactions',
-    imports: [CommonModule, FormsModule, BalanceProjectionChartComponent],
+    standalone: true,
+    imports: [CommonModule, FormsModule, NgbDatepicker, BalanceProjectionChartComponent, CustomDropdownComponent, CustomModalComponent],
     templateUrl: './transactions.component.html',
     styleUrls: ['./transactions.component.scss']
 })
 export class TransactionsComponent implements OnInit {
   @ViewChild('descriptionInput') descriptionInput!: ElementRef;
+  @ViewChild('startDatePicker') startDatePicker!: NgbDatepicker;
 
   currentBalance: number = 0;
   lastBalanceUpdate: Date = new Date();
@@ -28,6 +29,25 @@ export class TransactionsComponent implements OnInit {
   projectionInterval: ProjectionInterval = ProjectionInterval.MONTHLY;
   lowestProjections: ProjectionPoint[] = [];
   groupedTransactions: { date: Date, transactions: TimelineItem[] }[] = [];
+
+  // Date picker properties
+  startDate: NgbDate | null = null;
+  startDateString: string = '';
+  showDatePicker: boolean = false;
+
+  // Dropdown options
+  transactionTypeOptions: DropdownOption[] = [
+    { value: TransactionType.EXPENSE, label: 'Expense' },
+    { value: TransactionType.INCOME, label: 'Income' }
+  ];
+
+  frequencyOptions: DropdownOption[] = [
+    { value: RecurrenceFrequency.DAILY, label: 'Daily' },
+    { value: RecurrenceFrequency.WEEKLY, label: 'Weekly' },
+    { value: RecurrenceFrequency.BI_WEEKLY, label: 'Bi-weekly' },
+    { value: RecurrenceFrequency.MONTHLY, label: 'Monthly' },
+    { value: RecurrenceFrequency.YEARLY, label: 'Yearly' }
+  ];
 
   newRecurringTransaction: Partial<Transaction> = {
     description: '',
@@ -153,6 +173,26 @@ export class TransactionsComponent implements OnInit {
         lastWeekdayOfMonth: false
       }
     };
+    // Reset date picker
+    this.startDate = null;
+    this.startDateString = '';
+    this.showDatePicker = false;
+  }
+
+  toggleDatePicker() {
+    this.showDatePicker = !this.showDatePicker;
+  }
+
+  onStartDateChange(date: NgbDate | null) {
+    if (date) {
+      this.startDate = date;
+      this.startDateString = `${date.month}/${date.day}/${date.year}`;
+      // Convert NgbDate to Date and set it as the start date for the transaction
+      const jsDate = new Date(date.year, date.month - 1, date.day);
+      this.newRecurringTransaction.date = jsDate;
+      // Hide the date picker after selection
+      this.showDatePicker = false;
+    }
   }
 
   private loadTransactions() {

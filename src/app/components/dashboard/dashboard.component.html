@@ -83,11 +83,14 @@
     <div class="bg-white dark:bg-chatgpt-darker rounded-xl p-6 shadow-sm border border-gray-200 dark:border-chatgpt-border">
       <div class="flex items-center justify-between mb-6">
         <h3 class="text-lg font-semibold text-gray-900 dark:text-chatgpt-text">Spending Overview</h3>
-        <select class="text-sm border border-gray-300 dark:border-chatgpt-border rounded-lg px-3 py-1 bg-white dark:bg-chatgpt-darker text-gray-900 dark:text-chatgpt-text">
-          <option>This Month</option>
-          <option>Last Month</option>
-          <option>Last 3 Months</option>
-        </select>
+        <app-custom-dropdown
+          [options]="timePeriodOptions"
+          [(selectedValue)]="selectedTimePeriod"
+          placeholder="This Month"
+          size="sm"
+          variant="outline"
+          class="w-32"
+        ></app-custom-dropdown>
       </div>
       <div class="h-64 bg-gray-50 dark:bg-chatgpt-darker rounded-lg flex items-center justify-center">
         <div class="text-center">

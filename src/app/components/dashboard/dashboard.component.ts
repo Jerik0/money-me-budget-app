@@ -4,10 +4,12 @@ import { TransactionService } from '../../services/transaction.service';
 import { Transaction } from '../../interfaces';
 import { TransactionType } from '../../enums';
 import { formatCurrency, formatRelativeDate } from '../../utils/formatting.utils';
+import { CustomDropdownComponent, DropdownOption } from '../shared/custom-dropdown/custom-dropdown.component';
 
 @Component({
     selector: 'app-dashboard',
-    imports: [CommonModule],
+    standalone: true,
+    imports: [CommonModule, CustomDropdownComponent],
     templateUrl: './dashboard.component.html',
     styleUrl: './dashboard.component.scss'
 })
@@ -16,6 +18,14 @@ export class DashboardComponent implements OnInit {
   totalIncome = 0;
   totalExpenses = 0;
   balance = 0;
+  selectedTimePeriod: string = 'This Month';
+
+  // Dropdown options
+  timePeriodOptions: DropdownOption[] = [
+    { value: 'This Month', label: 'This Month' },
+    { value: 'Last Month', label: 'Last Month' },
+    { value: 'Last 3 Months', label: 'Last 3 Months' }
+  ];
 
   constructor(private transactionService: TransactionService) {}
 

@@ -5,11 +5,13 @@ import { filter } from 'rxjs/operators';
 
 @Component({
     selector: 'app-root',
+    standalone: true,
     imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive],
     templateUrl: './app.component.html',
     styleUrl: './app.component.scss'
 })
 export class AppComponent implements OnInit {
+  title = 'Money Me App';
   isDarkTheme = true; // Default to dark theme
   currentPageTitle = 'Dashboard';
 

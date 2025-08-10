@@ -8,18 +8,15 @@
       </div>
       <div class="flex items-center space-x-2">
         <label class="text-sm font-medium text-gray-700 dark:text-chatgpt-textSecondary">Interval:</label>
-        <select
-          [(ngModel)]="projectionInterval"
-          (change)="onIntervalChange()"
-          class="px-3 py-2 border border-gray-300 dark:border-chatgpt-border rounded-lg bg-white dark:bg-chatgpt-dark text-gray-900 dark:text-chatgpt-text focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm"
-        >
-          <option [value]="ProjectionInterval.DAILY">Daily</option>
-          <option [value]="ProjectionInterval.WEEKLY">Weekly</option>
-          <option [value]="ProjectionInterval.BI_WEEKLY">Bi-weekly</option>
-          <option [value]="ProjectionInterval.MONTHLY">Monthly</option>
-          <option [value]="ProjectionInterval.QUARTERLY">Quarterly</option>
-          <option [value]="ProjectionInterval.YEARLY">Yearly</option>
-        </select>
+        <app-custom-dropdown
+          [options]="projectionIntervalOptions"
+          [(selectedValue)]="projectionInterval"
+          (selectedValueChange)="onIntervalChange()"
+          placeholder="Monthly"
+          size="sm"
+          variant="outline"
+          class="w-32"
+        ></app-custom-dropdown>
       </div>
     </div>
   </div>
