@@ -10,11 +10,10 @@ import { Transaction, ProjectionPoint, TimelineItem } from '../../interfaces';
 Chart.register(TimeScale, LinearScale, PointElement, LineElement, LineController, Title, Tooltip, Legend, Filler);
 
 @Component({
-  selector: 'app-balance-projection-chart',
-  standalone: true,
-  imports: [CommonModule, FormsModule],
-  templateUrl: './balance-projection-chart.component.html',
-  styles: []
+    selector: 'app-balance-projection-chart',
+    imports: [CommonModule, FormsModule],
+    templateUrl: './balance-projection-chart.component.html',
+    styles: []
 })
 export class BalanceProjectionChartComponent implements AfterViewInit, OnDestroy, OnChanges {
   @Input() timeline: (TimelineItem | ProjectionPoint)[] = [];

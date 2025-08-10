@@ -13,11 +13,10 @@ import { TimelineService } from '../../services/timeline.service';
 
 
 @Component({
-  selector: 'app-transactions',
-  standalone: true,
-  imports: [CommonModule, FormsModule, BalanceProjectionChartComponent],
-  templateUrl: './transactions.component.html',
-  styleUrls: ['./transactions.component.scss']
+    selector: 'app-transactions',
+    imports: [CommonModule, FormsModule, BalanceProjectionChartComponent],
+    templateUrl: './transactions.component.html',
+    styleUrls: ['./transactions.component.scss']
 })
 export class TransactionsComponent implements OnInit {
   @ViewChild('descriptionInput') descriptionInput!: ElementRef;

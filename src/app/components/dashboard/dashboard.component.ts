@@ -6,11 +6,10 @@ import { TransactionType } from '../../enums';
 import { formatCurrency, formatRelativeDate } from '../../utils/formatting.utils';
 
 @Component({
-  selector: 'app-dashboard',
-  standalone: true,
-  imports: [CommonModule],
-  templateUrl: './dashboard.component.html',
-  styleUrl: './dashboard.component.scss'
+    selector: 'app-dashboard',
+    imports: [CommonModule],
+    templateUrl: './dashboard.component.html',
+    styleUrl: './dashboard.component.scss'
 })
 export class DashboardComponent implements OnInit {
   transactions: Transaction[] = [];
