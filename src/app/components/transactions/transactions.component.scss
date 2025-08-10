@@ -40,3 +40,21 @@
 .dark .transaction-timeline::-webkit-scrollbar-thumb:hover {
   background: #8e8ea0;
 }
+
+// Date picker styling fixes
+ngb-datepicker {
+  border-radius: 0.5rem !important;
+  overflow: hidden !important;
+}
+
+// Ensure the date picker header has proper border radius
+ngb-datepicker .ngb-dp-header {
+  border-top-left-radius: 0.5rem !important;
+  border-top-right-radius: 0.5rem !important;
+}
+
+// Ensure the date picker navigation has proper styling
+ngb-datepicker .ngb-dp-navigation {
+  border-top-left-radius: 0.5rem !important;
+  border-top-right-radius: 0.5rem !important;
+}

@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgbDatepicker, NgbDate } from '@ng-bootstrap/ng-bootstrap';
@@ -230,6 +230,68 @@ export class TransactionsComponent implements OnInit {
     this.endDate = null;
     this.endDateString = '';
     this.newRecurringTransaction.recurringPattern!.endDate = undefined;
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: Event) {
+    // Close date pickers when clicking outside
+    if (this.showDatePicker && !this.isClickInsideDatePicker(event, 'start')) {
+      this.showDatePicker = false;
+    }
+    if (this.showEndDatePicker && !this.isClickInsideDatePicker(event, 'end')) {
+      this.showEndDatePicker = false;
+    }
+  }
+
+  // Prevent date picker from closing when clicking inside the calendar
+  onDatePickerClick(event: Event) {
+    event.stopPropagation();
+  }
+
+  // Check if the transaction form is valid
+  isTransactionFormValid(): boolean {
+    const transaction = this.newRecurringTransaction;
+    
+    // Check required fields
+    if (!transaction.description || !transaction.description.trim()) {
+      return false;
+    }
+    
+    if (!transaction.amount || transaction.amount <= 0) {
+      return false;
+    }
+    
+    if (!transaction.category || !transaction.category.trim()) {
+      return false;
+    }
+    
+    // Check if start date is selected
+    if (!transaction.date) {
+      return false;
+    }
+    
+    // Check if frequency is selected
+    if (!transaction.recurringPattern?.frequency) {
+      return false;
+    }
+    
+    return true;
+  }
+
+  private isClickInsideDatePicker(event: Event, pickerType: 'start' | 'end'): boolean {
+    const target = event.target as HTMLElement;
+    
+    if (pickerType === 'start') {
+      // Check if click is inside the start date input or its date picker
+      const startDateInput = target.closest('.start-date-container');
+      const startDatePicker = target.closest('ngb-datepicker');
+      return !!(startDateInput || startDatePicker);
+    } else {
+      // Check if click is inside the end date input or its date picker
+      const endDateInput = target.closest('.end-date-container');
+      const endDatePicker = target.closest('ngb-datepicker');
+      return !!(endDateInput || endDatePicker);
+    }
   }
 
   private loadTransactions() {

@@ -190,7 +190,7 @@
        <!-- Start Date, End Date, and Frequency row -->
        <div class="grid grid-cols-2 gap-4">
          <div class="flex space-x-2">
-           <div class="flex-1">
+           <div class="flex-1 start-date-container">
              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Start Date</label>
              <div class="relative">
                <input
@@ -222,11 +222,12 @@
                #startDatePicker
                [(ngModel)]="startDate"
                (ngModelChange)="onStartDateChange($event)"
+               (click)="onDatePickerClick($event)"
                [class.hidden]="!showDatePicker"
-               class="absolute z-50 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg mt-1"
+               class="absolute z-50 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg mt-1 overflow-hidden"
              ></ngb-datepicker>
            </div>
-           <div class="flex-1">
+           <div class="flex-1 end-date-container">
              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">End Date (Optional)</label>
              <div class="relative">
                <input
@@ -258,8 +259,9 @@
                #endDatePicker
                [(ngModel)]="endDate"
                (ngModelChange)="onEndDateChange($event)"
+               (click)="onDatePickerClick($event)"
                [class.hidden]="!showEndDatePicker"
-               class="absolute z-50 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg mt-1"
+               class="absolute z-50 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg mt-1 overflow-hidden"
              ></ngb-datepicker>
            </div>
          </div>
@@ -300,10 +302,19 @@
        </div>
 
        <!-- Submit button -->
-       <div class="flex justify-end pt-4">
+       <div class="flex justify-end space-x-3 pt-4">
+         <button
+           (click)="toggleAddForm()"
+           class="px-6 py-2 bg-gray-500 hover:bg-gray-600 text-white font-medium rounded-lg focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 shadow-sm hover:shadow-md transition-colors duration-200"
+         >
+           Cancel
+         </button>
          <button
            (click)="addRecurringTransaction()"
-           class="px-6 py-2 bg-teal-600 hover:bg-teal-700 text-white font-medium rounded-lg focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 shadow-sm hover:shadow-md transition-colors duration-200"
+           [disabled]="!isTransactionFormValid()"
+           [class]="isTransactionFormValid() 
+             ? 'px-6 py-2 bg-teal-600 hover:bg-teal-700 text-white font-medium rounded-lg focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 shadow-sm hover:shadow-md transition-colors duration-200' 
+             : 'px-6 py-2 bg-gray-400 text-gray-200 font-medium rounded-lg cursor-not-allowed transition-colors duration-200'"
          >
            Add Transaction
          </button>
