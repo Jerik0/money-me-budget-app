@@ -46,6 +46,7 @@ export class TransactionsComponent implements OnInit {
   ];
 
   frequencyOptions: DropdownOption[] = [
+    { value: RecurrenceFrequency.ONCE, label: 'Once' },
     { value: RecurrenceFrequency.DAILY, label: 'Daily' },
     { value: RecurrenceFrequency.WEEKLY, label: 'Weekly' },
     { value: RecurrenceFrequency.BI_WEEKLY, label: 'Bi-weekly' },
@@ -396,16 +397,7 @@ export class TransactionsComponent implements OnInit {
     return this.groupedTransactions;
   }
 
-  // Helper method for debugging - clears localStorage and reloads sample data
-  clearDataAndReload() {
-    this.storageService.clearAllData();
-    this.transactions = [];
-    this.currentBalance = 0;
-    this.loadTransactions();
-    this.addSampleData();
-    this.calculateTimeline();
 
-  }
 
   private addSampleData() {
     // Only add sample data if no transactions exist and no data in localStorage

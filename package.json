@@ -3,12 +3,20 @@
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
-    "start": "ng serve",
+
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test",
-    "serve:ssr:money-me-app-2025": "node dist/money-me-app-2025/server/server.mjs",
-    "serve:ssr:test-app": "node dist/test-app/server/server.mjs"
+    "backend": "cd backend && npm run dev",
+    "backend:start": "cd backend && npm start",
+    "dev": "concurrently \"npm run start\" \"npm run backend\"",
+    "dev:build": "concurrently \"npm run build\" \"npm run backend\"",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:logs": "docker-compose logs -f",
+
+    "start:full": "concurrently \"npm run docker:up\" \"wait-on tcp:5432 && npm run start\" \"wait-on tcp:5432 && npm run backend\"",
+    "start:app": "start-app.bat",
+    "start": "start-app.bat"
   },
   "private": true,
   "dependencies": {
@@ -40,20 +48,15 @@
     "@angular/cli": "^20.1.5",
     "@angular/compiler-cli": "^20.1.6",
     "@types/express": "^5.0.1",
-    "@types/jasmine": "~5.1.0",
     "@types/node": "^20.17.19",
     "angular-eslint": "20.1.1",
     "autoprefixer": "^10.4.21",
+    "concurrently": "^9.2.0",
     "eslint": "^9.29.0",
-    "jasmine-core": "~5.2.0",
-    "karma": "~6.4.0",
-    "karma-chrome-launcher": "~3.2.0",
-    "karma-coverage": "~2.2.0",
-    "karma-jasmine": "~5.1.0",
-    "karma-jasmine-html-reporter": "~2.1.0",
     "postcss": "^8.5.6",
     "tailwindcss": "^3.4.17",
     "typescript": "~5.8.3",
-    "typescript-eslint": "8.34.1"
+    "typescript-eslint": "8.34.1",
+    "wait-on": "^8.0.4"
   }
 }

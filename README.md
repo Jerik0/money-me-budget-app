@@ -1,236 +1,168 @@
-# MoneyMe - Advanced Personal Finance Management App
+# Money Me App 2025
 
-A sophisticated personal finance application built with Angular 18, featuring clean architecture, comprehensive transaction management, and intelligent financial projections.
+A comprehensive money management application built with Angular frontend and Node.js backend with PostgreSQL database.
 
-## 🚀 Features
+## 🚀 Quick Start
 
-### Financial Management
-- **Advanced Dashboard**: Real-time financial overview with balance tracking and transaction history
-- **Recurring Transactions**: Intelligent recurring payment and income management with multiple frequency options
-- **Balance Projections**: Future balance predictions with interactive charts and lowest projection warnings
-- **Timeline View**: Comprehensive transaction timeline with grouping and filtering
-- **Smart Categorization**: Organized expense and income categorization
+### Option 1: Docker (Recommended)
+```bash
+# Install Docker Desktop for Windows first
+# Then run:
+npm run docker:up
+npm run dev:all
+```
 
-### Transaction Features
-- **Flexible Recurrence**: Daily, weekly, bi-weekly, monthly, quarterly, and yearly recurring transactions
-- **Last Day Options**: Support for last day of month and last weekday calculations
-- **Sample Data**: Realistic sample transactions for immediate app exploration
-- **Local Storage**: Automatic data persistence with localStorage integration
-- **Real-time Updates**: Live balance calculations and projection updates
+### Option 2: Local PostgreSQL
+```bash
+# Install PostgreSQL locally, then:
+npm run dev
+```
 
-### User Experience
-- **Interactive Charts**: Dynamic balance projection visualization with Chart.js
-- **Responsive Design**: Mobile-first responsive layout using Tailwind CSS
-- **Smooth Animations**: Polished transitions and form interactions
-- **Intuitive Forms**: Sliding form panels with smart focus management
-- **Modern UI**: Clean, professional interface with consistent design patterns
+### Option 3: Windows Batch File
+```bash
+# Double-click start-app.bat
+```
 
-## 🏗️ Architecture & Clean Code
+## 🛠️ Prerequisites
 
-### Separation of Concerns
-The application follows strict separation of concerns principles with well-defined service layers:
+- Node.js 18+ 
+- Angular CLI
+- PostgreSQL 15+ (or Docker)
 
-#### Services Layer
-- **`TransactionService`**: Core transaction CRUD operations and sample data management
-- **`StorageService`**: Centralized localStorage management with error handling
-- **`TimelineService`**: Complex timeline calculations and projection logic
-- **`RecurrenceService`**: Advanced date calculation and recurrence pattern handling
-
-#### Utilities Layer
-- **`FormattingUtils`**: Reusable currency and date formatting functions
-- **Type-safe utilities**: Consistent formatting across the application
-
-#### Component Layer
-- **Clean Components**: UI-focused components with minimal business logic
-- **Smart Delegation**: Components delegate business operations to appropriate services
-- **Testable Architecture**: Easy to unit test with proper dependency injection
-
-### Key Architectural Benefits
-- **Single Responsibility**: Each service has one clear purpose
-- **Reusability**: Services can be used across multiple components
-- **Maintainability**: Changes to business logic happen in one place
-- **Testability**: Services can be easily mocked and tested
-- **Scalability**: Easy to extend with new features
-
-## 🛠️ Tech Stack
-
-- **Frontend Framework**: Angular 18 (Latest)
-- **Styling**: Tailwind CSS v4 with custom configuration
-- **Charts**: Chart.js with date-fns adapter for time-based visualizations
-- **State Management**: RxJS BehaviorSubject patterns
-- **Data Persistence**: Browser localStorage with service abstraction
-- **Build Tool**: Angular CLI with standalone components
-- **Type Safety**: Full TypeScript with strict mode enabled
-
-## 📦 Installation & Setup
+## 📦 Installation
 
 1. **Clone the repository**
    ```bash
-   git clone <repository-url>
+   git clone <your-repo-url>
    cd money-me-app-2025
    ```
 
 2. **Install dependencies**
    ```bash
    npm install
+   cd backend && npm install
+   cd ..
    ```
 
-3. **Start the development server**
-   ```bash
-   npm start
+## 🗄️ Database Setup
+
+### With Docker (Easiest)
+```bash
+npm run docker:up
+```
+This will:
+- Start PostgreSQL on port 5432
+- Create database `money_me_app`
+- Create user `money_me_user` with password `money_me_password`
+- Run initialization scripts automatically
+
+### Local PostgreSQL Installation
+1. Download from [PostgreSQL.org](https://www.postgresql.org/download/windows/)
+2. Install with default settings
+3. Create database and user:
+   ```sql
+   CREATE DATABASE money_me_app;
+   CREATE USER money_me_user WITH PASSWORD 'money_me_password';
+   GRANT ALL PRIVILEGES ON DATABASE money_me_app TO money_me_user;
    ```
 
-4. **Open your browser**
-   Navigate to `http://localhost:4200`
+## 🚀 Running the App
 
-5. **Explore the app**
-   - The app comes with realistic sample data
-   - Try adding recurring transactions
-   - View balance projections in different intervals
-   - Clear and reload data using the debug helper
+### Development Mode
+```bash
+# Start both frontend and backend
+npm run dev
 
-## 🎨 UI/UX Features
+# Start with database
+npm run dev:all
 
-### Modern Design Elements
-- **Gradient Accents**: Beautiful teal-to-blue gradients throughout
-- **Card-based Layout**: Organized information presentation
-- **Smart Color Coding**: Green for income, red for expenses, contextual indicators
-- **Micro-interactions**: Hover effects, focus states, and smooth transitions
-- **Professional Typography**: Clean, accessible font choices
+# Start only backend
+npm run backend
 
-### Responsive Design
-- **Mobile-first Approach**: Optimized for mobile devices first
-- **Adaptive Layouts**: Flexible grid systems that work on all screen sizes
-- **Touch-friendly Interface**: Large touch targets and intuitive gestures
-- **Cross-browser Compatibility**: Tested across modern browsers
+# Start only frontend
+npm run start
+```
 
-## 📊 Core Functionality
+### Production Mode
+```bash
+npm run build
+npm run backend:start
+```
 
-### Dashboard
-- **Real-time Balance**: Current account balance with last update tracking
-- **Financial Metrics**: Total income, expenses, and calculated savings
-- **Recent Activity**: Latest transactions with relative date formatting
-- **Quick Stats**: Visual indicators for financial health
-- **Interactive Elements**: Clickable cards and action buttons
+## 📱 Available Scripts
 
-### Transaction Management
-- **Advanced Forms**: Multi-step transaction creation with validation
-- **Recurring Patterns**: Complex recurrence options including:
-  - Custom intervals (every N days/weeks/months/years)
-  - Last day of month options
-  - Last weekday of month calculations
-  - Flexible start dates
-- **Smart Calculations**: Automatic balance projections based on recurring transactions
-- **Data Persistence**: Automatic saving with localStorage backup
-
-### Balance Projections
-- **Interactive Charts**: Zoomable, responsive Chart.js visualizations
-- **Multiple Intervals**: Daily, weekly, monthly, quarterly, and yearly views
-- **Projection Analytics**: Identify lowest projected balances with warnings
-- **Timeline Integration**: Seamless connection between projections and transactions
+- `npm run start` - Start Angular frontend
+- `npm run backend` - Start Node.js backend
+- `npm run dev` - Start both frontend and backend
+- `npm run docker:up` - Start PostgreSQL with Docker
+- `npm run docker:down` - Stop PostgreSQL
+- `npm run dev:all` - Start everything (PostgreSQL + Frontend + Backend)
 
 ## 🔧 Configuration
 
-### Application Structure
-```
-src/app/
-├── components/
-│   ├── dashboard/                  # Financial overview component
-│   ├── transactions/               # Transaction management component
-│   └── balance-projection-chart/   # Interactive chart component
-├── services/
-│   ├── transaction.service.ts      # Core transaction operations
-│   ├── storage.service.ts          # Data persistence layer
-│   ├── timeline.service.ts         # Timeline calculations
-│   └── recurrence.service.ts       # Date and recurrence logic
-├── utils/
-│   └── formatting.utils.ts         # Shared formatting functions
-├── interfaces/
-│   ├── transaction.interface.ts    # Type definitions
-│   └── index.ts                    # Barrel exports
-├── enums/
-│   ├── transaction-type.enum.ts    # Transaction types
-│   ├── frequency.enum.ts           # Recurrence frequencies
-│   ├── projection-interval.enum.ts # Chart intervals
-│   └── index.ts                    # Barrel exports
-└── app.config.ts                   # Application configuration
+### Environment Variables
+Create `.env` file in backend directory:
+```env
+DB_USER=money_me_user
+DB_HOST=localhost
+DB_NAME=money_me_app
+DB_PASSWORD=money_me_password
+DB_PORT=5432
+PORT=3000
 ```
 
-### Development Configuration
-- **Tailwind CSS**: Custom configuration in `tailwind.config.js`
-- **TypeScript**: Strict mode enabled for type safety
-- **Angular**: Standalone components with modern Angular patterns
-- **Build**: Optimized production builds with tree-shaking
+## 🏗️ Architecture
 
-## 🚀 Future Enhancements
+- **Frontend**: Angular 17 with Tailwind CSS
+- **Backend**: Node.js with Express
+- **Database**: PostgreSQL with connection pooling
+- **API**: RESTful endpoints for transactions and categories
 
-### Immediate Development Goals
-1. **Backend Integration**: Replace localStorage with REST API calls
-2. **User Authentication**: Multi-user support with secure login
-3. **Advanced Analytics**: Spending patterns and trend analysis
-4. **Budget Management**: Category-based budget limits and tracking
-5. **Goal Setting**: Savings goals with progress visualization
+## 📊 Database Schema
 
-### Advanced Features
-1. **AI-Powered Insights**: Smart spending recommendations
-2. **Multi-Account Support**: Support for multiple bank accounts
-3. **Bill Reminders**: Automated payment reminders and notifications
-4. **Data Export**: PDF reports and CSV export functionality
-5. **Mobile App**: React Native or Flutter mobile companion
+- **categories**: User-defined transaction categories
+- **transactions**: Individual financial transactions
+- **recurring_transactions**: Recurring transaction patterns
 
-### Technical Improvements
-1. **State Management**: Implement NgRx for complex state scenarios
-2. **Testing Suite**: Comprehensive unit and integration tests
-3. **Performance**: Advanced optimization techniques and lazy loading
-4. **Accessibility**: Full WCAG compliance and screen reader support
-5. **PWA Features**: Offline support and native app-like experience
+## 🧪 Testing
 
-## 🧪 Testing Strategy
+```bash
+# Frontend tests
+npm run test
 
-### Planned Testing Approach
-- **Unit Tests**: Service layer testing with Jest
-- **Component Tests**: Angular Testing Library for component interactions
-- **Integration Tests**: End-to-end testing with Cypress
-- **Performance Testing**: Lighthouse CI integration
-- **Accessibility Testing**: Automated a11y testing tools
+# Backend tests (coming soon)
+cd backend && npm test
+```
 
-## 🎯 Development Guidelines
+## 📝 Development Notes
 
-### Code Quality Standards
-- **Separation of Concerns**: Strict adherence to SoC principles
-- **SOLID Principles**: Single responsibility, dependency injection
-- **Type Safety**: Full TypeScript coverage with strict typing
-- **Clean Code**: Self-documenting code with meaningful names
-- **Service Abstraction**: Business logic separated from UI components
+- Uses `[class.hidden]` instead of `*ngIf` for better performance
+- SCSS files for styling
+- Custom dropdown components with add/edit capabilities
+- Form validation with dynamic button states
+- Responsive design with Tailwind CSS
 
-### Best Practices
-- **Component Design**: Presentational vs. container component patterns
-- **Service Design**: Single responsibility with clear APIs
-- **State Management**: Reactive patterns with RxJS
-- **Error Handling**: Graceful error recovery and user feedback
-- **Performance**: Efficient change detection and lazy loading
+## 🐛 Troubleshooting
 
-## 🤝 Contributing
+### Port Already in Use
+```bash
+# Use different ports
+ng serve --port 4201
+# or
+npm run backend -- --port 3001
+```
 
-### Development Workflow
-1. **Fork** the repository
-2. **Create** a feature branch following the naming convention: `feature/description`
-3. **Implement** changes following the established architecture patterns
-4. **Test** thoroughly with both manual and automated testing
-5. **Document** any new features or architectural changes
-6. **Submit** a pull request with detailed description
+### Database Connection Issues
+1. Check if PostgreSQL is running
+2. Verify credentials in `.env` file
+3. Ensure database exists
+4. Check firewall settings
 
-### Code Review Checklist
-- ✅ Follows separation of concerns principles
-- ✅ Maintains type safety throughout
-- ✅ Includes appropriate error handling
-- ✅ Updates relevant documentation
-- ✅ Passes all existing tests
+### Docker Issues
+1. Ensure Docker Desktop is running
+2. Check if ports 5432 and 3000 are available
+3. Restart Docker Desktop if needed
 
-## 📄 License
+## 📞 Support
 
-This project is licensed under the MIT License - see the LICENSE file for details.
-
----
-
-**MoneyMe** - Professional personal finance management with intelligent projections and clean architecture! 💰📊✨
+For issues or questions, please check the troubleshooting section above or create an issue in the repository.
