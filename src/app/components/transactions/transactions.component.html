@@ -58,7 +58,7 @@
  </div>
 
  <!-- Transaction Timeline Section (Full Width) -->
- <div class="bg-white dark:bg-chatgpt-darker rounded-xl shadow-sm border border-gray-200 dark:border-chatgpt-border p-6 hover:shadow-md flex-1 flex flex-col overflow-hidden">
+ <div class="bg-white dark:bg-chatgpt-darker rounded-xl shadow-sm border border-gray-200 dark:border-chatgpt-border p-6 hover:shadow-md flex-1 flex flex-col">
   <!-- Header with sliding form animation -->
   <div class="relative overflow-hidden mb-2">
    <!-- Static header - title slides out, button stays in place -->
@@ -318,7 +318,7 @@
    </app-custom-modal>
 
   <!-- Timeline Items - Conditional View -->
-  <div class="flex-1 overflow-y-auto transaction-timeline-scroll">
+  <div class="flex-1 overflow-y-auto transaction-timeline-scroll" style="max-height: 500px;">
 
    <!-- Grid View (Current Calendar Layout) -->
    <div [class.hidden]="viewMode !== 'grid'" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 grid-aligned-with-toggle">

@@ -2,98 +2,96 @@
 # This script starts the database, backend, and frontend in the correct order
 
 Write-Host "Starting Money Me App..." -ForegroundColor Green
+Write-Host ""
 
-# Function to check if a port is in use
-function Test-Port {
-    param([int]$Port)
-    try {
-        $connection = Test-NetConnection -ComputerName localhost -Port $Port -WarningAction SilentlyContinue -ErrorAction SilentlyContinue
-        return $connection.TcpTestSucceeded
-    }
-    catch {
-        return $false
-    }
-}
+Write-Host "Step 1: Stopping any existing processes and containers..." -ForegroundColor Yellow
+Write-Host "Stopping any local processes on ports 3000 and 4200..."
 
-# Function to wait for a port to be available
-function Wait-ForPort {
-    param([int]$Port, [string]$ServiceName, [int]$TimeoutSeconds = 60)
-    Write-Host "Waiting for $ServiceName on port $Port..." -ForegroundColor Yellow
-    $startTime = Get-Date
-    $timeout = $startTime.AddSeconds($TimeoutSeconds)
-    
-    while ((Get-Date) -lt $timeout) {
-        if (Test-Port -Port $Port) {
-            Write-Host "$ServiceName is ready on port $Port" -ForegroundColor Green
-            return $true
+# Stop processes on ports 3000 and 4200
+$ports = @(3000, 4200)
+foreach ($port in $ports) {
+    $processes = Get-NetTCPConnection -LocalPort $port -ErrorAction SilentlyContinue | Where-Object {$_.State -eq "Listen"}
+    foreach ($process in $processes) {
+        try {
+            Stop-Process -Id $process.OwningProcess -Force -ErrorAction SilentlyContinue
+            Write-Host "Stopped process on port $port" -ForegroundColor Yellow
+        } catch {
+            Write-Host "Could not stop process on port $port" -ForegroundColor Red
         }
-        Start-Sleep 2
-        Write-Host "Still waiting for $ServiceName..." -ForegroundColor Yellow
     }
-    
-    Write-Host "Timeout waiting for $ServiceName on port $Port" -ForegroundColor Red
-    return $false
 }
 
-# Step 1: Start PostgreSQL database
-Write-Host "Starting PostgreSQL database..." -ForegroundColor Cyan
-try {
-    docker-compose up -d
-    if ($LASTEXITCODE -eq 0) {
-        Write-Host "PostgreSQL started successfully" -ForegroundColor Green
-    } else {
-        Write-Host "Failed to start PostgreSQL" -ForegroundColor Red
-        exit 1
+Write-Host "Stopping any existing Docker containers..."
+docker-compose down 2>$null
+Write-Host "Cleanup complete." -ForegroundColor Green
+Write-Host ""
+
+Write-Host "Step 2: Starting PostgreSQL database and backend via Docker..." -ForegroundColor Yellow
+docker-compose up -d
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "Failed to start Docker services" -ForegroundColor Red
+    Read-Host "Press Enter to continue"
+    exit 1
+}
+Write-Host "Docker services started successfully" -ForegroundColor Green
+Write-Host ""
+
+Write-Host "Step 3: Waiting for database to be healthy..." -ForegroundColor Yellow
+Write-Host "Waiting for PostgreSQL to be ready..."
+do {
+    Start-Sleep -Seconds 2
+    $dbStatus = docker ps --format "table {{.Names}}\t{{.Status}}" 2>$null | Select-String "money-me-postgres" | Select-String "healthy"
+} while (-not $dbStatus)
+Write-Host "Database is healthy and ready!" -ForegroundColor Green
+Write-Host ""
+
+Write-Host "Step 4: Waiting for backend to be ready..." -ForegroundColor Yellow
+Write-Host "Waiting for backend API to respond..."
+do {
+    Start-Sleep -Seconds 2
+    try {
+        $response = Invoke-WebRequest -Uri "http://localhost:3000/api/health" -UseBasicParsing -TimeoutSec 5 -ErrorAction SilentlyContinue
+        $backendReady = $response.StatusCode -eq 200
+    } catch {
+        $backendReady = $false
     }
-} catch {
-    Write-Host "Error starting PostgreSQL: $_" -ForegroundColor Red
-    exit 1
-}
-
-# Step 2: Wait for database to be ready
-if (-not (Wait-ForPort -Port 5432 -ServiceName "PostgreSQL" -TimeoutSeconds 30)) {
-    Write-Host "Database failed to start within timeout" -ForegroundColor Red
-    exit 1
-}
-
-# Step 3: Start backend server
-Write-Host "Starting backend server..." -ForegroundColor Cyan
-try {
-    Start-Process -FilePath "npm" -ArgumentList "run", "backend" -WorkingDirectory "backend" -WindowStyle Minimized
-    Write-Host "Backend startup initiated" -ForegroundColor Green
-} catch {
-    Write-Host "Error starting backend: $_" -ForegroundColor Red
-    exit 1
-}
-
-# Step 4: Wait for backend to be ready
-if (-not (Wait-ForPort -Port 3000 -ServiceName "Backend" -TimeoutSeconds 30)) {
-    Write-Host "Backend failed to start within timeout" -ForegroundColor Red
-    exit 1
-}
-
-# Step 5: Start frontend
-Write-Host "Starting frontend..." -ForegroundColor Cyan
-try {
-    Start-Process -FilePath "npm" -ArgumentList "run", "start" -WindowStyle Minimized
-    Write-Host "Frontend startup initiated" -ForegroundColor Green
-} catch {
-    Write-Host "Error starting frontend: $_" -ForegroundColor Red
-    exit 1
-}
-
-# Step 6: Wait for frontend to be ready
-if (-not (Wait-ForPort -Port 4200 -ServiceName "Frontend" -TimeoutSeconds 30)) {
-    Write-Host "Frontend failed to start within timeout" -ForegroundColor Red
-    exit 1
-}
-
-# Final status
+} while (-not $backendReady)
+Write-Host "Backend API is ready!" -ForegroundColor Green
 Write-Host ""
-Write-Host "Money Me App is now running!" -ForegroundColor Green
-Write-Host "Frontend: http://localhost:4200" -ForegroundColor Cyan
-Write-Host "Backend: http://localhost:3000" -ForegroundColor Cyan
-Write-Host "Database: localhost:5432" -ForegroundColor Cyan
+
+Write-Host "Step 5: Starting Angular frontend..." -ForegroundColor Yellow
+Write-Host "Starting frontend development server..."
+Start-Process -FilePath "ng" -ArgumentList "serve" -WindowStyle Minimized
+Write-Host "Frontend startup initiated." -ForegroundColor Green
 Write-Host ""
-Write-Host "All services are now running. You can close this window."
-Start-Sleep 5
+
+Write-Host "Step 6: Waiting for frontend to be ready..." -ForegroundColor Yellow
+Write-Host "Waiting for frontend to be accessible..."
+do {
+    Start-Sleep -Seconds 2
+    try {
+        $response = Invoke-WebRequest -Uri "http://localhost:4200" -UseBasicParsing -TimeoutSec 5 -ErrorAction SilentlyContinue
+        $frontendReady = $response.StatusCode -eq 200
+    } catch {
+        $frontendReady = $false
+    }
+} while (-not $frontendReady)
+Write-Host "Frontend is ready!" -ForegroundColor Green
+Write-Host ""
+
+Write-Host ""
+Write-Host "========================================" -ForegroundColor Cyan
+Write-Host "🎉 Money Me App is now fully running!" -ForegroundColor Green
+Write-Host "========================================" -ForegroundColor Cyan
+Write-Host ""
+Write-Host "Services Status:" -ForegroundColor White
+Write-Host "✅ Database: localhost:5432 (PostgreSQL)" -ForegroundColor Green
+Write-Host "✅ Backend:  http://localhost:3000 (Express API)" -ForegroundColor Green
+Write-Host "✅ Frontend: http://localhost:4200 (Angular)" -ForegroundColor Green
+Write-Host ""
+Write-Host "You can now:" -ForegroundColor White
+Write-Host "- View the app at: http://localhost:4200" -ForegroundColor Cyan
+Write-Host "- Test the API at: http://localhost:3000/api/health" -ForegroundColor Cyan
+Write-Host ""
+Write-Host "Press Enter to close this window..."
+Read-Host

@@ -3,7 +3,6 @@
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
-
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "backend": "cd backend && npm run dev",
@@ -13,10 +12,11 @@
     "docker:up": "docker-compose up -d",
     "docker:down": "docker-compose down",
     "docker:logs": "docker-compose logs -f",
-
     "start:full": "concurrently \"npm run docker:up\" \"wait-on tcp:5432 && npm run start\" \"wait-on tcp:5432 && npm run backend\"",
     "start:app": "start-app.bat",
-    "start": "start-app.bat"
+    "start": "start-app.bat",
+    "start:ps": "powershell -ExecutionPolicy Bypass -File start-app.ps1",
+    "start:all": "start-app.ps1"
   },
   "private": true,
   "dependencies": {

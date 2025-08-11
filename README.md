@@ -1,168 +1,102 @@
 # Money Me App 2025
 
-A comprehensive money management application built with Angular frontend and Node.js backend with PostgreSQL database.
+A comprehensive money management application built with Angular frontend, Node.js/Express backend, and PostgreSQL database.
 
 ## 🚀 Quick Start
 
-### Option 1: Docker (Recommended)
+### Single Command Startup (Recommended)
+
+The easiest way to start all three components is using one of these commands:
+
+**Windows (PowerShell - Recommended):**
 ```bash
-# Install Docker Desktop for Windows first
-# Then run:
-npm run docker:up
-npm run dev:all
+npm run start:all
+# or
+powershell -ExecutionPolicy Bypass -File start-app.ps1
 ```
 
-### Option 2: Local PostgreSQL
+**Windows (Command Prompt):**
 ```bash
-# Install PostgreSQL locally, then:
-npm run dev
-```
-
-### Option 3: Windows Batch File
-```bash
-# Double-click start-app.bat
-```
-
-## 🛠️ Prerequisites
-
-- Node.js 18+ 
-- Angular CLI
-- PostgreSQL 15+ (or Docker)
-
-## 📦 Installation
-
-1. **Clone the repository**
-   ```bash
-   git clone <your-repo-url>
-   cd money-me-app-2025
-   ```
-
-2. **Install dependencies**
-   ```bash
-   npm install
-   cd backend && npm install
-   cd ..
-   ```
-
-## 🗄️ Database Setup
-
-### With Docker (Easiest)
-```bash
-npm run docker:up
-```
-This will:
-- Start PostgreSQL on port 5432
-- Create database `money_me_app`
-- Create user `money_me_user` with password `money_me_password`
-- Run initialization scripts automatically
-
-### Local PostgreSQL Installation
-1. Download from [PostgreSQL.org](https://www.postgresql.org/download/windows/)
-2. Install with default settings
-3. Create database and user:
-   ```sql
-   CREATE DATABASE money_me_app;
-   CREATE USER money_me_user WITH PASSWORD 'money_me_password';
-   GRANT ALL PRIVILEGES ON DATABASE money_me_app TO money_me_user;
-   ```
-
-## 🚀 Running the App
-
-### Development Mode
-```bash
-# Start both frontend and backend
-npm run dev
-
-# Start with database
-npm run dev:all
-
-# Start only backend
-npm run backend
-
-# Start only frontend
 npm run start
+# or
+start-app.bat
 ```
 
-### Production Mode
+**Manual Startup:**
 ```bash
-npm run build
-npm run backend:start
-```
+# Start database and backend
+docker-compose up -d
 
-## 📱 Available Scripts
-
-- `npm run start` - Start Angular frontend
-- `npm run backend` - Start Node.js backend
-- `npm run dev` - Start both frontend and backend
-- `npm run docker:up` - Start PostgreSQL with Docker
-- `npm run docker:down` - Stop PostgreSQL
-- `npm run dev:all` - Start everything (PostgreSQL + Frontend + Backend)
-
-## 🔧 Configuration
-
-### Environment Variables
-Create `.env` file in backend directory:
-```env
-DB_USER=money_me_user
-DB_HOST=localhost
-DB_NAME=money_me_app
-DB_PASSWORD=money_me_password
-DB_PORT=5432
-PORT=3000
+# Start frontend (in a new terminal)
+ng serve
 ```
 
 ## 🏗️ Architecture
 
-- **Frontend**: Angular 17 with Tailwind CSS
-- **Backend**: Node.js with Express
-- **Database**: PostgreSQL with connection pooling
-- **API**: RESTful endpoints for transactions and categories
+- **Frontend**: Angular 20 with Tailwind CSS
+- **Backend**: Node.js/Express API
+- **Database**: PostgreSQL 15 with Docker
+- **Styling**: SCSS with Tailwind CSS
 
-## 📊 Database Schema
+## 📁 Project Structure
 
-- **categories**: User-defined transaction categories
-- **transactions**: Individual financial transactions
-- **recurring_transactions**: Recurring transaction patterns
-
-## 🧪 Testing
-
-```bash
-# Frontend tests
-npm run test
-
-# Backend tests (coming soon)
-cd backend && npm test
+```
+money-me-app-2025/
+├── src/                    # Angular frontend
+│   ├── app/
+│   │   ├── components/     # Angular components
+│   │   ├── services/       # Angular services
+│   │   └── interfaces/     # TypeScript interfaces
+├── backend/                # Node.js backend
+│   ├── src/
+│   │   ├── controllers/    # API controllers
+│   │   ├── database/       # Database connection & schema
+│   │   └── routes/         # API routes
+└── docker-compose.yml      # Database & backend containers
 ```
 
-## 📝 Development Notes
+## 🔧 Development
 
-- Uses `[class.hidden]` instead of `*ngIf` for better performance
-- SCSS files for styling
-- Custom dropdown components with add/edit capabilities
-- Form validation with dynamic button states
-- Responsive design with Tailwind CSS
+### Prerequisites
+- Node.js 18+
+- Angular CLI
+- Docker & Docker Compose
+- PostgreSQL (or use Docker)
+
+### Available Scripts
+
+- `npm run start:all` - Start all services (PowerShell)
+- `npm run start` - Start all services (Command Prompt)
+- `npm run build` - Build Angular app
+- `npm run docker:up` - Start database & backend only
+- `npm run docker:down` - Stop database & backend
+
+### Ports
+- **Frontend**: http://localhost:4200
+- **Backend API**: http://localhost:3000
+- **Database**: localhost:5432
 
 ## 🐛 Troubleshooting
 
-### Port Already in Use
-```bash
-# Use different ports
-ng serve --port 4201
-# or
-npm run backend -- --port 3001
-```
+### Port Conflicts
+If you get port conflicts, the startup scripts will automatically:
+1. Stop any existing processes on ports 3000 and 4200
+2. Stop existing Docker containers
+3. Start fresh services
 
 ### Database Connection Issues
-1. Check if PostgreSQL is running
-2. Verify credentials in `.env` file
-3. Ensure database exists
-4. Check firewall settings
+- Ensure Docker is running
+- Check that PostgreSQL container is healthy: `docker ps`
+- Verify database credentials in `docker-compose.yml`
 
-### Docker Issues
-1. Ensure Docker Desktop is running
-2. Check if ports 5432 and 3000 are available
-3. Restart Docker Desktop if needed
+### Frontend Not Loading
+- Check if Angular is running: `netstat -an | findstr :4200`
+- Restart with: `ng serve`
 
-## 📞 Support
+## 📝 Notes
 
-For issues or questions, please check the troubleshooting section above or create an issue in the repository.
+- The app uses SCSS files for styling (not CSS)
+- Buttons use subtle shading feedback instead of outlines
+- Toggled content uses `[class.hidden]` for instant performance
+- Main accent color is teal with gradients
+- All components use separate HTML template files

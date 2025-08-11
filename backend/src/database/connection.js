@@ -3,7 +3,7 @@
 // Database configuration
 const dbConfig = {
   user: process.env.DB_USER || 'postgres_admin',
-  host: process.env.DB_HOST || '127.0.0.1',
+  host: process.env.DB_HOST || 'localhost',
   database: process.env.DB_NAME || 'money_me_app',
   password: process.env.DB_PASSWORD || 'password123',
   port: process.env.DB_PORT || 5432,

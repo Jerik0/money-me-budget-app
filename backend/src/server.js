@@ -37,21 +37,50 @@ app.get('/api/health', async (req, res) => {
   }
 });
 
-// Placeholder routes (we'll implement these next)
-app.get('/api/transactions', (req, res) => {
-  res.json({ message: 'Get transactions endpoint - coming soon!' });
+// Import database functions
+const { query } = require('./database/connection');
+
+// Get all transactions
+app.get('/api/transactions', async (req, res) => {
+  try {
+    const result = await query(`
+      SELECT t.id, t.description, t.amount, t.type, t.date, c.name as category
+      FROM transactions t
+      LEFT JOIN categories c ON t.category_id = c.id
+      ORDER BY t.date DESC
+    `);
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Error fetching transactions:', error);
+    res.status(500).json({ error: 'Failed to fetch transactions' });
+  }
 });
 
-app.post('/api/transactions', (req, res) => {
-  res.json({ message: 'Create transaction endpoint - coming soon!' });
+// Get all categories
+app.get('/api/categories', async (req, res) => {
+  try {
+    const result = await query('SELECT * FROM categories ORDER BY name');
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Error fetching categories:', error);
+    res.status(500).json({ error: 'Failed to fetch categories' });
+  }
 });
 
-app.get('/api/categories', (req, res) => {
-  res.json({ message: 'Get categories endpoint - coming soon!' });
-});
-
-app.post('/api/categories', (req, res) => {
-  res.json({ message: 'Create category endpoint - coming soon!' });
+// Get recurring transactions
+app.get('/api/recurring-transactions', async (req, res) => {
+  try {
+    const result = await query(`
+      SELECT r.id, r.description, r.amount, r.frequency, r.start_date, c.name as category
+      FROM recurring_transactions r
+      LEFT JOIN categories c ON r.category_id = c.id
+      ORDER BY r.frequency, r.amount DESC
+    `);
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Error fetching recurring transactions:', error);
+    res.status(500).json({ error: 'Failed to fetch recurring transactions' });
+  }
 });
 
 // Error handling middleware
