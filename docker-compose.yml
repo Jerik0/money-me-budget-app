@@ -1,4 +1,4 @@
-﻿version: '3.8'
+﻿
 
 services:
   postgres:
@@ -22,9 +22,10 @@ services:
       retries: 5
 
   backend:
-    build: ./backend
+    image: node:18-alpine
     container_name: money-me-backend
     restart: unless-stopped
+    working_dir: /app
     ports:
       - "3000:3000"
     environment:
@@ -40,6 +41,7 @@ services:
     volumes:
       - ./backend:/app
       - /app/node_modules
+    command: sh -c "npm install && npm run dev"
 
 volumes:
   postgres_data:

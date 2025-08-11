@@ -7,16 +7,14 @@
     "watch": "ng build --watch --configuration development",
     "backend": "cd backend && npm run dev",
     "backend:start": "cd backend && npm start",
-    "dev": "concurrently \"npm run start\" \"npm run backend\"",
+    "dev": "concurrently \"npm run start:all\" \"npm run backend\"",
     "dev:build": "concurrently \"npm run build\" \"npm run backend\"",
     "docker:up": "docker-compose up -d",
     "docker:down": "docker-compose down",
     "docker:logs": "docker-compose logs -f",
-    "start:full": "concurrently \"npm run docker:up\" \"wait-on tcp:5432 && npm run start\" \"wait-on tcp:5432 && npm run backend\"",
-    "start:app": "start-app.bat",
-    "start": "start-app.bat",
-    "start:ps": "powershell -ExecutionPolicy Bypass -File start-app.ps1",
-    "start:all": "start-app.ps1"
+    "start:all": "powershell -ExecutionPolicy Bypass -File start-app.ps1",
+    "stop:all": "powershell -ExecutionPolicy Bypass -File stop-app.ps1",
+    "restart:all": "powershell -ExecutionPolicy Bypass -File restart-app.ps1"
   },
   "private": true,
   "dependencies": {

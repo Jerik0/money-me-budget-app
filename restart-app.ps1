@@ -1,32 +1,39 @@
-# Money Me App Startup Script
-# This script starts the database, backend, and frontend in the correct order
+# Money Me App Restart Script
+# This script stops all services and then starts them fresh
 
-Write-Host "Starting Money Me App..." -ForegroundColor Green
+Write-Host "Restarting Money Me App..." -ForegroundColor Cyan
 Write-Host ""
 
-Write-Host "Step 1: Stopping any existing processes and containers..." -ForegroundColor Yellow
-Write-Host "Stopping any local processes on ports 3000 and 4200..."
-
-# Stop processes on ports 3000 and 4200
-$ports = @(3000, 4200)
-foreach ($port in $ports) {
-    $processes = Get-NetTCPConnection -LocalPort $port -ErrorAction SilentlyContinue | Where-Object {$_.State -eq "Listen"}
-    foreach ($process in $processes) {
+Write-Host "Step 1: Stopping all services..." -ForegroundColor Yellow
+Write-Host "Stopping Angular frontend..."
+# Stop Angular processes on port 4200
+$frontendProcesses = Get-NetTCPConnection -LocalPort 4200 -ErrorAction SilentlyContinue | Where-Object {$_.State -eq "Listen"}
+if ($frontendProcesses) {
+    foreach ($process in $frontendProcesses) {
         try {
-            Stop-Process -Id $process.OwningProcess -Force -ErrorAction SilentlyContinue
-            Write-Host "Stopped process on port $port" -ForegroundColor Yellow
+            $processInfo = Get-Process -Id $process.OwningProcess -ErrorAction SilentlyContinue
+            if ($processInfo -and $processInfo.ProcessName -eq "node") {
+                Stop-Process -Id $process.OwningProcess -Force -ErrorAction SilentlyContinue
+                Write-Host "Stopped Angular frontend process" -ForegroundColor Green
+            }
         } catch {
-            Write-Host "Could not stop process on port $port" -ForegroundColor Red
+            Write-Host "Could not stop frontend process" -ForegroundColor Red
         }
     }
 }
 
-Write-Host "Stopping any existing Docker containers..."
-docker-compose down 2>$null
-Write-Host "Cleanup complete." -ForegroundColor Green
+Write-Host "Stopping Docker services..."
+# Stop Docker containers
+try {
+    docker-compose down 2>$null
+    Write-Host "Docker services stopped successfully" -ForegroundColor Green
+} catch {
+    Write-Host "Error stopping Docker services: $_" -ForegroundColor Red
+}
 Write-Host ""
 
-Write-Host "Step 2: Starting PostgreSQL database and backend via Docker..." -ForegroundColor Yellow
+Write-Host "Step 2: Starting all services..." -ForegroundColor Yellow
+Write-Host "Starting PostgreSQL database and backend via Docker..."
 docker-compose up -d
 if ($LASTEXITCODE -ne 0) {
     Write-Host "Failed to start Docker services" -ForegroundColor Red
@@ -36,8 +43,7 @@ if ($LASTEXITCODE -ne 0) {
 Write-Host "Docker services started successfully" -ForegroundColor Green
 Write-Host ""
 
-Write-Host "Step 3: Waiting for database to be healthy..." -ForegroundColor Yellow
-Write-Host "Waiting for PostgreSQL to be ready..."
+Write-Host "Waiting for database to be healthy..."
 do {
     Start-Sleep -Seconds 2
     $dbStatus = docker ps --format "table {{.Names}}\t{{.Status}}" 2>$null | Select-String "money-me-postgres" | Select-String "healthy"
@@ -45,8 +51,7 @@ do {
 Write-Host "Database is healthy and ready!" -ForegroundColor Green
 Write-Host ""
 
-Write-Host "Step 4: Waiting for backend to be ready..." -ForegroundColor Yellow
-Write-Host "Waiting for backend API to respond..."
+Write-Host "Waiting for backend to be ready..."
 do {
     Start-Sleep -Seconds 2
     try {
@@ -59,8 +64,7 @@ do {
 Write-Host "Backend API is ready!" -ForegroundColor Green
 Write-Host ""
 
-Write-Host "Step 5: Starting Angular frontend..." -ForegroundColor Yellow
-Write-Host "Starting frontend development server..."
+Write-Host "Starting Angular frontend..."
 Write-Host "Note: Starting ng serve in background..." -ForegroundColor Cyan
 
 # Start ng serve in background using Start-Job for better control
@@ -72,8 +76,7 @@ $frontendJob = Start-Job -ScriptBlock {
 Write-Host "Frontend startup initiated." -ForegroundColor Green
 Write-Host ""
 
-Write-Host "Step 6: Waiting for frontend to be ready..." -ForegroundColor Yellow
-Write-Host "Waiting for frontend to be accessible..."
+Write-Host "Waiting for frontend to be ready..."
 Write-Host "Note: Angular compilation can take 10-30 seconds on first run..." -ForegroundColor Cyan
 
 # Give Angular more time to start up initially
@@ -112,7 +115,7 @@ Write-Host ""
 
 Write-Host ""
 Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "Money Me App is now fully running!" -ForegroundColor Green
+Write-Host "Money Me App has been restarted!" -ForegroundColor Green
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "Services Status:" -ForegroundColor White
