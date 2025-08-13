@@ -72,89 +72,132 @@
 
          <!-- Controls section -->
      <div class="flex items-center space-x-3">
-      <!-- Calendar Navigation (Grid View Only) - Moved to LEFT -->
-      <div *ngIf="viewMode === 'grid' && !showViewEditMode" class="flex items-center space-x-1">
-       <button
-        (click)="navigateMonth('prev')"
-        class="px-2 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-md text-sm font-medium transition-colors h-10 flex items-center justify-center"
-        title="Previous Month"
-       >
-        ←
-       </button>
-       
-       <button
-        (click)="goToCurrentMonth()"
-        class="px-3 py-2 bg-teal-100 dark:bg-teal-900 hover:bg-teal-200 dark:hover:bg-teal-800 text-teal-700 dark:text-teal-300 rounded-md text-sm font-medium transition-colors h-10 flex items-center justify-center"
-        title="Go to Current Month"
-       >
-        {{ currentViewMonth | date:'MMM yyyy' }}
-       </button>
-       
-       <span class="text-xs text-gray-500 dark:text-gray-400 ml-2 px-2 py-2 h-10 flex items-center">
-        (Showing 3 months)
-       </span>
-       
-       <button
-        (click)="navigateMonth('next')"
-        class="px-2 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-md text-sm font-medium transition-colors h-10 flex items-center justify-center"
-        title="Next Month"
-       >
-        →
-       </button>
+      <!-- Month Picker (Grid View Only) - Moved to LEFT -->
+      <div *ngIf="viewMode === 'grid' && !showViewEditMode" class="flex items-center space-x-3">
+        <!-- Month/Year Display with Dropdown -->
+        <div class="relative month-picker-container">
+          <button
+            (click)="toggleMonthPicker()"
+            class="px-4 py-2 bg-teal-100 dark:bg-teal-900 hover:bg-teal-200 dark:hover:bg-teal-800 text-teal-700 dark:text-teal-300 rounded-lg text-sm font-medium transition-colors h-10 flex items-center justify-center space-x-2"
+            title="Select Month"
+          >
+            <span>{{ getCurrentMonthLabel() }} {{ getCurrentYear() }}</span>
+            <svg class="w-4 h-4 transition-transform duration-200" [class.rotate-180]="showMonthPicker" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path d="M19 9l-7 7-7-7"></path>
+            </svg>
+          </button>
+
+          <!-- Month Picker Dropdown -->
+          <div
+            *ngIf="showMonthPicker"
+            class="month-picker-dropdown absolute z-[99999] mt-2 left-0 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg overflow-hidden min-w-[280px]"
+          >
+            <!-- Year Navigation -->
+            <div class="flex items-center justify-between p-3 border-b border-gray-200 dark:border-gray-600">
+              <button
+                (click)="goToPreviousYear()"
+                class="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                title="Previous Year"
+              >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path d="M15 19l-7-7 7-7"></path>
+                </svg>
+              </button>
+              <span class="text-lg font-semibold text-gray-900 dark:text-white">{{ getCurrentYear() }}</span>
+              <button
+                (click)="goToNextYear()"
+                class="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                title="Next Year"
+              >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path d="M9 5l7 7-7 7"></path>
+                </svg>
+              </button>
+            </div>
+
+            <!-- Month Grid -->
+            <div class="p-3">
+              <div class="grid grid-cols-3 gap-2">
+                <button
+                  *ngFor="let month of monthOptions"
+                  (click)="selectMonth(month.value)"
+                  class="px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-teal-50 dark:hover:bg-teal-900/20 rounded-md transition-colors"
+                  [ngClass]="{
+                    'bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-300': month.value === currentViewMonth.getMonth()
+                  }">
+                  {{ month.label }}
+                </button>
+              </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="p-3 border-t border-gray-200 dark:border-gray-600">
+              <button
+                (click)="goToCurrentMonth(); showMonthPicker = false"
+                class="w-full px-3 py-2 text-sm text-teal-600 dark:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-900/20 rounded-md transition-colors">
+                Go to Current Month
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <span class="text-xs text-gray-500 dark:text-gray-400 px-2 py-2 h-10 flex items-center">
+          (Showing {{ getCurrentMonthLabel() }} {{ getCurrentYear() }} + 2 months)
+        </span>
       </div>
 
-             <!-- Add Transaction Button -->
-       <button
+      <!-- Add Transaction Button -->
+      <button
         (click)="toggleAddForm()"
-                    class="px-4 py-2 bg-chatgpt-accent hover:bg-chatgpt-accentHover text-white font-medium rounded-lg focus:ring-2 focus:ring-chatgpt-accent focus:ring-offset-2 shadow-lg hover:shadow-xl relative z-10"
+        class="px-4 py-2 bg-chatgpt-accent hover:bg-chatgpt-accentHover text-white font-medium rounded-lg focus:ring-2 focus:ring-chatgpt-accent focus:ring-offset-2 shadow-lg hover:shadow-xl relative z-10"
         [class.bg-red-500]="showAddForm"
         [class.hover:bg-red-600]="showAddForm"
-       >
+      >
         {{ showAddForm ? 'Cancel' : '+ Add Transaction' }}
-       </button>
+      </button>
 
-       <!-- View/Edit Transactions Toggle -->
-       <button
+      <!-- View/Edit Transactions Toggle -->
+      <button
         (click)="toggleViewEditMode()"
         class="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white font-medium rounded-lg focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 shadow-lg hover:shadow-xl transition-colors duration-200"
         [class.bg-orange-500]="showViewEditMode"
         [class.hover:bg-orange-600]="showViewEditMode"
-       >
+      >
         {{ showViewEditMode ? 'Back to Calendar' : 'View/Edit Transactions' }}
-       </button>
+      </button>
 
-       <!-- View Mode Toggle -->
-       <div *ngIf="!showViewEditMode" class="flex items-center bg-gray-100 dark:bg-gray-800 rounded-lg p-1 shadow-inner">
-       <button
-        (click)="toggleViewMode()"
-                      class="flex items-center justify-center w-8 h-8 rounded-md relative group"
-        [class.bg-white]="viewMode === 'grid'"
-        [class.shadow-sm]="viewMode === 'grid'"
-        [class.text-teal-600]="viewMode === 'grid'"
-        [class.text-gray-500]="viewMode !== 'grid'"
-        [class.hover:text-teal-500]="viewMode !== 'grid'"
-        title="Grid View"
-       >
-        <!-- Grid Icon -->
-        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-         <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
-        </svg>
-       </button>
-       <button
-        (click)="toggleViewMode()"
-                      class="flex items-center justify-center w-8 h-8 rounded-md relative group"
-        [class.bg-white]="viewMode === 'list'"
-        [class.shadow-sm]="viewMode === 'list'"
-        [class.text-teal-600]="viewMode === 'list'"
-        [class.text-gray-500]="viewMode !== 'list'"
-        [class.hover:text-teal-500]="viewMode !== 'list'"
-        title="List View"
-       >
-        <!-- List Icon -->
-        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-         <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd"/>
-        </svg>
-       </button>
+      <!-- View Mode Toggle -->
+      <div *ngIf="!showViewEditMode" class="flex items-center bg-gray-100 dark:bg-gray-800 rounded-lg p-1 shadow-inner">
+        <button
+          (click)="toggleViewMode()"
+          class="flex items-center justify-center w-8 h-8 rounded-md relative group"
+          [class.bg-white]="viewMode === 'grid'"
+          [class.shadow-sm]="viewMode === 'grid'"
+          [class.text-teal-600]="viewMode === 'grid'"
+          [class.text-gray-500]="viewMode !== 'grid'"
+          [class.hover:text-teal-500]="viewMode !== 'grid'"
+          title="Grid View"
+        >
+          <!-- Grid Icon -->
+          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+            <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
+          </svg>
+        </button>
+        <button
+          (click)="toggleViewMode()"
+          class="flex items-center justify-center w-8 h-8 rounded-md relative group"
+          [class.bg-white]="viewMode === 'list'"
+          [class.shadow-sm]="viewMode === 'list'"
+          [class.text-teal-600]="viewMode === 'list'"
+          [class.text-gray-500]="viewMode !== 'list'"
+          [class.hover:text-teal-500]="viewMode !== 'list'"
+          title="List View"
+        >
+          <!-- List Icon -->
+          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd"/>
+          </svg>
+        </button>
       </div>
      </div>
    </div>
@@ -517,9 +560,11 @@
    </div>
 
        <!-- Empty State -->
-    <div *ngIf="timeline.length === 0" class="text-center py-8">
+    <div *ngIf="getGroupedTransactions().length === 0" class="text-center py-8">
      <div class="text-gray-500 dark:text-chatgpt-textSecondary">
-      No transactions yet. Add some recurring transactions to see your timeline!
+      <div class="mb-2">No transactions found for {{ getCurrentMonthLabel() }} {{ getCurrentYear() }} + 2 months</div>
+      <div class="text-sm">Add recurring transactions to see your timeline</div>
+      <div class="text-xs mt-1">Recurring transactions will appear in all months after their starting date</div>
      </div>
     </div>
    </div>
@@ -537,7 +582,7 @@
           <div class="w-16 text-center">Actions</div>
         </div>
       </div>
-      
+
       <!-- Transactions List -->
       <div class="max-h-96 overflow-y-auto">
         <div *ngFor="let transaction of getDatabaseTransactions(); let transactionIndex = index"
@@ -546,7 +591,7 @@
                'even-row': transactionIndex % 2 === 0,
                'odd-row': transactionIndex % 2 !== 0
              }">
-           
+
                        <!-- Transaction Row -->
             <div class="flex items-center space-x-3">
               <!-- Date -->

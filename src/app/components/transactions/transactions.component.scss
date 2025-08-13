@@ -99,6 +99,21 @@ ngb-datepicker .ngb-dp-navigation {
   border-top-right-radius: 0.5rem !important;
 }
 
+// Month picker dropdown styling
+.month-picker-dropdown {
+  position: absolute !important;
+  z-index: 99999 !important;
+  overflow: visible !important;
+  max-height: none !important;
+  min-width: 280px !important;
+}
+
+// Ensure the month picker container doesn't clip the dropdown
+.month-picker-container {
+  position: relative !important;
+  overflow: visible !important;
+}
+
 // View/Edit transactions styling
 .view-edit-transactions {
   .transaction-row {

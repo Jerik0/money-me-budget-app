@@ -1,30 +1,31 @@
 -- Insert monthly recurring transactions (due on specific day of month)
-INSERT INTO recurring_transactions (description, amount, category_id, start_date, frequency, monthly_options) VALUES
-('Rent', 2620.00, NULL, '2025-01-27', 'monthly', '{"dayOfMonth": 1}'),
-('Renter''s Insurance', 20.00, NULL, '2025-01-27', 'monthly', '{"dayOfMonth": 12}'),
-('Car Payment (Jon)', 40.00, NULL, '2025-01-27', 'monthly', '{"dayOfMonth": 10}'),
-('Electricity', 793.00, NULL, '2025-01-27', 'monthly', '{"dayOfMonth": 17}'),
-('Internet', 379.00, NULL, '2025-01-27', 'monthly', '{"dayOfMonth": 23}'),
-('Spotify (Jon)', 373.00, NULL, '2025-01-27', 'monthly', '{"dayOfMonth": 24}'),
-('Cutie''s Bank Charge', 120.00, NULL, '2025-01-27', 'monthly', '{"dayOfMonth": 16}'),
-('Flex Monthly Payment', 100.00, NULL, '2025-01-27', 'monthly', '{"dayOfMonth": 14}'),
-('Rue bear pet insurance', 80.00, NULL, '2025-01-27', 'monthly', '{"dayOfMonth": 27}'),
-('Disney+', 11.00, NULL, '2025-01-27', 'monthly', '{"dayOfMonth": 26}'),
-('Netflix (Shelby)', 11.00, NULL, '2025-01-27', 'monthly', '{"dayOfMonth": 15}'),
-('Amazon Prime (Shelby)', 12.00, NULL, '2025-01-27', 'monthly', '{"dayOfMonth": 2}'),
-('Peloton Membership', 200.00, NULL, '2025-01-27', 'monthly', '{"dayOfMonth": 30}'),
-('Food x4', 73.00, NULL, '2025-01-27', 'monthly', '{"dayOfMonth": 15}'),
-('BLUE APRON x4', 22.00, NULL, '2025-01-27', 'monthly', '{"dayOfMonth": 25}'),
-('Gas x4', 16.00, NULL, '2025-01-27', 'monthly', '{"dayOfMonth": 16}'),
-('Desmond Medical', 50.00, NULL, '2025-01-27', 'monthly', '{"dayOfMonth": 30}'),
-('JetBrains', 32.00, NULL, '2025-01-27', 'monthly', '{"dayOfMonth": 21}');
+INSERT INTO transactions (description, amount, category_id, date, type, frequency, monthly_options, is_recurring) VALUES
+('Rent Part 1', 1650.00, NULL, '2025-01-27', 'expense', 'monthly', '{"dayOfMonth": 1}', true),
+('Renter''s Insurance', 19.00, NULL, '2025-01-27', 'expense', 'monthly', '{"dayOfMonth": 12}', true),
+('Car Payment (Jon)', 793.00, NULL, '2025-01-27', 'expense', 'monthly', '{"dayOfMonth": 10}', true),
+('Electricity', 150.00, NULL, '2025-01-27', 'expense', 'monthly', '{"dayOfMonth": 17}', true),
+('Internet', 81.00, NULL, '2025-01-27', 'expense', 'monthly', '{"dayOfMonth": 23}', true),
+('Spotify (Jon)', 373.00, NULL, '2025-01-27', 'expense', 'monthly', '{"dayOfMonth": 24}', true),
+('Shelby''s Bank Charge', 120.00, NULL, '2025-01-27', 'expense', 'monthly', '{"dayOfMonth": 16}', true),
+('Flex Monthly Payment', 15.00, NULL, '2025-01-27', 'expense', 'monthly', '{"dayOfMonth": 14}', true),
+('Rue bear pet insurance', 83.00, NULL, '2025-01-27', 'expense', 'monthly', '{"dayOfMonth": 12}', true),
+('Rent Part 2', 1065.00, NULL, '2025-08-18', 'expense', 'monthly', '{"dayOfMonth": 18}', true),
+('Disney+', 11.00, NULL, '2025-01-27', 'expense', 'monthly', '{"dayOfMonth": 26}', true),
+('Netflix', 18.00, NULL, '2025-01-27', 'expense', 'monthly', '{"dayOfMonth": 15}', true),
+('Amazon Prime (Shelby)', 16.00, NULL, '2025-01-27', 'expense', 'monthly', '{"dayOfMonth": 2}', true),
+('Peloton Membership', 45.00, NULL, '2025-01-27', 'expense', 'monthly', '{"dayOfMonth": 30}', true),
+('Food', 200.00, NULL, '2025-01-27', 'expense', 'weekly', '{"dayOfMonth": 15}', true),
+('BLUE APRON', 120.00, NULL, '2025-01-27', 'expense', 'weekly', '{"dayOfMonth": 25}', true),
+('Gas', 35.00, NULL, '2025-01-27', 'expense', 'weekly', '{"dayOfMonth": 16}', true),
+('Desmond Medical', 50.00, NULL, '2025-01-27', 'expense', 'monthly', '{"dayOfMonth": 30}', true),
+('JetBrains', 32.00, NULL, '2025-01-27', 'expense', 'monthly', '{"dayOfMonth": 21}', true),
+('Portfolio Recovery', 32.00, NULL, '2025-01-27', 'expense', 'monthly', '{"dayOfMonth": 21}', true),
+('Cursor', 20.00, NULL, '2025-08-21', 'expense', 'monthly', '{"dayOfMonth": 21}', true),
 
--- Insert weekly recurring transactions (x4 = weekly)
-INSERT INTO recurring_transactions (description, amount, category_id, start_date, frequency, monthly_options) VALUES
-('Food x4', 73.00, NULL, '2025-01-27', 'weekly', NULL),
-('BLUE APRON x4', 22.00, NULL, '2025-01-27', 'weekly', NULL),
-('Gas x4', 16.00, NULL, '2025-01-27', 'weekly', NULL),
-('Roth IRA Weekly x4', 0.00, NULL, '2025-01-27', 'weekly', NULL);
-
-
+-- Credit Card Payments
+('Chase', 32.00, NULL, '2025-01-27', 'expense', 'monthly', '{"dayOfMonth": 21}', true),
+('Affirm', 32.00, NULL, '2025-01-27', 'expense', 'monthly', '{"dayOfMonth": 21}', true),
+('Capital One', 32.00, NULL, '2025-01-27', 'expense', 'monthly', '{"dayOfMonth": 21}', true),
+('Discover', 32.00, NULL, '2025-01-27', 'expense', 'monthly', '{"dayOfMonth": 21}', true),
+('IRS', 32.00, NULL, '2025-01-27', 'expense', 'monthly', '{"dayOfMonth": 21}', true);
 

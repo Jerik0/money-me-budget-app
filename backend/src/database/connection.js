@@ -2,10 +2,10 @@
 
 // Database configuration
 const dbConfig = {
-  user: process.env.DB_USER || 'postgres_admin',
-  host: process.env.DB_HOST || 'localhost',
+  user: process.env.DB_USER || 'postgres', // Try default postgres user
+  host: process.env.DB_HOST || 'localhost', // Use localhost since we're running from host and DB is port-forwarded
   database: process.env.DB_NAME || 'money_me_app',
-  password: process.env.DB_PASSWORD || 'password123',
+  password: process.env.DB_PASSWORD || 'postgres', // Try default postgres password
   port: process.env.DB_PORT || 5432,
   // Connection pool settings
   max: 20, // Maximum number of clients in the pool

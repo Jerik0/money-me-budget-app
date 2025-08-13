@@ -15,14 +15,12 @@ import { CustomModalComponent } from '../shared/custom-modal/custom-modal.compon
 @Component({
     selector: 'app-transactions',
     standalone: true,
-    imports: [CommonModule, FormsModule, HttpClientModule, NgbDatepicker, BalanceProjectionChartComponent, CustomDropdownComponent, CustomModalComponent],
+    imports: [CommonModule, FormsModule, HttpClientModule, CustomDropdownComponent, CustomModalComponent, BalanceProjectionChartComponent],
     templateUrl: './transactions.component.html',
     styleUrls: ['./transactions.component.scss']
 })
 export class TransactionsComponent implements OnInit {
   @ViewChild('descriptionInput') descriptionInput!: ElementRef;
-  @ViewChild('startDatePicker') startDatePicker!: NgbDatepicker;
-  @ViewChild('endDatePicker') endDatePicker!: NgbDatepicker;
 
   currentBalance: number = 0;
   lastBalanceUpdate: Date = new Date();
@@ -40,6 +38,28 @@ export class TransactionsComponent implements OnInit {
 
   // Properties for view/edit mode
   showViewEditMode: boolean = false;
+
+  // Month picker properties
+  showMonthPicker: boolean = false;
+  isMonthLoading: boolean = false;
+  monthOptions: { value: number, label: string }[] = [
+    { value: 0, label: 'January' },
+    { value: 1, label: 'February' },
+    { value: 2, label: 'March' },
+    { value: 3, label: 'April' },
+    { value: 4, label: 'May' },
+    { value: 5, label: 'June' },
+    { value: 6, label: 'July' },
+    { value: 7, label: 'August' },
+    { value: 8, label: 'September' },
+    { value: 9, label: 'October' },
+    { value: 10, label: 'November' },
+    { value: 11, label: 'December' }
+  ];
+
+  // Caching for grouped transactions to prevent infinite loops
+  private cachedGroupedTransactions: { date: Date, transactions: TimelineItem[] }[] = [];
+  private lastCachedMonth: string = '';
 
   // Date picker properties
   startDate: NgbDate | null = null;
@@ -117,7 +137,8 @@ export class TransactionsComponent implements OnInit {
         console.log('Loaded real transactions from service:', transactions);
         this.transactions = transactions;
         this.allTransactions = transactions; // Assign to allTransactions
-        // Don't call calculateTimeline here - it will be called by loadMonthData
+        // Calculate timeline to populate the timeline array for filtering
+        this.calculateTimeline();
       } else {
         console.log('No transactions from service, loading from storage');
         this.loadTransactions();
@@ -130,8 +151,7 @@ export class TransactionsComponent implements OnInit {
       this.allTransactions = transactions;
     });
     
-    // Load month data for the current view
-    this.loadMonthData();
+    // Month data is now handled by filtering existing transactions
     
     // Mark component as initialized
     this.componentInitialized = true;
@@ -296,6 +316,11 @@ export class TransactionsComponent implements OnInit {
     if (this.showEndDatePicker && !this.isClickInsideDatePicker(event, 'end')) {
       this.showEndDatePicker = false;
     }
+    
+    // Close month picker when clicking outside
+    if (this.showMonthPicker && !this.isClickInsideMonthPicker(event)) {
+      this.showMonthPicker = false;
+    }
   }
 
   // Prevent date picker from closing when clicking inside the calendar
@@ -370,6 +395,14 @@ export class TransactionsComponent implements OnInit {
     }
   }
 
+  private isClickInsideMonthPicker(event: Event): boolean {
+    const target = event.target as HTMLElement;
+    // Check if click is inside the month picker button or dropdown
+    const monthPickerButton = target.closest('button[title="Select Month"]');
+    const monthPickerDropdown = target.closest('.month-picker-dropdown');
+    return !!(monthPickerButton || monthPickerDropdown);
+  }
+
     private loadTransactions() {
     // Clear old mock data from localStorage
     this.storageService.clearAllData();
@@ -385,10 +418,11 @@ export class TransactionsComponent implements OnInit {
         console.log('Loaded real transactions from service:', transactions);
         this.transactions = transactions;
         this.allTransactions = transactions; // Assign to allTransactions
-        // Don't call calculateTimeline here - it will be called by loadMonthData
+        // Calculate timeline to populate the timeline array for filtering
+        this.calculateTimeline();
       } else {
         console.log('No real transactions from service');
-        // Don't call calculateTimeline here - it will be called by loadMonthData
+        // No transactions to calculate timeline for
       }
     });
   }
@@ -399,11 +433,37 @@ export class TransactionsComponent implements OnInit {
   }
 
   calculateTimeline() {
+    // First, get the base timeline from existing transactions
     this.timeline = this.timelineService.calculateTimeline(
       this.transactions,
       this.currentBalance,
       this.projectionInterval
     );
+    
+    // Store the base timeline temporarily
+    const baseTimeline = [...this.timeline];
+    
+    // Clear any existing recurring transactions from the timeline to prevent duplicates
+    this.timeline = this.timeline.filter(item => 
+      !this.isTransaction(item) || !item.isRecurring
+    );
+    
+    // Now generate recurring transactions for all months after starting dates
+    this.generateRecurringTransactionsForAllMonths();
+    
+    // Ensure the timeline has content before proceeding
+    if (this.timeline.length === 0) {
+      console.log('⚠️ Timeline is empty after generation, restoring base timeline');
+      this.timeline = baseTimeline;
+    }
+    
+    console.log('Timeline calculated with recurring transactions:', this.timeline);
+    console.log('Timeline length:', this.timeline.length);
+    
+    // Clear the cache when timeline changes
+    this.cachedGroupedTransactions = [];
+    this.lastCachedMonth = '';
+    
     this.saveTransactions();
     this.updateLowestProjections();
     this.updateGroupedTransactions();
@@ -451,11 +511,74 @@ export class TransactionsComponent implements OnInit {
   }
 
   private updateGroupedTransactions(): void {
-    this.groupedTransactions = this.timelineService.groupTransactionsByDate(this.timeline);
+    // Don't update groupedTransactions here - let getGroupedTransactions() handle the filtering
+    // This method is kept for compatibility but no longer needed
   }
 
   getGroupedTransactions(): { date: Date, transactions: TimelineItem[] }[] {
-    return this.groupedTransactions;
+    // Guard against empty timeline
+    if (!this.timeline || this.timeline.length === 0) {
+      console.log('⚠️ Timeline is empty, returning empty array');
+      return [];
+    }
+    
+    // Create a cache key for the current month
+    const currentMonthKey = `${this.currentViewMonth.getFullYear()}-${this.currentViewMonth.getMonth()}`;
+    
+    // Return cached result if available and month hasn't changed
+    if (this.cachedGroupedTransactions.length > 0 && this.lastCachedMonth === currentMonthKey) {
+      return this.cachedGroupedTransactions;
+    }
+    
+    // Filter transactions to show only the selected month range (current + next 2 months)
+    const startMonth = new Date(this.currentViewMonth.getFullYear(), this.currentViewMonth.getMonth(), 1);
+    
+    // Calculate end month properly, handling year boundaries
+    let endYear = this.currentViewMonth.getFullYear();
+    let endMonth = this.currentViewMonth.getMonth() + 2; // Current month + 2 more months
+    
+    if (endMonth > 11) {
+      endMonth = endMonth - 12;
+      endYear = endYear + 1;
+    }
+    
+    const endMonthDate = new Date(endYear, endMonth + 1, 0); // Last day of the 3rd month
+    
+    console.log('Filtering transactions:');
+    console.log('Current view month:', this.currentViewMonth.toLocaleDateString());
+    console.log('Start month:', startMonth.toLocaleDateString());
+    console.log('End month:', endMonthDate.toLocaleDateString());
+    console.log('Timeline items before filtering:', this.timeline.length);
+    
+    // Debug: Show what transactions exist in the timeline
+    console.log('Timeline transactions:');
+    this.timeline.forEach((item, index) => {
+      if (this.isTransaction(item)) {
+        console.log(`  ${index}: ${item.date.toLocaleDateString()} - ${item.description}`);
+      }
+    });
+    
+    const filteredTimeline = this.timeline.filter(item => {
+      if (this.isTransaction(item)) {
+        const itemDate = item.date;
+        const isInRange = itemDate >= startMonth && itemDate <= endMonthDate;
+        if (isInRange) {
+          console.log('Included item:', itemDate.toLocaleDateString(), item.description);
+        }
+        return isInRange;
+      }
+      return false;
+    });
+    
+    console.log('Filtered timeline items:', filteredTimeline.length);
+    
+    // Cache the result
+    this.cachedGroupedTransactions = this.timelineService.groupTransactionsByDate(filteredTimeline);
+    this.lastCachedMonth = currentMonthKey;
+    
+    console.log('Final grouped transactions:', this.cachedGroupedTransactions.length, 'groups');
+    
+    return this.cachedGroupedTransactions;
   }
 
   // Calendar navigation methods
@@ -471,102 +594,144 @@ export class TransactionsComponent implements OnInit {
     console.log(`New view month: ${this.currentViewMonth.toLocaleDateString()}`);
     console.log(`Current transactions count: ${this.transactions.length}`);
     
-    this.loadMonthData();
+    // Month data is now handled by filtering existing transactions
   }
 
   goToCurrentMonth(): void {
     this.currentViewMonth = new Date();
-    this.loadMonthData();
+    // Month data is now handled by filtering existing transactions
   }
 
-
-
-  private loadMonthData(): void {
-    // Generate transactions for the current view month and surrounding months
-    this.generateTransactionsForMonthRange(this.currentViewMonth);
-    
-    // Update visible months (keep only maxVisibleMonths in memory)
-    this.updateVisibleMonths();
-    
-    // Timeline will be recalculated in the subscription after transactions are generated
+  // Month picker methods
+  toggleMonthPicker(): void {
+    this.showMonthPicker = !this.showMonthPicker;
   }
 
-  private generateTransactionsForMonthRange(centerMonth: Date): void {
-    // Generate transactions for 3 months: current, next, and next+1
-    const months = [
-      centerMonth,
-      new Date(centerMonth.getFullYear(), centerMonth.getMonth() + 1, 1),
-      new Date(centerMonth.getFullYear(), centerMonth.getMonth() + 2, 1)
-    ];
+  selectMonth(monthValue: number): void {
+    // Create a new date with the selected month, keeping the current year
+    this.currentViewMonth = new Date(this.currentViewMonth.getFullYear(), monthValue, 1);
+    this.showMonthPicker = false;
     
-    months.forEach(month => {
-      this.generateTransactionsForMonth(month);
-    });
+    // Clear cache to force recalculation for new month
+    this.cachedGroupedTransactions = [];
+    this.lastCachedMonth = '';
+    
+    // Recalculate timeline to ensure we have transactions for the new month range
+    this.calculateTimeline();
   }
 
-  private generateTransactionsForMonth(targetMonth: Date): void {
-    const monthStart = new Date(targetMonth.getFullYear(), targetMonth.getMonth(), 1);
-    const monthEnd = new Date(targetMonth.getFullYear(), targetMonth.getMonth() + 1, 0);
+  goToPreviousYear(): void {
+    this.currentViewMonth = new Date(this.currentViewMonth.getFullYear() - 1, this.currentViewMonth.getMonth(), 1);
+    // Clear cache to force recalculation for new year
+    this.cachedGroupedTransactions = [];
+    this.lastCachedMonth = '';
+    // Recalculate timeline to ensure we have transactions for the new year
+    this.calculateTimeline();
+  }
+
+  goToNextYear(): void {
+    this.currentViewMonth = new Date(this.currentViewMonth.getFullYear() + 1, this.currentViewMonth.getMonth(), 1);
+    // Clear cache to force recalculation for new year
+    this.cachedGroupedTransactions = [];
+    this.lastCachedMonth = '';
+    // Recalculate timeline to ensure we have transactions for the new year
+    this.calculateTimeline();
+  }
+
+  getCurrentYear(): number {
+    return this.currentViewMonth.getFullYear();
+  }
+
+  getCurrentMonthLabel(): string {
+    return this.monthOptions[this.currentViewMonth.getMonth()].label;
+  }
+
+  // Helper method to get total transactions for current month range
+  getTotalTransactionsForCurrentRange(): number {
+    const grouped = this.getGroupedTransactions();
+    return grouped.reduce((total, group) => total + group.transactions.length, 0);
+  }
+
+  /**
+   * Generates recurring transactions for all months after the starting date
+   * This ensures that recurring transactions appear in all relevant months
+   */
+  private generateRecurringTransactionsForAllMonths(): void {
+    const today = new Date();
+    const currentYear = today.getFullYear();
+    const currentMonth = today.getMonth();
     
-    console.log(`Generating transactions for month: ${targetMonth.toLocaleDateString()}`);
-    console.log(`Month range: ${monthStart.toLocaleDateString()} to ${monthEnd.toLocaleDateString()}`);
-    
-    // Check if transactions for this month already exist
-    const monthKey = `${targetMonth.getFullYear()}-${targetMonth.getMonth()}`;
-    const existingTransactionsForMonth = this.transactions.filter(t => {
-      const transactionMonth = `${t.date.getFullYear()}-${t.date.getMonth()}`;
-      return transactionMonth === monthKey;
-    });
-    
-    if (existingTransactionsForMonth.length > 0) {
-      console.log(`Transactions for month ${monthKey} already exist, skipping generation`);
-      return;
+    // Generate transactions for current year and next year
+    for (let year = currentYear; year <= currentYear + 1; year++) {
+      for (let month = 0; month < 12; month++) {
+        // Skip months before the current month in current year
+        if (year === currentYear && month < currentMonth) {
+          continue;
+        }
+        
+        this.generateRecurringTransactionsForMonth(year, month);
+      }
     }
     
-    // Get recurring transactions from the service (now returns Observable)
+    // Also ensure we have transactions for the currently selected month range
+    this.ensureTransactionsForCurrentMonthRange();
+    
+    // Sort timeline by date after adding recurring transactions
+    this.timeline.sort((a, b) => a.date.getTime() - b.date.getTime());
+  }
+
+  /**
+   * Ensures transactions exist for the currently selected month range
+   */
+  private ensureTransactionsForCurrentMonthRange(): void {
+    const startMonth = new Date(this.currentViewMonth.getFullYear(), this.currentViewMonth.getMonth(), 1);
+    const endMonth = new Date(this.currentViewMonth.getFullYear(), this.currentViewMonth.getMonth() + 3, 0);
+    
+    // Generate transactions for each month in the range
+    let currentDate = new Date(startMonth);
+    while (currentDate <= endMonth) {
+      const year = currentDate.getFullYear();
+      const month = currentDate.getMonth();
+      
+      this.generateRecurringTransactionsForMonth(year, month);
+      
+      // Move to next month
+      currentDate.setMonth(currentDate.getMonth() + 1);
+    }
+  }
+
+  /**
+   * Generates recurring transactions for a specific month
+   */
+  private generateRecurringTransactionsForMonth(year: number, month: number): void {
+    // Get recurring transactions from the database
     this.transactionService.getRecurringTransactions().subscribe(recurringTransactions => {
-      console.log('Recurring transactions found:', recurringTransactions.length);
-      console.log('Recurring transactions data:', recurringTransactions);
-      
-      if (recurringTransactions.length === 0) {
-        console.log('No recurring transactions available yet, skipping month generation');
-        return;
-      }
-      
-      // Generate transactions for this month
-      const monthTransactions: Transaction[] = [];
-      
       recurringTransactions.forEach(recurring => {
-        console.log(`Processing recurring: ${recurring.description} (${recurring.frequency})`);
-        
-        if (recurring.frequency === 'monthly' && recurring.monthly_options?.dayOfMonth) {
-          const dayOfMonth = recurring.monthly_options.dayOfMonth;
-          const transactionDate = new Date(targetMonth.getFullYear(), targetMonth.getMonth(), dayOfMonth);
+        // Check if this recurring transaction should appear in this month
+        if (this.shouldGenerateRecurringTransaction(recurring, year, month)) {
+          // Generate ALL occurrences for this month based on frequency
+          const transactionDates = this.calculateAllRecurringTransactionDates(recurring, year, month);
           
-          if (transactionDate >= monthStart && transactionDate <= monthEnd) {
-            monthTransactions.push({
-              id: `recurring-${recurring.id}-${targetMonth.getTime()}`,
-              date: transactionDate,
-              description: recurring.description,
-              amount: Math.abs(parseFloat(recurring.amount)),
-              type: TransactionType.EXPENSE,
-              category: recurring.category || 'Uncategorized',
-              isRecurring: true,
-              recurringPattern: {
-                frequency: this.mapFrequency(recurring.frequency),
-                interval: 1
-              }
-            });
-            console.log(`Added monthly transaction: ${recurring.description} on ${transactionDate.toLocaleDateString()}`);
-          }
-        } else if (recurring.frequency === 'weekly') {
-          // Generate 4-5 weekly transactions for the month
-          for (let week = 0; week < 5; week++) {
-            const transactionDate = new Date(targetMonth.getFullYear(), targetMonth.getMonth(), 1 + (week * 7));
-            
-            if (transactionDate >= monthStart && transactionDate <= monthEnd) {
-              monthTransactions.push({
-                id: `recurring-${recurring.id}-week-${week}-${targetMonth.getTime()}`,
+          console.log(`Month ${year}-${month + 1}: ${recurring.description} (${recurring.frequency}) - ${transactionDates.length} occurrences`);
+          transactionDates.forEach(date => {
+            console.log(`  - ${date.toLocaleDateString()}`);
+          });
+          
+          transactionDates.forEach(transactionDate => {
+                      // Check if this transaction already exists
+          const existingTransaction = this.timeline.find(item => 
+            this.isTransaction(item) && 
+            item.description === recurring.description &&
+            item.date.getTime() === transactionDate.getTime()
+          );
+          
+          if (!existingTransaction) {
+            // For weekly transactions, add extra logging
+            if (recurring.frequency.toLowerCase() === 'weekly') {
+              console.log(`Adding weekly transaction: ${recurring.description} on ${transactionDate.toLocaleDateString()} (${transactionDate.getDay() === 0 ? 'Sunday' : transactionDate.getDay() === 1 ? 'Monday' : transactionDate.getDay() === 2 ? 'Tuesday' : transactionDate.getDay() === 3 ? 'Wednesday' : transactionDate.getDay() === 4 ? 'Thursday' : transactionDate.getDay() === 5 ? 'Friday' : 'Saturday'})`);
+            }
+              const newTransaction: TimelineItem = {
+                id: `recurring-${recurring.id}-${transactionDate.getTime()}`,
                 date: transactionDate,
                 description: recurring.description,
                 amount: Math.abs(parseFloat(recurring.amount)),
@@ -576,23 +741,149 @@ export class TransactionsComponent implements OnInit {
                 recurringPattern: {
                   frequency: this.mapFrequency(recurring.frequency),
                   interval: 1
-                }
-              });
-              console.log(`Added weekly transaction: ${recurring.description} on ${transactionDate.toLocaleDateString()}`);
+                },
+                balance: 0 // Will be calculated by timeline service
+              };
+              
+              this.timeline.push(newTransaction);
+              console.log(`Generated recurring transaction: ${recurring.description} on ${transactionDate.toLocaleDateString()}`);
             }
-          }
+          });
         }
       });
-      
-      console.log(`Generated ${monthTransactions.length} transactions for month`);
-      
-      // Add to main transactions array
-      this.transactions.push(...monthTransactions);
-      
-      // Recalculate timeline after adding transactions
-      this.calculateTimeline();
     });
   }
+
+  /**
+   * Determines if a recurring transaction should be generated for a specific month
+   */
+  private shouldGenerateRecurringTransaction(recurring: any, year: number, month: number): boolean {
+    const recurringStartDate = new Date(recurring.date);
+    const recurringStartYear = recurringStartDate.getFullYear();
+    const recurringStartMonth = recurringStartDate.getMonth();
+    
+    // Only generate for months after the starting date
+    if (year < recurringStartYear || (year === recurringStartYear && month < recurringStartMonth)) {
+      return false;
+    }
+    
+    // Check frequency-specific logic
+    switch (recurring.frequency.toLowerCase()) {
+      case 'monthly':
+        return true; // Monthly transactions appear every month after start
+      case 'weekly':
+        // For weekly transactions, we need to check if this month actually contains
+        // any weekly occurrences based on the start date
+        const monthStart = new Date(year, month, 1);
+        const monthEnd = new Date(year, month + 1, 0);
+        
+        // Calculate the first weekly occurrence in or after this month
+        let currentDate = new Date(recurringStartDate);
+        while (currentDate < monthStart) {
+          currentDate.setDate(currentDate.getDate() + 7);
+        }
+        
+        // Only generate if there's at least one occurrence in this month AND
+        // the first occurrence falls within the month boundaries
+        const shouldGenerate = currentDate <= monthEnd && currentDate >= monthStart;
+        if (recurring.frequency.toLowerCase() === 'weekly') {
+          console.log(`Weekly ${recurring.description}: Month ${year}-${month + 1} - ${shouldGenerate ? 'WILL generate' : 'WILL NOT generate'} (first occurrence: ${currentDate.toLocaleDateString()}, month: ${monthStart.toLocaleDateString()} to ${monthEnd.toLocaleDateString()})`);
+        }
+        return shouldGenerate;
+      case 'yearly':
+        return month === recurringStartMonth; // Yearly transactions appear same month every year
+      default:
+        return true;
+    }
+  }
+
+  /**
+   * Calculates ALL dates for recurring transactions in a given month
+   */
+  private calculateAllRecurringTransactionDates(recurring: any, year: number, month: number): Date[] {
+    const recurringStartDate = new Date(recurring.date);
+    const dates: Date[] = [];
+    
+    switch (recurring.frequency.toLowerCase()) {
+      case 'monthly':
+        // Use monthly_options.dayOfMonth if available, otherwise fall back to start date day
+        let dayOfMonth;
+        if (recurring.monthly_options && recurring.monthly_options.dayOfMonth) {
+          dayOfMonth = recurring.monthly_options.dayOfMonth;
+          console.log(`Monthly ${recurring.description}: Using dayOfMonth from options: ${dayOfMonth}`);
+        } else {
+          dayOfMonth = recurringStartDate.getDate();
+          console.log(`Monthly ${recurring.description}: Using dayOfMonth from start date: ${dayOfMonth}`);
+        }
+        
+        const lastDayOfMonth = new Date(year, month + 1, 0).getDate();
+        const actualDay = Math.min(dayOfMonth, lastDayOfMonth);
+        dates.push(new Date(year, month, actualDay));
+        console.log(`Monthly ${recurring.description}: Generated for ${year}-${month + 1}-${actualDay}`);
+        break;
+        
+      case 'weekly':
+        // For weekly transactions, we need to calculate based on the actual starting date
+        // and generate dates that are multiples of 7 days from the start
+        const startDate = new Date(recurringStartDate);
+        const monthStart = new Date(year, month, 1);
+        const monthEnd = new Date(year, month + 1, 0);
+        
+        // Find the first occurrence in or after this month
+        let currentDate = new Date(startDate);
+        
+        // If we're before the month, advance to the first occurrence in this month
+        while (currentDate < monthStart) {
+          currentDate.setDate(currentDate.getDate() + 7);
+        }
+        
+        // Only generate if the first occurrence falls within this month AND
+        // we're not generating for a month before the actual start date
+        if (currentDate <= monthEnd && currentDate >= monthStart && currentDate >= startDate) {
+          // Generate weekly transactions for this month, ensuring exactly 7-day intervals
+          while (currentDate <= monthEnd) {
+            if (currentDate.getMonth() === month && currentDate.getFullYear() === year) {
+              dates.push(new Date(currentDate));
+              console.log(`Weekly ${recurring.description}: Generated for ${currentDate.toLocaleDateString()}`);
+            }
+            // Always advance by exactly 7 days to maintain weekly intervals
+            currentDate.setDate(currentDate.getDate() + 7);
+          }
+        } else {
+          console.log(`Weekly ${recurring.description}: Skipping month ${year}-${month + 1} - first occurrence ${currentDate.toLocaleDateString()}, start date: ${startDate.toLocaleDateString()}`);
+        }
+        break;
+        
+      case 'yearly':
+        // Same month and day every year
+        dates.push(new Date(year, month, recurringStartDate.getDate()));
+        break;
+        
+      default:
+        dates.push(new Date(year, month, recurringStartDate.getDate()));
+        break;
+    }
+    
+    return dates;
+  }
+
+  /**
+   * Calculates the specific date for a recurring transaction in a given month
+   * @deprecated Use calculateAllRecurringTransactionDates instead
+   */
+  private calculateRecurringTransactionDate(recurring: any, year: number, month: number): Date | null {
+    const dates = this.calculateAllRecurringTransactionDates(recurring, year, month);
+    return dates.length > 0 ? dates[0] : null;
+  }
+
+
+  private loadMonthData(): void {
+    // This method is no longer used for month picker functionality
+    // The month picker now just changes the view month and filters existing data
+  }
+
+  // Removed complex transaction generation methods to prevent infinite loops
+  // The month picker now just changes the view month and filters existing data
 
   private updateVisibleMonths(): void {
     // Keep only the most recent months in memory
