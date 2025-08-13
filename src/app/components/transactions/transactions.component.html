@@ -17,6 +17,7 @@
         <span class="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400 text-sm">$</span>
         <input
          type="number"
+         name="currentBalance"
          [(ngModel)]="currentBalance"
          (blur)="updateBalance(); isEditingBalance = false"
          (keydown.enter)="updateBalance(); isEditingBalance = false"
@@ -218,6 +219,7 @@
            <input
              #descriptionInput
              type="text"
+             name="description"
              [(ngModel)]="newRecurringTransaction.description"
              (keydown.enter)="addRecurringTransaction()"
              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-teal-500 focus:border-transparent"
@@ -230,6 +232,7 @@
              <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400">$</span>
              <input
                type="number"
+               name="amount"
                [(ngModel)]="newRecurringTransaction.amount"
                (keydown.enter)="addRecurringTransaction()"
                class="w-full pl-8 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-teal-500 focus:border-transparent"
@@ -274,6 +277,7 @@
              <div class="relative">
                <input
                  type="text"
+                 name="startDateString"
                  [(ngModel)]="startDateString"
                  (click)="toggleDatePicker()"
                  readonly
@@ -299,6 +303,7 @@
              </div>
              <ngb-datepicker
                #startDatePicker
+               name="startDate"
                [(ngModel)]="startDate"
                (ngModelChange)="onStartDateChange($event)"
                (click)="onDatePickerClick($event)"
@@ -311,6 +316,7 @@
              <div class="relative">
                <input
                  type="text"
+                 name="endDateString"
                  [(ngModel)]="endDateString"
                  (click)="toggleEndDatePicker()"
                  readonly
@@ -336,11 +342,12 @@
              </div>
              <ngb-datepicker
                #endDatePicker
+               name="endDate"
                [(ngModel)]="endDate"
                (ngModelChange)="onEndDateChange($event)"
                (click)="onDatePickerClick($event)"
                [class.hidden]="!showEndDatePicker"
-               class="absolute z-50 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg mt-1 overflow-hidden"
+               class="absolute z-50 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg mt-1 overflow-hidden"
              ></ngb-datepicker>
            </div>
          </div>
