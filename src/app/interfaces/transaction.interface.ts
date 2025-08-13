@@ -15,6 +15,15 @@ export interface Transaction {
     lastDayOfMonth?: boolean;
     lastWeekdayOfMonth?: boolean;
   };
+  // Editing properties
+  isEditing?: boolean;
+  isEditingCategory?: boolean;
+  isEditingAmount?: boolean;
+  originalValues?: {
+    description: string;
+    category: string;
+    amount: number;
+  };
 }
 
 export interface ProjectionPoint {

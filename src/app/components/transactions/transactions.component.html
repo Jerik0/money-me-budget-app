@@ -63,59 +63,100 @@
   <div class="relative overflow-hidden mb-2">
    <!-- Static header - title slides out, button stays in place -->
    <div class="flex items-center justify-between">
-    <!-- Title that slides out when form opens -->
-            <h2 class="text-xl font-semibold text-gray-900 dark:text-chatgpt-text"
-      [class.transform]="showAddForm"
-      [class.-translate-x-full]="showAddForm">
-     Transaction Timeline
-    </h2>
+         <!-- Title that slides out when form opens -->
+             <h2 class="text-xl font-semibold text-gray-900 dark:text-chatgpt-text"
+       [class.transform]="showAddForm"
+       [class.-translate-x-full]="showAddForm">
+      {{ showViewEditMode ? 'Manage Transactions' : 'Transaction Timeline' }}
+     </h2>
 
-    <!-- Controls section -->
-    <div class="flex items-center space-x-3">
-     <!-- Add Transaction Button -->
-     <button
-      (click)="toggleAddForm()"
-                  class="px-4 py-2 bg-chatgpt-accent hover:bg-chatgpt-accentHover text-white font-medium rounded-lg focus:ring-2 focus:ring-chatgpt-accent focus:ring-offset-2 shadow-lg hover:shadow-xl relative z-10"
-      [class.bg-red-500]="showAddForm"
-      [class.hover:bg-red-600]="showAddForm"
-     >
-      {{ showAddForm ? 'Cancel' : '+ Add Transaction' }}
-     </button>
+         <!-- Controls section -->
+     <div class="flex items-center space-x-3">
+      <!-- Calendar Navigation (Grid View Only) - Moved to LEFT -->
+      <div *ngIf="viewMode === 'grid' && !showViewEditMode" class="flex items-center space-x-1">
+       <button
+        (click)="navigateMonth('prev')"
+        class="px-2 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-md text-sm font-medium transition-colors h-10 flex items-center justify-center"
+        title="Previous Month"
+       >
+        ←
+       </button>
+       
+       <button
+        (click)="goToCurrentMonth()"
+        class="px-3 py-2 bg-teal-100 dark:bg-teal-900 hover:bg-teal-200 dark:hover:bg-teal-800 text-teal-700 dark:text-teal-300 rounded-md text-sm font-medium transition-colors h-10 flex items-center justify-center"
+        title="Go to Current Month"
+       >
+        {{ currentViewMonth | date:'MMM yyyy' }}
+       </button>
+       
+       <span class="text-xs text-gray-500 dark:text-gray-400 ml-2 px-2 py-2 h-10 flex items-center">
+        (Showing 3 months)
+       </span>
+       
+       <button
+        (click)="navigateMonth('next')"
+        class="px-2 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-md text-sm font-medium transition-colors h-10 flex items-center justify-center"
+        title="Next Month"
+       >
+        →
+       </button>
+      </div>
 
-     <!-- View Mode Toggle -->
-     <div class="flex items-center bg-gray-100 dark:bg-gray-800 rounded-lg p-1 shadow-inner">
-      <button
-       (click)="toggleViewMode()"
-                     class="flex items-center justify-center w-8 h-8 rounded-md relative group"
-       [class.bg-white]="viewMode === 'grid'"
-       [class.shadow-sm]="viewMode === 'grid'"
-       [class.text-teal-600]="viewMode === 'grid'"
-       [class.text-gray-500]="viewMode !== 'grid'"
-       [class.hover:text-teal-500]="viewMode !== 'grid'"
-       title="Grid View"
-      >
-       <!-- Grid Icon -->
-       <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-        <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
-       </svg>
-      </button>
-      <button
-       (click)="toggleViewMode()"
-                     class="flex items-center justify-center w-8 h-8 rounded-md relative group"
-       [class.bg-white]="viewMode === 'list'"
-       [class.shadow-sm]="viewMode === 'list'"
-       [class.text-teal-600]="viewMode === 'list'"
-       [class.text-gray-500]="viewMode !== 'list'"
-       [class.hover:text-teal-500]="viewMode !== 'list'"
-       title="List View"
-      >
-       <!-- List Icon -->
-       <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-        <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd"/>
-       </svg>
-      </button>
+             <!-- Add Transaction Button -->
+       <button
+        (click)="toggleAddForm()"
+                    class="px-4 py-2 bg-chatgpt-accent hover:bg-chatgpt-accentHover text-white font-medium rounded-lg focus:ring-2 focus:ring-chatgpt-accent focus:ring-offset-2 shadow-lg hover:shadow-xl relative z-10"
+        [class.bg-red-500]="showAddForm"
+        [class.hover:bg-red-600]="showAddForm"
+       >
+        {{ showAddForm ? 'Cancel' : '+ Add Transaction' }}
+       </button>
+
+       <!-- View/Edit Transactions Toggle -->
+       <button
+        (click)="toggleViewEditMode()"
+        class="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white font-medium rounded-lg focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 shadow-lg hover:shadow-xl transition-colors duration-200"
+        [class.bg-orange-500]="showViewEditMode"
+        [class.hover:bg-orange-600]="showViewEditMode"
+       >
+        {{ showViewEditMode ? 'Back to Calendar' : 'View/Edit Transactions' }}
+       </button>
+
+       <!-- View Mode Toggle -->
+       <div *ngIf="!showViewEditMode" class="flex items-center bg-gray-100 dark:bg-gray-800 rounded-lg p-1 shadow-inner">
+       <button
+        (click)="toggleViewMode()"
+                      class="flex items-center justify-center w-8 h-8 rounded-md relative group"
+        [class.bg-white]="viewMode === 'grid'"
+        [class.shadow-sm]="viewMode === 'grid'"
+        [class.text-teal-600]="viewMode === 'grid'"
+        [class.text-gray-500]="viewMode !== 'grid'"
+        [class.hover:text-teal-500]="viewMode !== 'grid'"
+        title="Grid View"
+       >
+        <!-- Grid Icon -->
+        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+         <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
+        </svg>
+       </button>
+       <button
+        (click)="toggleViewMode()"
+                      class="flex items-center justify-center w-8 h-8 rounded-md relative group"
+        [class.bg-white]="viewMode === 'list'"
+        [class.shadow-sm]="viewMode === 'list'"
+        [class.text-teal-600]="viewMode === 'list'"
+        [class.text-gray-500]="viewMode !== 'list'"
+        [class.hover:text-teal-500]="viewMode !== 'list'"
+        title="List View"
+       >
+        <!-- List Icon -->
+        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+         <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd"/>
+        </svg>
+       </button>
+      </div>
      </div>
-    </div>
    </div>
 
    <!-- Custom Modal for Add Transaction -->
@@ -317,11 +358,11 @@
      </div>
    </app-custom-modal>
 
-                                               <!-- Timeline Items - Conditional View -->
-                           <div id="views-container" class="flex-1 overflow-y-auto mt-2 border border-gray-200 dark:border-chatgpt-border rounded-md p-2 overflow-x-hidden" style="max-height: 500px;">
+                                                                                               <!-- Timeline Items - Conditional View -->
+                            <div *ngIf="!showViewEditMode" id="views-container" class="flex-1 overflow-y-auto mt-2 border border-gray-200 dark:border-chatgpt-border rounded-md p-2 overflow-x-hidden" style="max-height: 500px;">
 
-                                                               <!-- Grid View (Current Calendar Layout) -->
-               <div [class.hidden]="viewMode !== 'grid'" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-2 grid-aligned-with-toggle w-full max-w-full overflow-hidden">
+                                                                <!-- Grid View (Current Calendar Layout) -->
+                <div [class.hidden]="viewMode !== 'grid'" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-2 grid-aligned-with-toggle w-full max-w-full overflow-hidden">
     <div *ngFor="let group of getGroupedTransactions()" class="border border-gray-200 dark:border-chatgpt-border rounded-md overflow-hidden bg-white dark:bg-chatgpt-darker hover:shadow-md">
      <!-- Date Header - More Compact -->
      <div class="bg-gray-100 dark:bg-chatgpt-light px-2 py-1 border-b border-gray-200 dark:border-chatgpt-border">
@@ -475,14 +516,116 @@
     </div>
    </div>
 
-   <!-- Empty State -->
-   <div *ngIf="timeline.length === 0" class="text-center py-8">
-    <div class="text-gray-500 dark:text-chatgpt-textSecondary">
-     No transactions yet. Add some recurring transactions to see your timeline!
+       <!-- Empty State -->
+    <div *ngIf="timeline.length === 0" class="text-center py-8">
+     <div class="text-gray-500 dark:text-chatgpt-textSecondary">
+      No transactions yet. Add some recurring transactions to see your timeline!
+     </div>
     </div>
    </div>
+
+       <!-- View/Edit Transactions Component -->
+    <div *ngIf="showViewEditMode" class="border border-gray-200 dark:border-chatgpt-border rounded-lg overflow-hidden bg-white dark:bg-chatgpt-darker mt-2 view-edit-transactions">
+      <!-- Header Row -->
+      <div class="bg-gray-100 dark:bg-chatgpt-light px-4 py-2 border-b border-gray-200 dark:border-chatgpt-border">
+        <div class="flex items-center justify-between text-xs font-medium text-gray-600 dark:text-gray-400">
+          <div class="w-20">Date</div>
+          <div class="flex-1">Description</div>
+          <div class="w-36">Category</div>
+          <div class="w-20 text-right">Amount</div>
+          <div class="w-20 text-center">Frequency</div>
+          <div class="w-16 text-center">Actions</div>
+        </div>
+      </div>
+      
+      <!-- Transactions List -->
+      <div class="max-h-96 overflow-y-auto">
+        <div *ngFor="let transaction of getDatabaseTransactions(); let transactionIndex = index"
+             class="px-4 py-2 transition-colors duration-150 transaction-row"
+             [ngClass]="{
+               'even-row': transactionIndex % 2 === 0,
+               'odd-row': transactionIndex % 2 !== 0
+             }">
+           
+                       <!-- Transaction Row -->
+            <div class="flex items-center space-x-3">
+              <!-- Date -->
+              <div class="w-20 flex-shrink-0">
+                <div class="text-sm font-medium text-gray-900 dark:text-chatgpt-text">
+                  {{ transaction.date | date:'MMM d' }}
+                </div>
+                <div class="text-xs text-gray-500 dark:text-gray-400">
+                  {{ transaction.date | date:'EEE' }}
+                </div>
+              </div>
+
+             <!-- Description -->
+             <div class="flex-1 min-w-0">
+               <span class="text-sm font-medium text-gray-900 dark:text-chatgpt-text truncate">
+                 {{ transaction.description }}
+               </span>
+             </div>
+
+             <!-- Category (Dropdown) -->
+              <div class="w-36 flex-shrink-0">
+                <app-custom-dropdown
+                  [options]="categoryOptions"
+                  [(selectedValue)]="transaction.category"
+                  placeholder="Select category"
+                  size="sm"
+                  variant="outline"
+                  [allowAdd]="true"
+                  (optionAdded)="onCategoryAdded($event)"
+                  (selectedValueChange)="onCategoryChange(transaction, $event)"
+                ></app-custom-dropdown>
+              </div>
+
+             <!-- Amount -->
+              <div class="w-20 flex-shrink-0">
+                <span class="text-sm font-semibold" [ngClass]="{
+                  'text-red-600 dark:text-red-400': transaction.type === TransactionType.EXPENSE,
+                  'text-chatgpt-accent dark:text-chatgpt-accent': transaction.type === TransactionType.INCOME
+                }">
+                  {{ transaction.type === TransactionType.EXPENSE ? '-' : '+' }}${{ transaction.amount | number:'1.0-0' }}
+                </span>
+              </div>
+
+             <!-- Frequency -->
+             <div class="w-20 flex-shrink-0">
+               <span class="text-xs text-gray-500 dark:text-gray-400 capitalize">
+                 {{ transaction.recurringPattern?.frequency?.toLowerCase() || 'Once' }}
+               </span>
+             </div>
+
+             <!-- Actions -->
+             <div class="w-16 flex-shrink-0 flex items-center space-x-2">
+               <button
+                 (click)="deleteTransactionFromDatabase(transaction.id)"
+                 class="p-1.5 text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors"
+                 title="Delete transaction"
+               >
+                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                 </svg>
+               </button>
+             </div>
+           </div>
+         </div>
+       </div>
+     </div>
+
+     <!-- Empty State for View/Edit Mode -->
+     <div *ngIf="getDatabaseTransactions().length === 0" class="text-center py-12">
+       <div class="text-gray-500 dark:text-chatgpt-textSecondary">
+         <svg class="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 00-2 2v2h2V5z"/>
+         </svg>
+         <p class="text-lg font-medium">No transactions found</p>
+         <p class="text-sm">No transactions exist in the database yet</p>
+       </div>
+     </div>
+   </div>
   </div>
- </div>
 
  <!-- Bottom Row: Balance Projection Chart (Full Width) -->
  <div class="mt-3">

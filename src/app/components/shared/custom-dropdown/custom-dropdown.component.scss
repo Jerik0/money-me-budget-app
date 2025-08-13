@@ -16,6 +16,34 @@
   display: none !important;
 }
 
+// Ensure text doesn't wrap unnecessarily in dropdown options
+.option-item {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+// Ensure the dropdown button text doesn't wrap
+button span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+// Ensure text doesn't wrap unnecessarily in dropdown options
+.option-item {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+// Ensure the dropdown button text doesn't wrap
+button span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .overflow-y-auto::-webkit-scrollbar {
   width: 6px;
 }

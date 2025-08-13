@@ -12,7 +12,7 @@
     "docker:up": "docker-compose up -d",
     "docker:down": "docker-compose down",
     "docker:logs": "docker-compose logs -f",
-    "start:all": "powershell -ExecutionPolicy Bypass -File start-app.ps1",
+    "start:all": "powershell -ExecutionPolicy Bypass -File start-app-reliable.ps1",
     "start:local": "powershell -ExecutionPolicy Bypass -File start-app-local.ps1",
     "stop:all": "powershell -ExecutionPolicy Bypass -File stop-app.ps1",
     "stop:local": "powershell -ExecutionPolicy Bypass -File stop-app-local.ps1",

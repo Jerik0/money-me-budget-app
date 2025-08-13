@@ -1,6 +1,7 @@
 import { Component, OnInit, ViewChild, ElementRef, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { HttpClientModule } from '@angular/common/http';
 import { NgbDatepicker, NgbDate } from '@ng-bootstrap/ng-bootstrap';
 import { RecurrenceFrequency, ProjectionInterval, TransactionType, ProjectionType } from '../../enums';
 import { BalanceProjectionChartComponent } from '../balance-projection-chart/balance-projection-chart.component';
@@ -14,7 +15,7 @@ import { CustomModalComponent } from '../shared/custom-modal/custom-modal.compon
 @Component({
     selector: 'app-transactions',
     standalone: true,
-    imports: [CommonModule, FormsModule, NgbDatepicker, BalanceProjectionChartComponent, CustomDropdownComponent, CustomModalComponent],
+    imports: [CommonModule, FormsModule, HttpClientModule, NgbDatepicker, BalanceProjectionChartComponent, CustomDropdownComponent, CustomModalComponent],
     templateUrl: './transactions.component.html',
     styleUrls: ['./transactions.component.scss']
 })
@@ -26,10 +27,19 @@ export class TransactionsComponent implements OnInit {
   currentBalance: number = 0;
   lastBalanceUpdate: Date = new Date();
   transactions: Transaction[] = [];
+  allTransactions: Transaction[] = []; // Actual database transactions
   timeline: (TimelineItem | ProjectionPoint)[] = [];
   projectionInterval: ProjectionInterval = ProjectionInterval.MONTHLY;
   lowestProjections: ProjectionPoint[] = [];
   groupedTransactions: { date: Date, transactions: TimelineItem[] }[] = [];
+  
+  // Calendar navigation
+  currentViewMonth: Date = new Date();
+  visibleMonths: { month: Date, transactions: { date: Date, transactions: TimelineItem[] }[] }[] = [];
+  maxVisibleMonths: number = 6; // Keep 6 months in memory
+
+  // Properties for view/edit mode
+  showViewEditMode: boolean = false;
 
   // Date picker properties
   startDate: NgbDate | null = null;
@@ -96,14 +106,35 @@ export class TransactionsComponent implements OnInit {
     private timelineService: TimelineService
   ) {}
 
-  ngOnInit() {
-    this.loadTransactions();
-    // Removed addSampleData() - now using real data from database
-    this.calculateTimeline();
-    // Set initialization flag after a brief delay to allow component to settle
-    setTimeout(() => {
-      this.componentInitialized = true;
-    }, 100);
+  ngOnInit(): void {
+    // Load balance from storage
+    this.currentBalance = this.storageService.loadCurrentBalance();
+    this.lastBalanceUpdate = new Date(); // For now, use current date
+    
+    // Subscribe to transaction service
+    this.transactionService.getTransactions().subscribe(transactions => {
+      if (transactions && transactions.length > 0) {
+        console.log('Loaded real transactions from service:', transactions);
+        this.transactions = transactions;
+        this.allTransactions = transactions; // Assign to allTransactions
+        // Don't call calculateTimeline here - it will be called by loadMonthData
+      } else {
+        console.log('No transactions from service, loading from storage');
+        this.loadTransactions();
+      }
+    });
+
+    // Subscribe to all transactions from database
+    this.transactionService.getAllTransactions().subscribe(transactions => {
+      console.log('Loaded all transactions from database:', transactions);
+      this.allTransactions = transactions;
+    });
+    
+    // Load month data for the current view
+    this.loadMonthData();
+    
+    // Mark component as initialized
+    this.componentInitialized = true;
   }
 
   updateBalance() {
@@ -131,6 +162,15 @@ export class TransactionsComponent implements OnInit {
   toggleViewMode() {
     this.viewMode = this.viewMode === 'grid' ? 'list' : 'grid';
     // No additional calculations needed - view switching is now instant
+  }
+
+  // Toggle view/edit mode
+  toggleViewEditMode(): void {
+    this.showViewEditMode = !this.showViewEditMode;
+    if (this.showViewEditMode) {
+      // Close add form when switching to view/edit mode
+      this.showAddForm = false;
+    }
   }
 
   addRecurringTransaction() {
@@ -294,21 +334,24 @@ export class TransactionsComponent implements OnInit {
   }
 
   // Add new category to the options
-  onCategoryAdded(newCategory: string) {
-    // Don't allow adding "Uncategorized" as it's reserved
-    if (newCategory.toLowerCase() === 'uncategorized') {
-      return;
+  onCategoryAdded(newCategory: string): void {
+    // Add the new category to the options if it doesn't exist
+    if (!this.categoryOptions.find(option => option.value === newCategory)) {
+      this.categoryOptions.push({ value: newCategory, label: newCategory });
     }
+  }
+
+  onCategoryChange(transaction: Transaction, newCategory: string): void {
+    // Update the transaction category
+    transaction.category = newCategory;
     
-    // Check if category already exists
-    const existingCategory = this.categoryOptions.find(option => 
-      option.value.toLowerCase() === newCategory.toLowerCase()
-    );
-    
-    if (!existingCategory) {
-      // Add new category to the beginning of the list (after Uncategorized)
-      this.categoryOptions.splice(1, 0, { value: newCategory, label: newCategory });
-    }
+    // Save the change to the database
+    this.transactionService.updateTransactionInDatabase(transaction.id, { category: newCategory }).subscribe();
+  }
+
+  deleteTransactionFromDatabase(id: string): void {
+    // Delete the transaction from the database
+    this.transactionService.deleteTransactionFromDatabase(id).subscribe();
   }
 
   private isClickInsideDatePicker(event: Event, pickerType: 'start' | 'end'): boolean {
@@ -327,23 +370,25 @@ export class TransactionsComponent implements OnInit {
     }
   }
 
-  private loadTransactions() {
+    private loadTransactions() {
     // Clear old mock data from localStorage
     this.storageService.clearAllData();
-    
+
     // Initialize with empty arrays
     this.transactions = [];
+    this.allTransactions = []; // Initialize allTransactions
     this.currentBalance = 0;
-    
+
     // Subscribe to real data from the service
     this.transactionService.getTransactions().subscribe(transactions => {
       if (transactions && transactions.length > 0) {
         console.log('Loaded real transactions from service:', transactions);
         this.transactions = transactions;
-        this.calculateTimeline();
+        this.allTransactions = transactions; // Assign to allTransactions
+        // Don't call calculateTimeline here - it will be called by loadMonthData
       } else {
         console.log('No real transactions from service');
-        this.calculateTimeline();
+        // Don't call calculateTimeline here - it will be called by loadMonthData
       }
     });
   }
@@ -413,6 +458,172 @@ export class TransactionsComponent implements OnInit {
     return this.groupedTransactions;
   }
 
+  // Calendar navigation methods
+  navigateMonth(direction: 'prev' | 'next'): void {
+    console.log(`Navigating ${direction} from ${this.currentViewMonth.toLocaleDateString()}`);
+    
+    if (direction === 'prev') {
+      this.currentViewMonth = new Date(this.currentViewMonth.getFullYear(), this.currentViewMonth.getMonth() - 1, 1);
+    } else {
+      this.currentViewMonth = new Date(this.currentViewMonth.getFullYear(), this.currentViewMonth.getMonth() + 1, 1);
+    }
+    
+    console.log(`New view month: ${this.currentViewMonth.toLocaleDateString()}`);
+    console.log(`Current transactions count: ${this.transactions.length}`);
+    
+    this.loadMonthData();
+  }
+
+  goToCurrentMonth(): void {
+    this.currentViewMonth = new Date();
+    this.loadMonthData();
+  }
+
+
+
+  private loadMonthData(): void {
+    // Generate transactions for the current view month and surrounding months
+    this.generateTransactionsForMonthRange(this.currentViewMonth);
+    
+    // Update visible months (keep only maxVisibleMonths in memory)
+    this.updateVisibleMonths();
+    
+    // Timeline will be recalculated in the subscription after transactions are generated
+  }
+
+  private generateTransactionsForMonthRange(centerMonth: Date): void {
+    // Generate transactions for 3 months: current, next, and next+1
+    const months = [
+      centerMonth,
+      new Date(centerMonth.getFullYear(), centerMonth.getMonth() + 1, 1),
+      new Date(centerMonth.getFullYear(), centerMonth.getMonth() + 2, 1)
+    ];
+    
+    months.forEach(month => {
+      this.generateTransactionsForMonth(month);
+    });
+  }
+
+  private generateTransactionsForMonth(targetMonth: Date): void {
+    const monthStart = new Date(targetMonth.getFullYear(), targetMonth.getMonth(), 1);
+    const monthEnd = new Date(targetMonth.getFullYear(), targetMonth.getMonth() + 1, 0);
+    
+    console.log(`Generating transactions for month: ${targetMonth.toLocaleDateString()}`);
+    console.log(`Month range: ${monthStart.toLocaleDateString()} to ${monthEnd.toLocaleDateString()}`);
+    
+    // Check if transactions for this month already exist
+    const monthKey = `${targetMonth.getFullYear()}-${targetMonth.getMonth()}`;
+    const existingTransactionsForMonth = this.transactions.filter(t => {
+      const transactionMonth = `${t.date.getFullYear()}-${t.date.getMonth()}`;
+      return transactionMonth === monthKey;
+    });
+    
+    if (existingTransactionsForMonth.length > 0) {
+      console.log(`Transactions for month ${monthKey} already exist, skipping generation`);
+      return;
+    }
+    
+    // Get recurring transactions from the service (now returns Observable)
+    this.transactionService.getRecurringTransactions().subscribe(recurringTransactions => {
+      console.log('Recurring transactions found:', recurringTransactions.length);
+      console.log('Recurring transactions data:', recurringTransactions);
+      
+      if (recurringTransactions.length === 0) {
+        console.log('No recurring transactions available yet, skipping month generation');
+        return;
+      }
+      
+      // Generate transactions for this month
+      const monthTransactions: Transaction[] = [];
+      
+      recurringTransactions.forEach(recurring => {
+        console.log(`Processing recurring: ${recurring.description} (${recurring.frequency})`);
+        
+        if (recurring.frequency === 'monthly' && recurring.monthly_options?.dayOfMonth) {
+          const dayOfMonth = recurring.monthly_options.dayOfMonth;
+          const transactionDate = new Date(targetMonth.getFullYear(), targetMonth.getMonth(), dayOfMonth);
+          
+          if (transactionDate >= monthStart && transactionDate <= monthEnd) {
+            monthTransactions.push({
+              id: `recurring-${recurring.id}-${targetMonth.getTime()}`,
+              date: transactionDate,
+              description: recurring.description,
+              amount: Math.abs(parseFloat(recurring.amount)),
+              type: TransactionType.EXPENSE,
+              category: recurring.category || 'Uncategorized',
+              isRecurring: true,
+              recurringPattern: {
+                frequency: this.mapFrequency(recurring.frequency),
+                interval: 1
+              }
+            });
+            console.log(`Added monthly transaction: ${recurring.description} on ${transactionDate.toLocaleDateString()}`);
+          }
+        } else if (recurring.frequency === 'weekly') {
+          // Generate 4-5 weekly transactions for the month
+          for (let week = 0; week < 5; week++) {
+            const transactionDate = new Date(targetMonth.getFullYear(), targetMonth.getMonth(), 1 + (week * 7));
+            
+            if (transactionDate >= monthStart && transactionDate <= monthEnd) {
+              monthTransactions.push({
+                id: `recurring-${recurring.id}-week-${week}-${targetMonth.getTime()}`,
+                date: transactionDate,
+                description: recurring.description,
+                amount: Math.abs(parseFloat(recurring.amount)),
+                type: TransactionType.EXPENSE,
+                category: recurring.category || 'Uncategorized',
+                isRecurring: true,
+                recurringPattern: {
+                  frequency: this.mapFrequency(recurring.frequency),
+                  interval: 1
+                }
+              });
+              console.log(`Added weekly transaction: ${recurring.description} on ${transactionDate.toLocaleDateString()}`);
+            }
+          }
+        }
+      });
+      
+      console.log(`Generated ${monthTransactions.length} transactions for month`);
+      
+      // Add to main transactions array
+      this.transactions.push(...monthTransactions);
+      
+      // Recalculate timeline after adding transactions
+      this.calculateTimeline();
+    });
+  }
+
+  private updateVisibleMonths(): void {
+    // Keep only the most recent months in memory
+    if (this.visibleMonths.length > this.maxVisibleMonths) {
+      this.visibleMonths = this.visibleMonths.slice(-this.maxVisibleMonths);
+    }
+    
+    // Clean up old transactions to prevent memory issues
+    this.cleanupOldTransactions();
+  }
+
+  private cleanupOldTransactions(): void {
+    const currentDate = new Date();
+    const threeMonthsAgo = new Date(currentDate.getFullYear(), currentDate.getMonth() - 3, 1);
+    
+    // Remove transactions older than 3 months
+    this.transactions = this.transactions.filter(t => t.date >= threeMonthsAgo);
+    
+    console.log(`Cleaned up old transactions. Current count: ${this.transactions.length}`);
+  }
+
+  private mapFrequency(frequency: string): RecurrenceFrequency {
+    switch (frequency.toLowerCase()) {
+      case 'daily': return RecurrenceFrequency.DAILY;
+      case 'weekly': return RecurrenceFrequency.WEEKLY;
+      case 'monthly': return RecurrenceFrequency.MONTHLY;
+      case 'yearly': return RecurrenceFrequency.YEARLY;
+      default: return RecurrenceFrequency.MONTHLY;
+    }
+  }
+
 
 
   // Removed addSampleData method - now using real data from database
@@ -434,6 +645,11 @@ export class TransactionsComponent implements OnInit {
     return totalRowIndex % 2 === 0;
   }
 
+  // Get database transactions for Manage Transactions view
+  getDatabaseTransactions(): Transaction[] {
+    return this.allTransactions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }
+
   // Dynamic placeholder text for interval input based on frequency
   getIntervalPlaceholder(): string {
     const frequency = this.newRecurringTransaction.recurringPattern?.frequency;
@@ -452,6 +668,68 @@ export class TransactionsComponent implements OnInit {
       default:
         return '1';
     }
+  }
+
+  // View/Edit Transactions Methods
+  startEditing(transaction: Transaction): void {
+    // Store original values for potential rollback
+    transaction.originalValues = {
+      description: transaction.description,
+      category: transaction.category,
+      amount: transaction.amount
+    };
+    transaction.isEditing = true;
+  }
+
+  startEditingCategory(transaction: Transaction): void {
+    transaction.originalValues = {
+      description: transaction.description,
+      category: transaction.category,
+      amount: transaction.amount
+    };
+    transaction.isEditingCategory = true;
+  }
+
+  startEditingAmount(transaction: Transaction): void {
+    transaction.originalValues = {
+      description: transaction.description,
+      category: transaction.category,
+      amount: transaction.amount
+    };
+    transaction.isEditingAmount = true;
+  }
+
+  saveTransaction(transaction: Transaction): void {
+    // Save changes to the transaction service
+    this.transactionService.updateTransaction(transaction.id, {
+      description: transaction.description,
+      category: transaction.category,
+      amount: transaction.amount
+    });
+
+    // Exit editing mode
+    transaction.isEditing = false;
+    transaction.isEditingCategory = false;
+    transaction.isEditingAmount = false;
+    delete transaction.originalValues;
+
+    // Recalculate timeline to reflect changes
+    this.calculateTimeline();
+  }
+
+  cancelEditing(transaction: Transaction): void {
+    // Restore original values
+    if (transaction.originalValues) {
+      transaction.description = transaction.originalValues.description;
+      transaction.category = transaction.originalValues.category;
+      transaction.amount = transaction.originalValues.amount;
+    }
+
+    // Exit editing mode
+    transaction.isEditing = false;
+    transaction.isEditingCategory = false;
+    transaction.isEditingAmount = false;
+    delete transaction.originalValues;
   }
 
 }

@@ -98,3 +98,39 @@ ngb-datepicker .ngb-dp-navigation {
   border-top-left-radius: 0.5rem !important;
   border-top-right-radius: 0.5rem !important;
 }
+
+// View/Edit transactions styling
+.view-edit-transactions {
+  .transaction-row {
+    &.even-row {
+      background-color: #f9fafb;
+    }
+    
+    &.odd-row {
+      background-color: #ffffff;
+    }
+    
+    &:hover {
+      background-color: #f3f4f6;
+    }
+  }
+  
+  // Remove borders between rows
+  .divide-y {
+    border-top: none;
+    border-bottom: none;
+  }
+}
+
+// Dark theme overrides - separate from the main selector
+:host-context(.dark) .view-edit-transactions .transaction-row.even-row {
+  background-color: #3e3e42 !important; // chatgpt-light
+}
+
+:host-context(.dark) .view-edit-transactions .transaction-row.odd-row {
+  background-color: #2d2d30 !important; // chatgpt-darker
+}
+
+:host-context(.dark) .view-edit-transactions .transaction-row:hover {
+  background-color: #484848 !important; // chatgpt-lighter
+}

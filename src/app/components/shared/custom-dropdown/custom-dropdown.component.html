@@ -15,8 +15,8 @@
 
   <!-- Dropdown Menu -->
   <div
-    [class.hidden]="!isOpen"
-    class="absolute z-[9999] mt-1 w-full bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg overflow-hidden min-w-[200px]"
+    *ngIf="isOpen"
+    class="absolute z-[99999] mt-1 w-full bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg overflow-hidden min-w-[280px]"
   >
     <div class="max-h-60 overflow-y-auto overscroll-contain">
       <!-- Add new option input (only show if allowAdd is true) -->

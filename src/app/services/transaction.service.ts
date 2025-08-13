@@ -10,18 +10,57 @@ import { ApiService } from './api.service';
 })
 export class TransactionService {
   private transactions: Transaction[] = [];
-
-  // Removed getSampleTransactions method - now using real data from database
+  private allTransactions: Transaction[] = []; // For actual database transactions
 
   private transactionsSubject = new BehaviorSubject<Transaction[]>([]);
+  private allTransactionsSubject = new BehaviorSubject<Transaction[]>([]);
   private recurringTransactionsSubject = new BehaviorSubject<any[]>([]);
 
   constructor(private apiService: ApiService) { 
     this.loadRecurringTransactions();
+    this.loadAllTransactions();
   }
 
   getTransactions(): Observable<Transaction[]> {
     return this.transactionsSubject.asObservable();
+  }
+
+  getAllTransactions(): Observable<Transaction[]> {
+    return this.allTransactionsSubject.asObservable();
+  }
+
+  getRecurringTransactions(): Observable<any[]> {
+    return this.recurringTransactionsSubject.asObservable();
+  }
+
+  private loadAllTransactions(): void {
+    this.apiService.get<any[]>('/transactions').pipe(
+      tap(data => {
+        console.log('Loaded all transactions from API:', data);
+        this.allTransactions = this.convertApiDataToTransactions(data);
+        this.allTransactionsSubject.next(this.allTransactions);
+      }),
+      catchError(error => {
+        console.error('Error loading all transactions:', error);
+        return of([]);
+      })
+    ).subscribe();
+  }
+
+  private convertApiDataToTransactions(apiData: any[]): Transaction[] {
+    return apiData.map(item => ({
+      id: item.id.toString(),
+      date: new Date(item.date),
+      description: item.description,
+      amount: Math.abs(parseFloat(item.amount)),
+      type: item.type === 'income' ? TransactionType.INCOME : TransactionType.EXPENSE,
+      category: item.category || 'Uncategorized',
+      isRecurring: item.is_recurring || false,
+      recurringPattern: item.is_recurring ? {
+        frequency: this.mapFrequency(item.frequency),
+        interval: 1
+      } : undefined
+    }));
   }
 
   private loadRecurringTransactions(): void {
@@ -29,7 +68,7 @@ export class TransactionService {
       tap(data => {
         console.log('Loaded recurring transactions from API:', data);
         this.recurringTransactionsSubject.next(data);
-        // Convert recurring transactions to display format
+        // Convert recurring transactions to display format for timeline view
         this.convertRecurringToTransactions(data);
       }),
       catchError(error => {
@@ -139,27 +178,57 @@ export class TransactionService {
     }
   }
 
+  updateTransactionInDatabase(id: string, updates: Partial<Transaction>): Observable<any> {
+    return this.apiService.put<any>(`/transactions/${id}`, updates).pipe(
+      tap(() => {
+        // Refresh the transactions list after update
+        this.loadAllTransactions();
+      }),
+      catchError(error => {
+        console.error('Error updating transaction:', error);
+        return of(null);
+      })
+    );
+  }
+
   deleteTransaction(id: string): void {
     this.transactions = this.transactions.filter(t => t.id !== id);
     this.transactionsSubject.next([...this.transactions]);
   }
 
+  deleteTransactionFromDatabase(id: string): Observable<any> {
+    return this.apiService.delete<any>(`/transactions/${id}`).pipe(
+      tap(() => {
+        // Refresh the transactions list after deletion
+        this.loadAllTransactions();
+      }),
+      catchError(error => {
+        console.error('Error deleting transaction:', error);
+        return of(null);
+      })
+    );
+  }
+
+  refreshTransactions(): void {
+    this.loadAllTransactions();
+  }
+
   getTransactionById(id: string): Transaction | undefined {
-    return this.transactions.find(t => t.id === id);
+    return this.allTransactions.find(t => t.id === id);
   }
 
   getRecentTransactions(limit: number = 5): Transaction[] {
-    return this.transactions.slice(0, limit);
+    return this.allTransactions.slice(0, limit);
   }
 
   getTotalIncome(): number {
-    return this.transactions
+    return this.allTransactions
       .filter(t => t.type === TransactionType.INCOME)
       .reduce((sum, t) => sum + t.amount, 0);
   }
 
   getTotalExpenses(): number {
-    return this.transactions
+    return this.allTransactions
       .filter(t => t.type === TransactionType.EXPENSE)
       .reduce((sum, t) => sum + t.amount, 0);
   }

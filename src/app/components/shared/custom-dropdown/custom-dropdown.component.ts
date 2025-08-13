@@ -62,6 +62,7 @@ export class CustomDropdownComponent implements OnInit, OnChanges {
   toggleDropdown() {
     if (!this.disabled) {
       this.isOpen = !this.isOpen;
+      console.log('Dropdown toggled, isOpen:', this.isOpen);
     }
   }
 
