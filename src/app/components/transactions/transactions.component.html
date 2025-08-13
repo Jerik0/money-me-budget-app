@@ -213,7 +213,7 @@
                  </svg>
                </div>
              </div>
-             <ngb-datepicker 
+             <ngb-datepicker
                #startDatePicker
                [(ngModel)]="startDate"
                (ngModelChange)="onStartDateChange($event)"
@@ -250,7 +250,7 @@
                  </svg>
                </div>
              </div>
-             <ngb-datepicker 
+             <ngb-datepicker
                #endDatePicker
                [(ngModel)]="endDate"
                (ngModelChange)="onEndDateChange($event)"
@@ -269,7 +269,7 @@
              size="md"
              variant="outline"
            ></app-custom-dropdown>
-           
+
             <!-- Monthly options checkboxes - directly under frequency input -->
             <div [class.hidden]="newRecurringTransaction.recurringPattern!.frequency !== RecurrenceFrequency.MONTHLY" class="mt-2 space-y-3">
               <div class="flex items-center space-x-4">
@@ -307,8 +307,8 @@
          <button
            (click)="addRecurringTransaction()"
            [disabled]="!isTransactionFormValid()"
-           [class]="isTransactionFormValid() 
-             ? 'px-6 py-2 bg-teal-600 hover:bg-teal-700 text-white font-medium rounded-lg focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 shadow-sm hover:shadow-md transition-colors duration-200' 
+           [class]="isTransactionFormValid()
+             ? 'px-6 py-2 bg-teal-600 hover:bg-teal-700 text-white font-medium rounded-lg focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 shadow-sm hover:shadow-md transition-colors duration-200'
              : 'px-6 py-2 bg-gray-400 text-gray-200 font-medium rounded-lg cursor-not-allowed transition-colors duration-200'"
          >
            Add Transaction
@@ -317,11 +317,11 @@
      </div>
    </app-custom-modal>
 
-  <!-- Timeline Items - Conditional View -->
-  <div class="flex-1 overflow-y-auto transaction-timeline-scroll" style="max-height: 500px;">
+                                               <!-- Timeline Items - Conditional View -->
+                           <div id="views-container" class="flex-1 overflow-y-auto mt-2 border border-gray-200 dark:border-chatgpt-border rounded-md p-2 overflow-x-hidden" style="max-height: 500px;">
 
-   <!-- Grid View (Current Calendar Layout) -->
-   <div [class.hidden]="viewMode !== 'grid'" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 grid-aligned-with-toggle">
+                                                               <!-- Grid View (Current Calendar Layout) -->
+               <div [class.hidden]="viewMode !== 'grid'" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-2 grid-aligned-with-toggle w-full max-w-full overflow-hidden">
     <div *ngFor="let group of getGroupedTransactions()" class="border border-gray-200 dark:border-chatgpt-border rounded-md overflow-hidden bg-white dark:bg-chatgpt-darker hover:shadow-md">
      <!-- Date Header - More Compact -->
      <div class="bg-gray-100 dark:bg-chatgpt-light px-2 py-1 border-b border-gray-200 dark:border-chatgpt-border">
@@ -340,10 +340,18 @@
       </div>
      </div>
 
-     <!-- Transactions in this date card - More Compact -->
-     <div class="p-1.5 space-y-1 min-h-[60px] max-h-[80px] overflow-y-auto">
-      <div *ngFor="let transaction of group.transactions"
-         class="group rounded px-1.5 py-1 hover:bg-gray-50 dark:hover:bg-gray-800/50 ">
+           <!-- Transactions in this date card - More Compact -->
+      <div class="p-1.5 space-y-1 min-h-[90px] max-h-[120px] overflow-y-auto">
+             <div *ngFor="let transaction of group.transactions; let transactionIndex = index"
+          class="group rounded px-1.5 py-1"
+          [class.bg-white]="transactionIndex % 2 === 0"
+          [class.bg-gray-50]="transactionIndex % 2 !== 0"
+          [class.dark:bg-chatgpt-darker]="transactionIndex % 2 === 0"
+          [class.dark:bg-chatgpt-light]="transactionIndex % 2 !== 0"
+          [class.hover:bg-gray-100]="transactionIndex % 2 === 0"
+          [class.hover:bg-gray-200]="transactionIndex % 2 !== 0"
+          [class.dark:hover:bg-gray-800]="transactionIndex % 2 === 0"
+          [class.dark:hover:bg-gray-700]="transactionIndex % 2 !== 0">
 
        <!-- Single Line Layout -->
        <div class="flex items-center justify-between">
@@ -354,10 +362,10 @@
 
         <!-- Right: Amount + Delete -->
         <div class="flex items-center space-x-1 flex-shrink-0">
-         <div class="font-medium text-xs" [ngClass]="{
-          'text-red-600 dark:text-red-400': transaction.type === TransactionType.EXPENSE,
-          'text-green-600 dark:text-green-400': transaction.type === TransactionType.INCOME
-         }">
+                    <div class="font-medium text-xs" [ngClass]="{
+            'text-red-600 dark:text-red-400': transaction.type === TransactionType.EXPENSE,
+            'text-chatgpt-accent dark:text-chatgpt-accent': transaction.type === TransactionType.INCOME
+           }">
           {{ transaction.type === TransactionType.EXPENSE ? '-' : '+' }}${{ transaction.amount | number:'1.0-0' }}
          </div>
          <button
@@ -379,34 +387,34 @@
     </div>
    </div>
 
-   <!-- List View (New Compact Layout) -->
-   <div [class.hidden]="viewMode !== 'list'" class="border border-gray-200 dark:border-chatgpt-border rounded-lg overflow-hidden flex flex-col h-full">
-    <!-- Fixed Header Row -->
-    <div class="bg-gray-100 dark:bg-chatgpt-light px-4 py-2 border-b border-gray-200 dark:border-chatgpt-border">
-     <div class="flex items-center justify-between text-xs font-medium text-gray-600 dark:text-gray-400">
-      <div class="flex-1">Description</div>
-      <div class="w-20 text-center">Date</div>
-      <div class="w-24 text-center">Category</div>
-      <div class="w-20 text-right">Amount</div>
-      <div class="w-16 text-center">Frequency</div>
-      <div class="w-8"></div>
-     </div>
-    </div>
+                               <!-- List View (New Compact Layout) -->
+      <div [class.hidden]="viewMode !== 'list'" class="border border-gray-200 dark:border-chatgpt-border rounded-lg overflow-hidden flex flex-col h-96 w-full max-w-full">
+        <!-- Fixed Header Row -->
+        <div class="bg-gray-100 dark:bg-chatgpt-light px-4 py-2 border-b border-gray-200 dark:border-chatgpt-border">
+         <div class="flex items-center justify-between text-xs font-medium text-gray-600 dark:text-gray-400">
+          <div class="flex-1">Description</div>
+          <div class="w-20 text-center">Date</div>
+          <div class="w-24 text-center">Category</div>
+          <div class="w-20 text-right">Amount</div>
+          <div class="w-16 text-center">Frequency</div>
+          <div class="w-8"></div>
+         </div>
+        </div>
 
     <!-- Scrollable Transaction Rows Container -->
     <div class="flex-1 overflow-y-auto">
      <div>
       <div *ngFor="let group of getGroupedTransactions(); let groupIndex = index">
-       <div *ngFor="let transaction of group.transactions; let transactionIndex = index"
-          class="px-4 py-1.5 group"
-          [class.bg-white]="isEvenRow(groupIndex, transactionIndex)"
-          [class.bg-gray-50]="!isEvenRow(groupIndex, transactionIndex)"
-          [class.dark:bg-chatgpt-darker]="isEvenRow(groupIndex, transactionIndex)"
-          [class.dark:bg-chatgpt-light]="!isEvenRow(groupIndex, transactionIndex)"
-          [class.hover:bg-gray-100]="isEvenRow(groupIndex, transactionIndex)"
-          [class.hover:bg-gray-200]="!isEvenRow(groupIndex, transactionIndex)"
-          [class.dark:hover:bg-gray-800]="isEvenRow(groupIndex, transactionIndex)"
-          [class.dark:hover:bg-gray-700]="!isEvenRow(groupIndex, transactionIndex)">
+               <div *ngFor="let transaction of group.transactions; let transactionIndex = index"
+           class="px-4 py-1.5 group"
+           [class.bg-white]="isEvenRow(groupIndex, transactionIndex)"
+           [class.bg-gray-100]="!isEvenRow(groupIndex, transactionIndex)"
+           [class.dark:bg-chatgpt-darker]="isEvenRow(groupIndex, transactionIndex)"
+           [class.dark:bg-chatgpt-light]="!isEvenRow(groupIndex, transactionIndex)"
+           [class.hover:bg-gray-100]="isEvenRow(groupIndex, transactionIndex)"
+           [class.hover:bg-gray-200]="!isEvenRow(groupIndex, transactionIndex)"
+           [class.dark:hover:bg-gray-800]="isEvenRow(groupIndex, transactionIndex)"
+           [class.dark:hover:bg-gray-700]="!isEvenRow(groupIndex, transactionIndex)">
         <div class="flex items-center justify-between">
 
          <!-- Description -->
@@ -423,19 +431,19 @@
           </div>
          </div>
 
-         <!-- Category -->
-         <div class="w-24 text-center">
-          <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
-           {{ transaction.category }}
-          </span>
-         </div>
+                   <!-- Category -->
+          <div class="w-24 text-center">
+           <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300">
+            {{ transaction.category }}
+           </span>
+          </div>
 
-         <!-- Amount -->
-         <div class="w-20 text-right">
-          <div class="font-semibold text-sm" [ngClass]="{
-           'text-red-600 dark:text-red-400': transaction.type === TransactionType.EXPENSE,
-           'text-green-600 dark:text-green-400': transaction.type === TransactionType.INCOME
-          }">
+                   <!-- Amount -->
+          <div class="w-20 text-right">
+           <div class="font-semibold text-sm" [ngClass]="{
+            'text-red-600 dark:text-red-400': transaction.type === TransactionType.EXPENSE,
+            'text-chatgpt-accent dark:text-chatgpt-accent': transaction.type === TransactionType.INCOME
+           }">
            {{ transaction.type === TransactionType.EXPENSE ? '-' : '+' }}${{ transaction.amount | number:'1.0-0' }}
           </div>
          </div>

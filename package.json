@@ -13,8 +13,11 @@
     "docker:down": "docker-compose down",
     "docker:logs": "docker-compose logs -f",
     "start:all": "powershell -ExecutionPolicy Bypass -File start-app.ps1",
+    "start:local": "powershell -ExecutionPolicy Bypass -File start-app-local.ps1",
     "stop:all": "powershell -ExecutionPolicy Bypass -File stop-app.ps1",
-    "restart:all": "powershell -ExecutionPolicy Bypass -File restart-app.ps1"
+    "stop:local": "powershell -ExecutionPolicy Bypass -File stop-app-local.ps1",
+    "restart:all": "powershell -ExecutionPolicy Bypass -File restart-app.ps1",
+    "setup:local": "powershell -ExecutionPolicy Bypass -File setup-local-postgres.ps1"
   },
   "private": true,
   "dependencies": {

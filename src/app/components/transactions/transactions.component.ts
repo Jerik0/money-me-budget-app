@@ -98,12 +98,12 @@ export class TransactionsComponent implements OnInit {
 
   ngOnInit() {
     this.loadTransactions();
-    this.addSampleData();
+    // Removed addSampleData() - now using real data from database
     this.calculateTimeline();
     // Set initialization flag after a brief delay to allow component to settle
     setTimeout(() => {
       this.componentInitialized = true;
-    }, 50);
+    }, 100);
   }
 
   updateBalance() {
@@ -328,8 +328,24 @@ export class TransactionsComponent implements OnInit {
   }
 
   private loadTransactions() {
-    this.transactions = this.storageService.loadTransactions();
-    this.currentBalance = this.storageService.loadCurrentBalance();
+    // Clear old mock data from localStorage
+    this.storageService.clearAllData();
+    
+    // Initialize with empty arrays
+    this.transactions = [];
+    this.currentBalance = 0;
+    
+    // Subscribe to real data from the service
+    this.transactionService.getTransactions().subscribe(transactions => {
+      if (transactions && transactions.length > 0) {
+        console.log('Loaded real transactions from service:', transactions);
+        this.transactions = transactions;
+        this.calculateTimeline();
+      } else {
+        console.log('No real transactions from service');
+        this.calculateTimeline();
+      }
+    });
   }
 
   private saveTransactions() {
@@ -399,18 +415,7 @@ export class TransactionsComponent implements OnInit {
 
 
 
-  private addSampleData() {
-    // Only add sample data if no transactions exist and no data in localStorage
-    if (this.transactions.length === 0 && !this.storageService.hasExistingData()) {
-
-      // Set a starting balance
-      this.currentBalance = 3250.00;
-
-      // Get sample transactions from the service
-      this.transactions = this.transactionService.getSampleTransactionsData();
-      this.saveTransactions();
-    }
-  }
+  // Removed addSampleData method - now using real data from database
 
   // Helper method to determine if a row should have alternate background color
   isEvenRow(groupIndex: number, transactionIndex: number): boolean {

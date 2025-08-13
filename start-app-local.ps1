@@ -1,68 +1,51 @@
-# Money Me App Startup Script
-# This script starts the database, backend, and frontend in the correct order
+# Money Me App Startup Script (Local PostgreSQL Version)
+# This script starts the backend and frontend using local PostgreSQL
 
-Write-Host "Starting Money Me App..." -ForegroundColor Green
+Write-Host "Starting Money Me App with Local PostgreSQL..." -ForegroundColor Green
 Write-Host ""
 
-Write-Host "Step 1: Stopping any existing processes and containers..." -ForegroundColor Yellow
-Write-Host "Stopping any local processes on ports 3000 and 4200..."
-
-# Stop processes on ports 3000 and 4200
-$ports = @(3000, 4200)
-foreach ($port in $ports) {
-    $processes = Get-NetTCPConnection -LocalPort $port -ErrorAction SilentlyContinue | Where-Object {$_.State -eq "Listen"}
-    foreach ($process in $processes) {
-        try {
-            Stop-Process -Id $process.OwningProcess -Force -ErrorAction SilentlyContinue
-            Write-Host "Stopped process on port $port" -ForegroundColor Yellow
-        } catch {
-            Write-Host "Could not stop process on port $port" -ForegroundColor Red
-        }
-    }
-}
-
-Write-Host "Stopping any existing Docker containers..."
-docker-compose down 2>$null
-Write-Host "Cleanup complete." -ForegroundColor Green
-Write-Host ""
-
-Write-Host "Step 2: Starting PostgreSQL database and backend via Docker..." -ForegroundColor Yellow
-
-# Check if Docker is ready
-Write-Host "Checking if Docker is ready..." -ForegroundColor Cyan
-do {
-    Start-Sleep -Seconds 2
-    try {
-        $dockerReady = docker version 2>$null
-        if (-not $dockerReady) {
-            Write-Host "Docker not ready yet, waiting..." -ForegroundColor Yellow
-        }
-    } catch {
-        $dockerReady = $false
-        Write-Host "Docker not ready yet, waiting..." -ForegroundColor Yellow
-    }
-} while (-not $dockerReady)
-Write-Host "Docker is ready!" -ForegroundColor Green
-
-# Start Docker services
-Write-Host "Starting Docker services..." -ForegroundColor Cyan
-docker-compose up -d
-if ($LASTEXITCODE -ne 0) {
-    Write-Host "Failed to start Docker services" -ForegroundColor Red
-    Read-Host "Press Enter to continue"
+Write-Host "Step 1: Checking PostgreSQL service..." -ForegroundColor Yellow
+$pgService = Get-Service -Name "*postgres*" -ErrorAction SilentlyContinue
+if (-not $pgService) {
+    Write-Host "PostgreSQL service not found. Please install PostgreSQL first." -ForegroundColor Red
     exit 1
 }
-Write-Host "Docker services started successfully" -ForegroundColor Green
-Write-Host ""
 
-Write-Host "Step 3: Waiting for database to be healthy..." -ForegroundColor Yellow
-Write-Host "Waiting for PostgreSQL to be ready..."
-do {
-    Start-Sleep -Seconds 2
-    $dbStatus = docker ps --format "table {{.Names}}\t{{.Status}}" 2>$null | Select-String "money-me-postgres" | Select-String "healthy"
-} while (-not $dbStatus)
-Write-Host "Database is healthy and ready!" -ForegroundColor Green
-Write-Host ""
+if ($pgService.Status -ne "Running") {
+    Write-Host "Starting PostgreSQL service..." -ForegroundColor Yellow
+    Start-Service $pgService
+    Start-Sleep -Seconds 5
+}
+Write-Host "PostgreSQL service is running." -ForegroundColor Green
+
+Write-Host "Step 2: Testing database connection..." -ForegroundColor Yellow
+try {
+    $env:PGPASSWORD = "password123"
+    $testResult = psql -U postgres_admin -h localhost -d money_me_app -c "SELECT COUNT(*) FROM transactions;" 2>&1
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host "Database connection successful!" -ForegroundColor Green
+    } else {
+        Write-Host "Database connection failed. Please run setup-local-postgres.ps1 first." -ForegroundColor Red
+        Write-Host "Press Enter to continue anyway..."
+        Read-Host
+    }
+} catch {
+    Write-Host "Database connection failed. Please run setup-local-postgres.ps1 first." -ForegroundColor Red
+    Write-Host "Press Enter to continue anyway..."
+    Read-Host
+}
+
+Write-Host "Step 3: Starting backend API..." -ForegroundColor Yellow
+Write-Host "Starting backend in background..."
+
+# Start backend in background
+$backendJob = Start-Job -ScriptBlock { 
+    Set-Location $using:PWD
+    cd backend
+    npm run dev
+} -Name "BackendAPI"
+
+Write-Host "Backend startup initiated." -ForegroundColor Green
 
 Write-Host "Step 4: Waiting for backend to be ready..." -ForegroundColor Yellow
 Write-Host "Waiting for backend API to respond..."
@@ -76,20 +59,17 @@ do {
     }
 } while (-not $backendReady)
 Write-Host "Backend API is ready!" -ForegroundColor Green
-Write-Host ""
 
 Write-Host "Step 5: Starting Angular frontend..." -ForegroundColor Yellow
 Write-Host "Starting frontend development server..."
-Write-Host "Note: Starting ng serve in background..." -ForegroundColor Cyan
 
-# Start ng serve in background using Start-Job for better control
+# Start ng serve in background
 $frontendJob = Start-Job -ScriptBlock { 
     Set-Location $using:PWD
-    ng serve
+    ng serve --port 4200
 } -Name "AngularFrontend"
 
 Write-Host "Frontend startup initiated." -ForegroundColor Green
-Write-Host ""
 
 Write-Host "Step 6: Waiting for frontend to be ready..." -ForegroundColor Yellow
 Write-Host "Waiting for frontend to be accessible..."
@@ -129,19 +109,20 @@ do {
 
 Write-Host ""
 
-Write-Host ""
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host "Money Me App is now fully running!" -ForegroundColor Green
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "Services Status:" -ForegroundColor White
-Write-Host "Database: localhost:5432 (PostgreSQL)" -ForegroundColor Green
+Write-Host "Database: localhost:5432 (Local PostgreSQL)" -ForegroundColor Green
 Write-Host "Backend:  http://localhost:3000 (Express API)" -ForegroundColor Green
 Write-Host "Frontend: http://localhost:4200 (Angular)" -ForegroundColor Green
 Write-Host ""
 Write-Host "You can now:" -ForegroundColor White
 Write-Host "- View the app at: http://localhost:4200" -ForegroundColor Cyan
 Write-Host "- Test the API at: http://localhost:3000/api/health" -ForegroundColor Cyan
+Write-Host ""
+Write-Host "To stop all services, run: stop-app-local.ps1" -ForegroundColor Yellow
 Write-Host ""
 Write-Host "Press Enter to close this window..."
 Read-Host

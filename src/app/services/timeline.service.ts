@@ -23,35 +23,27 @@ export class TimelineService {
     const today = new Date();
     const endDate = this.recurrenceService.getProjectionEndDate(projectionInterval);
 
+    console.log('TimelineService: Processing transactions:', transactions.length);
+    console.log('TimelineService: Current balance:', currentBalance);
 
-
-    // Generate timeline with recurring transactions
-    const currentDate = new Date(today);
-    while (currentDate <= endDate) {
-      // Add recurring transactions for this date
-      const dailyTransactions = transactions
-        .filter(t => t.isRecurring && this.recurrenceService.shouldOccurOnDate(t, currentDate));
+    // Use the transaction dates that were already created by TransactionService
+    transactions.forEach(transaction => {
+      console.log(`TimelineService: Adding transaction ${transaction.description} on ${transaction.date.toDateString()}`);
       
-      if (dailyTransactions.length > 0) {
-        // Date has transactions
-      }
+      const amount = transaction.type === TransactionType.INCOME ? transaction.amount : -transaction.amount;
+      runningBalance += amount;
       
-      dailyTransactions.forEach(transaction => {
-        const amount = transaction.type === TransactionType.INCOME ? transaction.amount : -transaction.amount;
-        runningBalance += amount;
-        
-        timeline.push({
-          ...transaction,
-          date: new Date(currentDate),
-          balance: runningBalance
-        } as TimelineItem);
-      });
-
-      currentDate.setDate(currentDate.getDate() + 1);
-    }
+      timeline.push({
+        ...transaction,
+        date: new Date(transaction.date), // Use the transaction's specific date
+        balance: runningBalance
+      } as TimelineItem);
+    });
 
     // Sort timeline by date
     timeline.sort((a, b) => a.date.getTime() - b.date.getTime());
+    
+    console.log('TimelineService: Total timeline items:', timeline.length);
     
     return timeline;
   }

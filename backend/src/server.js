@@ -40,15 +40,23 @@ app.get('/api/health', async (req, res) => {
 // Import database functions
 const { query } = require('./database/connection');
 
-// Get all transactions
+// Get all transactions with optional filtering
 app.get('/api/transactions', async (req, res) => {
   try {
-    const result = await query(`
-      SELECT t.id, t.description, t.amount, t.type, t.date, c.name as category
+    const { is_recurring } = req.query;
+    let sql = `
+      SELECT t.id, t.description, t.amount, t.type, t.date, t.frequency, t.monthly_options, t.is_recurring, c.name as category
       FROM transactions t
       LEFT JOIN categories c ON t.category_id = c.id
-      ORDER BY t.date DESC
-    `);
+    `;
+    
+    if (is_recurring !== undefined) {
+      sql += ` WHERE t.is_recurring = ${is_recurring === 'true' ? 'TRUE' : 'FALSE'}`;
+    }
+    
+    sql += ` ORDER BY t.date DESC`;
+    
+    const result = await query(sql);
     res.json(result.rows);
   } catch (error) {
     console.error('Error fetching transactions:', error);
@@ -67,14 +75,15 @@ app.get('/api/categories', async (req, res) => {
   }
 });
 
-// Get recurring transactions
+// Legacy endpoint for backward compatibility (redirects to new structure)
 app.get('/api/recurring-transactions', async (req, res) => {
   try {
     const result = await query(`
-      SELECT r.id, r.description, r.amount, r.frequency, r.start_date, c.name as category
-      FROM recurring_transactions r
-      LEFT JOIN categories c ON r.category_id = c.id
-      ORDER BY r.frequency, r.amount DESC
+      SELECT t.id, t.description, t.amount, t.frequency, t.date as start_date, c.name as category
+      FROM transactions t
+      LEFT JOIN categories c ON t.category_id = c.id
+      WHERE t.is_recurring = TRUE
+      ORDER BY t.frequency, t.amount DESC
     `);
     res.json(result.rows);
   } catch (error) {
