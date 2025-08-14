@@ -47,7 +47,6 @@ export class CalendarDataService {
     
     // Ensure the timeline has content before proceeding
     if (filteredTimeline.length === 0) {
-      console.log('⚠️ Timeline is empty after generation, restoring base timeline');
       return tempTimeline;
     }
     
@@ -169,7 +168,7 @@ export class CalendarDataService {
     });
     
     // Create month objects for the visible range
-    let currentMonth = new Date(startMonth);
+    const currentMonth = new Date(startMonth);
     while (currentMonth <= endMonth) {
       const monthKey = `${currentMonth.getFullYear()}-${currentMonth.getMonth()}`;
       const monthTransactions = monthGroups.get(monthKey) || [];

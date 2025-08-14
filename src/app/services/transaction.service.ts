@@ -36,7 +36,6 @@ export class TransactionService {
   private loadAllTransactions(): void {
     this.apiService.get<any[]>('/transactions').pipe(
       tap(data => {
-        console.log('📊 Raw API response:', data);
         this.allTransactions = this.convertApiDataToTransactions(data);
         this.allTransactionsSubject.next(this.allTransactions);
       }),
@@ -52,13 +51,10 @@ export class TransactionService {
       const amount = parseFloat(item.amount);
       const type = item.type === 'income' ? TransactionType.INCOME : TransactionType.EXPENSE;
       
-      console.log(`🔄 Converting API data: ${item.description}, amount: ${item.amount}, type: ${item.type} -> ${type}`);
-      
       // Handle timezone conversion properly
       // The database stores dates as UTC, but we want to preserve the local date
       const dbDate = new Date(item.date);
       const localDate = new Date(dbDate.getFullYear(), dbDate.getMonth(), dbDate.getDate(), 12, 0, 0, 0);
-      console.log(`📅 Date conversion: ${item.date} -> ${dbDate.toDateString()} -> ${localDate.toDateString()}`);
       
       return {
         id: item.id.toString(),
@@ -79,7 +75,6 @@ export class TransactionService {
   private loadRecurringTransactions(): void {
     this.apiService.get<any[]>('/transactions?is_recurring=true').pipe(
       tap(data => {
-        console.log('Loaded recurring transactions from API:', data);
         this.recurringTransactionsSubject.next(data);
         // Convert recurring transactions to display format for timeline view
         this.convertRecurringToTransactions(data);
@@ -97,19 +92,13 @@ export class TransactionService {
     const currentMonth = today.getMonth();
     const currentYear = today.getFullYear();
     
-    console.log('Converting recurring data:', recurringData);
-    console.log('Current month/year:', currentMonth, currentYear);
-    
     recurringData.forEach(recurring => {
       const amount = parseFloat(recurring.amount);
-      console.log(`Processing: ${recurring.description} (${recurring.frequency})`);
       
       if (recurring.frequency === 'monthly' && recurring.monthly_options?.dayOfMonth) {
         // Monthly transactions with specific day of month
         const dayOfMonth = recurring.monthly_options.dayOfMonth;
         const transactionDate = new Date(currentYear, currentMonth, dayOfMonth);
-        
-        console.log(`  Monthly transaction on day ${dayOfMonth}: ${transactionDate.toDateString()}`);
         
         // Always add monthly transactions for the current month (ignore start_date)
         const transaction: Transaction = {
@@ -126,11 +115,9 @@ export class TransactionService {
           }
         };
         transactions.push(transaction);
-        console.log(`  Added monthly transaction: ${recurring.description} on ${transactionDate.toDateString()}`);
         
       } else if (recurring.frequency === 'weekly') {
         // Weekly transactions - show on multiple days
-        console.log(`  Weekly transaction - creating 4 instances`);
         for (let week = 0; week < 4; week++) {
           const transactionDate = new Date(currentYear, currentMonth, 1 + (week * 7));
           
@@ -148,11 +135,9 @@ export class TransactionService {
             }
           };
           transactions.push(transaction);
-          console.log(`  Added weekly transaction: ${recurring.description} on ${transactionDate.toDateString()}`);
         }
       } else if (recurring.frequency === 'bi-weekly') {
         // Bi-weekly transactions - show on alternating weeks
-        console.log(`  Bi-weekly transaction - creating 2 instances`);
         for (let week = 0; week < 2; week++) {
           const transactionDate = new Date(currentYear, currentMonth, 1 + (week * 14));
           
@@ -170,17 +155,14 @@ export class TransactionService {
             }
           };
           transactions.push(transaction);
-          console.log(`  Added bi-weekly transaction: ${recurring.description} on ${transactionDate.toDateString()}`);
         }
       } else {
-        console.log(`  Skipping transaction: ${recurring.description} - frequency: ${recurring.frequency}, monthly_options:`, recurring.monthly_options);
+        // Skip unsupported frequency
       }
     });
     
     // Sort transactions by date
     transactions.sort((a, b) => a.date.getTime() - b.date.getTime());
-    
-    console.log(`Total transactions created: ${transactions.length}`);
     this.transactionsSubject.next(transactions);
   }
 
@@ -216,6 +198,19 @@ export class TransactionService {
 
   updateTransactionInDatabase(id: string, updates: Partial<Transaction>): Observable<any> {
     return this.apiService.put<any>(`/transactions/${id}`, updates).pipe(
+      tap(() => {
+        // Refresh the transactions list after update
+        this.loadAllTransactions();
+      }),
+      catchError(error => {
+        console.error('Error updating transaction:', error);
+        return of(null);
+      })
+    );
+  }
+
+  updateFullTransaction(transaction: Transaction): Observable<any> {
+    return this.apiService.put<any>(`/transactions/${transaction.id}`, transaction).pipe(
       tap(() => {
         // Refresh the transactions list after update
         this.loadAllTransactions();

@@ -24,6 +24,10 @@ export interface Transaction {
     category: string;
     amount: number;
   };
+  editPosition?: {
+    x: number;
+    y: number;
+  };
 }
 
 export interface ProjectionPoint {

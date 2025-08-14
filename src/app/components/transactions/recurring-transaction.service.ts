@@ -241,7 +241,7 @@ export class RecurringTransactionService {
         const monthEnd = new Date(year, month + 1, 0);
         
         // Calculate the first weekly occurrence in or after this month
-        let currentDate = new Date(recurringStartDate);
+        const currentDate = new Date(recurringStartDate);
         while (currentDate < monthStart) {
           currentDate.setDate(currentDate.getDate() + 7);
         }
@@ -259,7 +259,7 @@ export class RecurringTransactionService {
         const biWeekMonthEnd = new Date(year, month + 1, 0);
         
         // Calculate the first bi-weekly occurrence in or after this month
-        let biWeekCurrentDate = new Date(recurringStartDate);
+        const biWeekCurrentDate = new Date(recurringStartDate);
         while (biWeekCurrentDate < biWeekMonthStart) {
           biWeekCurrentDate.setDate(biWeekCurrentDate.getDate() + 14);
         }
@@ -306,7 +306,7 @@ export class RecurringTransactionService {
         const monthEnd = new Date(year, month + 1, 0);
         
         // Find the first occurrence in or after this month
-        let currentDate = new Date(startDate);
+        const currentDate = new Date(startDate);
         
         // If we're before the month, advance to the first occurrence in this month
         while (currentDate < monthStart) {
@@ -335,7 +335,7 @@ export class RecurringTransactionService {
         const biWeekMonthEnd = new Date(year, month + 1, 0);
         
         // Find the first occurrence in or after this month
-        let biWeekCurrentDate = new Date(biWeekStartDate);
+        const biWeekCurrentDate = new Date(biWeekStartDate);
         
         // If we're before the month, advance to the first occurrence in this month
         while (biWeekCurrentDate < biWeekMonthStart) {

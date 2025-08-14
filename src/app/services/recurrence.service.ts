@@ -47,7 +47,7 @@ export class RecurrenceService {
         // Check if this should occur on the last weekday of the month
         if (pattern.lastWeekdayOfMonth) {
           const lastDayOfMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0);
-          let lastWeekday = new Date(lastDayOfMonth);
+          const lastWeekday = new Date(lastDayOfMonth);
           
           // Find the last weekday (Monday-Friday) of the month
           while (lastWeekday.getDay() === 0 || lastWeekday.getDay() === 6) {

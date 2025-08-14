@@ -20,7 +20,6 @@ export class CalendarNavigationService {
    */
   navigateToPreviousMonth(currentViewMonth: Date): Date {
     const newMonth = new Date(currentViewMonth.getFullYear(), currentViewMonth.getMonth() - 1, 1);
-    console.log(`Navigating to previous month: ${newMonth.toLocaleDateString()}`);
     return newMonth;
   }
 
@@ -29,7 +28,6 @@ export class CalendarNavigationService {
    */
   navigateToNextMonth(currentViewMonth: Date): Date {
     const newMonth = new Date(currentViewMonth.getFullYear(), currentViewMonth.getMonth() + 1, 1);
-    console.log(`Navigating to next month: ${newMonth.toLocaleDateString()}`);
     return newMonth;
   }
 
@@ -38,7 +36,6 @@ export class CalendarNavigationService {
    */
   goToCurrentMonth(): Date {
     const currentMonth = new Date();
-    console.log(`Going to current month: ${currentMonth.toLocaleDateString()}`);
     return currentMonth;
   }
 
@@ -47,7 +44,6 @@ export class CalendarNavigationService {
    */
   selectMonth(currentViewMonth: Date, monthValue: number): Date {
     const newMonth = new Date(currentViewMonth.getFullYear(), monthValue, 1);
-    console.log(`Selecting month: ${newMonth.toLocaleDateString()}`);
     return newMonth;
   }
 

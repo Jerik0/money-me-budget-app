@@ -140,19 +140,12 @@ export class TransactionsComponent implements OnInit {
       }
     };
 
-    console.log('📤 Creating transaction object:', {
-      description: transaction.description,
-      amount: transaction.amount,
-      type: transaction.type,
-      date: transaction.date,
-      category: transaction.category
-    });
+
 
     // Save the transaction to the database first
     this.transactionService.addTransactionToDatabase(transaction).subscribe({
       next: (result) => {
         if (result) {
-          console.log(`✅ Transaction saved to database: ${transaction.description}`);
           
           // Save user preferences for next time
           this.preferencesService.updateLastTransactionType(transaction.type);
@@ -171,14 +164,11 @@ export class TransactionsComponent implements OnInit {
             
             // Wait a moment for the refresh to complete, then recalculate timeline
             setTimeout(() => {
-              console.log('🔄 Starting timeline recalculation...');
               this.calculateTimeline();
               this.calendarDataService.clearCachePreserveStartDate();
-              console.log(`✅ Timeline recalculated after database refresh`);
               
               // Force a manual refresh of the calendar data
               setTimeout(() => {
-                console.log('🔄 Forcing calendar data refresh...');
                 this.refreshCalendarData();
               }, 100);
             }, 1000);
@@ -188,7 +178,7 @@ export class TransactionsComponent implements OnInit {
             this.showAddForm = false;
             this.saveSuccess = false;
             
-            console.log(`Added new recurring transaction: ${transaction.description} on ${transaction.date.toDateString()}`);
+
           }, 1500); // Show success for 1.5 seconds
         }
       },
@@ -335,13 +325,11 @@ export class TransactionsComponent implements OnInit {
     // Subscribe to transaction service
     this.transactionService.getTransactions().subscribe(transactions => {
       if (transactions && transactions.length > 0) {
-        console.log('Loaded real transactions from service:', transactions);
         this.transactions = transactions;
         this.allTransactions = transactions; // Assign to allTransactions
         // Calculate timeline to populate the timeline array for filtering
         this.calculateTimeline();
       } else {
-        console.log('No transactions from service, loading from storage');
         this.loadTransactions();
       }
     });
@@ -354,8 +342,7 @@ export class TransactionsComponent implements OnInit {
 
     // Subscribe to recurring transactions to see what's available
     this.transactionService.getRecurringTransactions().subscribe(recurringTransactions => {
-      console.log('Available recurring transactions:', recurringTransactions);
-      console.log('Recurring transactions count:', recurringTransactions.length);
+
     });
 
     // Mark component as initialized
@@ -382,6 +369,87 @@ export class TransactionsComponent implements OnInit {
     // Select all text when the input is clicked
     if (this.balanceInput) {
       this.balanceInput.nativeElement.select();
+    }
+  }
+
+  // Inline editing methods
+  startInlineEdit(transaction: Transaction, field: 'description' | 'amount' | 'category', event: MouseEvent) {
+    // Store original values
+    transaction.originalValues = {
+      description: transaction.description,
+      category: transaction.category,
+      amount: transaction.amount
+    };
+    
+    // Clear all editing states first
+    transaction.isEditing = false;
+    transaction.isEditingAmount = false;
+    transaction.isEditingCategory = false;
+    
+    // Set specific editing state
+    if (field === 'description') transaction.isEditing = true;
+    if (field === 'amount') transaction.isEditingAmount = true;
+    if (field === 'category') transaction.isEditingCategory = true;
+    
+    // Store click position for positioning the container
+    transaction.editPosition = {
+      x: event.clientX,
+      y: event.clientY
+    };
+    
+    // Focus the input after a short delay
+    setTimeout(() => {
+      const inputElement = document.querySelector(`[data-edit-field="${field}"][data-transaction-id="${transaction.id}"]`) as HTMLInputElement;
+      if (inputElement) {
+        inputElement.focus();
+        inputElement.select();
+      }
+    }, 10);
+  }
+
+  saveInlineEdit(transaction: Transaction) {
+    // Update the transaction in the database
+    this.transactionService.updateFullTransaction(transaction).subscribe({
+      next: (updatedTransaction) => {
+        this.cancelInlineEdit(transaction);
+        this.calculateTimeline(); // Refresh timeline
+      },
+      error: (error) => {
+        console.error('❌ Failed to update transaction:', error);
+        // Revert to original values on error
+        if (transaction.originalValues) {
+          transaction.description = transaction.originalValues.description;
+          transaction.category = transaction.originalValues.category;
+          transaction.amount = transaction.originalValues.amount;
+        }
+        this.cancelInlineEdit(transaction);
+      }
+    });
+  }
+
+  cancelInlineEdit(transaction: Transaction) {
+    // Revert to original values
+    if (transaction.originalValues) {
+      transaction.description = transaction.originalValues.description;
+      transaction.category = transaction.originalValues.category;
+      transaction.amount = transaction.originalValues.amount;
+    }
+    
+    // Clear editing state
+    transaction.isEditing = false;
+    transaction.isEditingAmount = false;
+    transaction.isEditingCategory = false;
+    transaction.originalValues = undefined;
+    transaction.editPosition = undefined;
+  }
+
+  onInlineEditKeydown(event: KeyboardEvent, transaction: Transaction) {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      this.saveInlineEdit(transaction);
+    } else if (event.key === 'Escape') {
+      event.preventDefault();
+      this.cancelInlineEdit(transaction);
     }
   }
 
@@ -512,7 +580,9 @@ export class TransactionsComponent implements OnInit {
   }
 
   toggleViewMode() {
+    const oldMode = this.viewMode;
     this.viewMode = this.viewMode === 'grid' ? 'list' : 'grid';
+    console.log('🔄 View mode changed from', oldMode, 'to', this.viewMode);
     // No additional calculations needed - view switching is now instant
   }
 
@@ -604,7 +674,6 @@ export class TransactionsComponent implements OnInit {
   }
 
   calculateTimeline() {
-    console.log(`🔄 calculateTimeline called with ${this.allTransactions.length} transactions from database`);
     
     // Use the TimelineService to calculate the complete timeline with recurring transactions
     this.timelineService.calculateTimelineWithRecurring(
@@ -625,33 +694,17 @@ export class TransactionsComponent implements OnInit {
         this.transactionService.saveTransactions(this.allTransactions);
         this.lowestProjections = this.timelineService.updateLowestProjections(this.timeline, this.currentBalance, this.projectionInterval);
         
-        console.log(`📊 Final timeline has ${this.timeline.length} items`);
-        
-        // Debug: Log the first transaction in the timeline
-        if (this.timeline.length > 0) {
-          const firstTransaction = this.timeline.find(item => this.isTransaction(item));
-          if (firstTransaction) {
-            console.log('🔍 Timeline Transaction Debug:', {
-              description: firstTransaction.description,
-              type: firstTransaction.type,
-              amount: firstTransaction.amount,
-              TransactionType_INCOME: TransactionType.INCOME,
-              TransactionType_EXPENSE: TransactionType.EXPENSE
-            });
-          }
-        }
+
       }
     );
   }
 
   deleteTransaction(id: string) {
-    console.log(`🗑️ Deleting transaction with ID: ${id}`);
     
     // Call the backend DELETE endpoint
     this.transactionService.deleteTransactionFromDatabase(id).subscribe({
       next: (result) => {
         if (result) {
-          console.log(`✅ Transaction deleted from database: ${id}`);
           
           // Force a complete refresh of all data from the database
           this.transactionService.refreshTransactions();
@@ -660,7 +713,6 @@ export class TransactionsComponent implements OnInit {
           setTimeout(() => {
             this.calculateTimeline();
             this.calendarDataService.clearCachePreserveStartDate();
-            console.log(`🔄 Timeline recalculated after database deletion`);
           }, 500);
         }
       },
@@ -694,7 +746,6 @@ export class TransactionsComponent implements OnInit {
   }
 
   onChartClick(clickedDate: Date) {
-    console.log('Chart clicked on date:', clickedDate);
     
     // Set the current view month to the clicked date (not just the 1st of the month)
     this.currentViewMonth = new Date(clickedDate);
@@ -718,14 +769,17 @@ export class TransactionsComponent implements OnInit {
       }
     }, 100);
     
-    console.log('Updated current view month to:', this.currentViewMonth);
-    console.log('Set specific start date to:', clickedDate);
-    console.log('Switched to grid view to show calendar');
+
   }
 
   getGroupedTransactions(): { date: Date, transactions: TimelineItem[] }[] {
     const grouped = this.calendarDataService.getGroupedTransactions(this.timeline, this.currentViewMonth);
     return grouped;
+  }
+
+  getTotalTransactionCount(): number {
+    const groups = this.getGroupedTransactions();
+    return groups.reduce((sum, group) => sum + group.transactions.length, 0);
   }
 
   goToCurrentMonth(): void {
@@ -740,7 +794,6 @@ export class TransactionsComponent implements OnInit {
    * Force refresh of calendar data
    */
   refreshCalendarData(): void {
-    console.log('🔄 Forcing calendar data refresh...');
     // Clear cache but preserve specific start date
     this.calendarDataService.clearCachePreserveStartDate();
     this.calculateTimeline();

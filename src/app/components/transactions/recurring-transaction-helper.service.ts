@@ -67,7 +67,7 @@ export class RecurringTransactionHelperService {
    * Calculates the first weekly occurrence in or after a given month
    */
   calculateFirstWeeklyOccurrence(startDate: Date, monthStart: Date): Date {
-    let currentDate = new Date(startDate);
+    const currentDate = new Date(startDate);
     while (currentDate < monthStart) {
       currentDate.setDate(currentDate.getDate() + 7);
     }
@@ -122,7 +122,7 @@ export class RecurringTransactionHelperService {
     const dates: Date[] = [];
     
     // Find first occurrence in this month
-    let currentDate = this.calculateFirstWeeklyOccurrence(recurringStartDate, monthStart);
+    const currentDate = this.calculateFirstWeeklyOccurrence(recurringStartDate, monthStart);
     
     // Only generate if first occurrence falls within month boundaries
     if (currentDate <= monthEnd && currentDate >= monthStart && currentDate >= recurringStartDate) {
@@ -158,10 +158,7 @@ export class RecurringTransactionHelperService {
     month: number, 
     dates: Date[]
   ): void {
-    console.log(`Month ${year}-${month + 1}: ${description} (${frequency}) - ${dates.length} occurrences`);
-    dates.forEach(date => {
-      console.log(`  - ${date.toLocaleDateString()}`);
-    });
+
   }
 
   /**
@@ -170,14 +167,14 @@ export class RecurringTransactionHelperService {
   logWeeklyTransaction(description: string, date: Date): void {
     const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     const dayName = dayNames[date.getDay()];
-    console.log(`Adding weekly transaction: ${description} on ${date.toLocaleDateString()} (${dayName})`);
+    
   }
 
   /**
    * Logs monthly transaction details
    */
   logMonthlyTransaction(description: string, year: number, month: number, day: number): void {
-    console.log(`Monthly ${description}: Generated for ${year}-${month + 1}-${day}`);
+    
   }
 
   /**
@@ -192,6 +189,6 @@ export class RecurringTransactionHelperService {
     monthStart: Date, 
     monthEnd: Date
   ): void {
-    console.log(`Weekly ${description}: Month ${year}-${month + 1} - ${shouldGenerate ? 'WILL generate' : 'WILL NOT generate'} (first occurrence: ${firstOccurrence.toLocaleDateString()}, month: ${monthStart.toLocaleDateString()} to ${monthEnd.toLocaleDateString()})`);
+
   }
 }

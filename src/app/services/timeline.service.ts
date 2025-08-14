@@ -27,12 +27,11 @@ export class TimelineService {
     const today = new Date();
     const endDate = this.recurrenceService.getProjectionEndDate(projectionInterval);
 
-    console.log('TimelineService: Processing transactions:', transactions.length);
-    console.log('TimelineService: Current balance:', currentBalance);
+
 
     // Use the transaction dates that were already created by TransactionService
     transactions.forEach(transaction => {
-      console.log(`TimelineService: Adding transaction ${transaction.description} on ${transaction.date.toDateString()}`);
+  
       
       // Calculate balance impact (income adds to balance, expenses subtract from balance)
       const balanceImpact = transaction.type === TransactionType.INCOME ? transaction.amount : -transaction.amount;
@@ -48,7 +47,7 @@ export class TimelineService {
     // Sort timeline by date
     timeline.sort((a, b) => a.date.getTime() - b.date.getTime());
     
-    console.log('TimelineService: Total timeline items:', timeline.length);
+
     
     return timeline;
   }
@@ -171,13 +170,8 @@ export class TimelineService {
     projectionInterval: ProjectionInterval,
     onComplete?: (timeline: (TimelineItem | ProjectionPoint)[]) => void
   ): void {
-    console.log('🔄 Starting timeline calculation...');
-    console.log(`Current transactions count: ${transactions.length}`);
-    console.log(`Current balance: ${currentBalance}`);
-
     // Step 1: Create base timeline from existing transactions
     const baseTimeline = this.createBaseTimeline(transactions, currentBalance, projectionInterval);
-    console.log(`Base timeline created with ${baseTimeline.length} items`);
 
     // Step 2: Start with non-recurring transactions from base timeline (preserving their balance calculations)
     const nonRecurringTransactions = baseTimeline.filter(item => 
@@ -236,16 +230,11 @@ export class TimelineService {
   ): void {
     // Ensure the timeline has content before proceeding
     if (timeline.length === 0) {
-      console.log('⚠️ Timeline is empty after generation, restoring base timeline');
       timeline = [...baseTimeline];
     }
 
     // Ensure proper balance calculations for the entire timeline
     this.ensureTimelineBalances(timeline, currentBalance);
-
-    console.log('✅ Timeline calculation complete!');
-    console.log('Timeline calculated with recurring transactions:', timeline);
-    console.log('Timeline length:', timeline.length);
 
     // Call completion callback if provided
     if (onComplete) {
@@ -271,6 +260,6 @@ export class TimelineService {
       }
     });
     
-    console.log(`Ensured balance calculations for ${timeline.length} timeline items. Final balance: ${runningBalance}`);
+
   }
 }

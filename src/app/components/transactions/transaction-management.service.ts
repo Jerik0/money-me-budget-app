@@ -121,7 +121,6 @@ export class TransactionManagementService {
   deleteTransaction(transactionId: string, onComplete?: () => void): void {
     this.transactionService.deleteTransactionFromDatabase(transactionId).subscribe({
       next: () => {
-        console.log(`Transaction ${transactionId} deleted successfully`);
         if (onComplete) {
           onComplete();
         }
@@ -138,7 +137,6 @@ export class TransactionManagementService {
   addNewCategory(categoryName: string, categoryOptions: any[]): void {
     if (categoryName && !categoryOptions.find(option => option.value === categoryName)) {
       categoryOptions.push({ value: categoryName, label: categoryName });
-      console.log(`Added new category: ${categoryName}`);
     }
   }
 

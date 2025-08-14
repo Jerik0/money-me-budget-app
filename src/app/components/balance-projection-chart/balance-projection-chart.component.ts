@@ -180,7 +180,6 @@ export class BalanceProjectionChartComponent implements AfterViewInit, OnDestroy
               const dataPoint = this.chart?.data.datasets[0].data[element.index];
               if (dataPoint && typeof dataPoint === 'object' && 'x' in dataPoint) {
                 const clickedDate = new Date(dataPoint.x);
-                console.log('Chart clicked on date:', clickedDate);
                 this.chartClick.emit(clickedDate);
               }
             }
