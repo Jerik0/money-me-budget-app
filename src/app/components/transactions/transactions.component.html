@@ -9,7 +9,7 @@
     <div class="flex items-center space-x-2">
      <span class="text-lg font-medium text-gray-700 dark:text-chatgpt-textSecondary">Current Balance:</span>
      <button
-      (click)="isEditingBalance = !isEditingBalance"
+      (click)="startEditingBalance()"
       class="text-2xl font-bold text-teal-600 dark:text-teal-400 hover:text-teal-700 dark:hover:text-teal-300 cursor-pointer">
       <span *ngIf="!isEditingBalance">${{ currentBalance | number:'1.2-2' }}</span>
       <div *ngIf="isEditingBalance" class="flex items-center space-x-2">
@@ -22,6 +22,7 @@
          (blur)="updateBalance(); isEditingBalance = false"
          (keydown.enter)="updateBalance(); isEditingBalance = false"
          (keydown.escape)="isEditingBalance = false"
+         (click)="selectBalanceInput()"
          class="w-36 pl-6 pr-3 py-1 text-xl font-bold border border-teal-300 dark:border-teal-600 rounded-md bg-white dark:bg-gray-800 text-teal-600 dark:text-teal-400 focus:ring-2 focus:ring-teal-500 focus:border-transparent "
          placeholder="0.00"
          step="0.01"

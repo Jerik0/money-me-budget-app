@@ -35,6 +35,7 @@ import {
 export class TransactionsComponent implements OnInit {
   @ViewChild('descriptionInput') descriptionInput!: ElementRef;
   @ViewChild('calendarSection') calendarSection!: ElementRef;
+  @ViewChild('balanceInput') balanceInput!: ElementRef;
 
   currentBalance: number = 0;
   lastBalanceUpdate: Date = new Date();
@@ -364,6 +365,24 @@ export class TransactionsComponent implements OnInit {
   updateBalance() {
     this.lastBalanceUpdate = new Date();
     this.calculateTimeline();
+  }
+
+  startEditingBalance() {
+    this.isEditingBalance = true;
+    // Use setTimeout to ensure the input is rendered before focusing
+    setTimeout(() => {
+      if (this.balanceInput) {
+        this.balanceInput.nativeElement.focus();
+        this.balanceInput.nativeElement.select();
+      }
+    }, 0);
+  }
+
+  selectBalanceInput() {
+    // Select all text when the input is clicked
+    if (this.balanceInput) {
+      this.balanceInput.nativeElement.select();
+    }
   }
 
   toggleAddForm() {
