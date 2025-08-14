@@ -131,4 +131,29 @@ export class TimelineService {
   isProjectionPoint(item: any): item is ProjectionPoint {
     return 'type' in item && !('amount' in item);
   }
+
+  /**
+   * Sorts timeline by date
+   */
+  sortTimelineByDate(timeline: (TimelineItem | ProjectionPoint)[]): void {
+    timeline.sort((a, b) => a.date.getTime() - b.date.getTime());
+  }
+
+  /**
+   * Updates lowest projections for the given timeline
+   */
+  updateLowestProjections(
+    timeline: (TimelineItem | ProjectionPoint)[],
+    currentBalance: number,
+    projectionInterval: ProjectionInterval
+  ): ProjectionPoint[] {
+    return this.calculateLowestProjections(timeline, currentBalance, projectionInterval);
+  }
+
+  /**
+   * Updates grouped transactions for the given timeline
+   */
+  updateGroupedTransactions(timeline: (TimelineItem | ProjectionPoint)[]): { date: Date, transactions: TimelineItem[] }[] {
+    return this.groupTransactionsByDate(timeline);
+  }
 }

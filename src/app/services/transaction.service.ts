@@ -236,4 +236,13 @@ export class TransactionService {
   getBalance(): number {
     return this.getTotalIncome() - this.getTotalExpenses();
   }
+
+  /**
+   * Saves transactions to storage
+   */
+  saveTransactions(transactions: Transaction[]): void {
+    // Save to local storage or other persistence mechanism
+    localStorage.setItem('transactions', JSON.stringify(transactions));
+    console.log(`Saved ${transactions.length} transactions to storage`);
+  }
 }

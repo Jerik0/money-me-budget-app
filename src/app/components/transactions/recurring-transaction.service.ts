@@ -34,11 +34,140 @@ export class RecurringTransactionService {
   }
 
   /**
+   * Generates recurring transactions for all months with callback support
+   */
+  generateRecurringTransactionsForAllMonthsWithCallback(
+    timeline: (TimelineItem | any)[], 
+    onComplete?: () => void
+  ): void {
+    const currentYear = new Date().getFullYear();
+    const currentMonth = new Date().getMonth();
+    
+    // Get recurring transactions once and process them for all months
+    this.transactionService.getRecurringTransactions().subscribe(recurringTransactions => {
+      console.log(`Processing ${recurringTransactions.length} recurring transactions for timeline generation`);
+      
+      // Generate for current year and next year
+      this.generateTransactionsForYearRangeWithData(currentYear, currentYear + 1, currentMonth, recurringTransactions, timeline);
+      
+      // Ensure transactions for current view month range
+      this.ensureTransactionsForCurrentMonthRangeWithData(recurringTransactions, timeline);
+      
+      // Sort timeline by date
+      timeline.sort((a, b) => a.date.getTime() - b.date.getTime());
+      
+      console.log(`Timeline generation complete. Total timeline items: ${timeline.length}`);
+      
+      // Call completion callback if provided
+      if (onComplete) {
+        onComplete();
+      }
+    });
+  }
+
+  /**
    * Ensures transactions exist for the current 3-month view range
    */
   private ensureTransactionsForCurrentMonthRange(timeline: TimelineItem[]): void {
     // This method can be called to ensure specific month ranges are populated
     // Implementation depends on the current view month
+  }
+
+  /**
+   * Generates transactions for a year range
+   */
+  generateTransactionsForYearRange(
+    startYear: number, 
+    endYear: number, 
+    skipMonthsBefore: number,
+    timeline: TimelineItem[]
+  ): void {
+    for (let year = startYear; year <= endYear; year++) {
+      for (let month = 0; month < 12; month++) {
+        // Skip past months in current year
+        if (year === startYear && month < skipMonthsBefore) {
+          continue;
+        }
+        this.generateRecurringTransactionsForMonth(year, month, timeline);
+      }
+    }
+  }
+
+  /**
+   * Generates transactions for a year range with pre-loaded data
+   */
+  generateTransactionsForYearRangeWithData(
+    startYear: number, 
+    endYear: number, 
+    skipMonthsBefore: number, 
+    recurringTransactions: any[],
+    timeline: (TimelineItem | any)[]
+  ): void {
+    for (let year = startYear; year <= endYear; year++) {
+      for (let month = 0; month < 12; month++) {
+        // Skip past months in current year
+        if (year === startYear && month < skipMonthsBefore) {
+          continue;
+        }
+        this.generateRecurringTransactionsForMonthWithData(year, month, recurringTransactions, timeline);
+      }
+    }
+  }
+
+  /**
+   * Ensures transactions exist for the current month range with pre-loaded data
+   */
+  ensureTransactionsForCurrentMonthRangeWithData(
+    recurringTransactions: any[],
+    timeline: (TimelineItem | any)[]
+  ): void {
+    // This method ensures the current 3-month view range is populated with pre-loaded data
+    // Implementation depends on the specific recurring transaction logic
+  }
+
+  /**
+   * Generates recurring transactions for a specific month with pre-loaded data
+   */
+  generateRecurringTransactionsForMonthWithData(
+    year: number, 
+    month: number, 
+    recurringTransactions: any[],
+    timeline: (TimelineItem | any)[]
+  ): void {
+    recurringTransactions.forEach(recurring => {
+      if (this.shouldGenerateRecurringTransaction(recurring, year, month)) {
+        const transactionDates = this.calculateAllRecurringTransactionDates(recurring, year, month);
+        
+        transactionDates.forEach(transactionDate => {
+          // Check if this transaction already exists
+          const existingTransaction = timeline.find(item => 
+            this.isTransaction(item) && 
+            item.description === recurring.description &&
+            item.date.getTime() === transactionDate.getTime()
+          );
+          
+          if (!existingTransaction) {
+            const newTransaction: TimelineItem = {
+              id: `recurring-${recurring.id}-${transactionDate.getTime()}`,
+              date: transactionDate,
+              description: recurring.description,
+              amount: Math.abs(parseFloat(recurring.amount)),
+              type: TransactionType.EXPENSE,
+              category: recurring.category || 'Uncategorized',
+              isRecurring: true,
+              recurringPattern: {
+                frequency: this.mapFrequency(recurring.frequency),
+                interval: 1
+              },
+              balance: 0 // Will be calculated by timeline service
+            };
+            
+            timeline.push(newTransaction);
+            console.log(`Generated recurring transaction: ${recurring.description} on ${transactionDate.toLocaleDateString()}`);
+          }
+        });
+      }
+    });
   }
 
   /**

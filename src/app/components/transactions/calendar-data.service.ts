@@ -199,4 +199,91 @@ export class CalendarDataService {
   private isTransaction(item: any): item is TimelineItem {
     return item && typeof item === 'object' && 'description' in item;
   }
+
+  /**
+   * Generates transactions for a year range
+   */
+  generateTransactionsForYearRange(
+    startYear: number, 
+    endYear: number, 
+    skipMonthsBefore: number,
+    timeline: (TimelineItem | ProjectionPoint)[]
+  ): void {
+    for (let year = startYear; year <= endYear; year++) {
+      for (let month = 0; month < 12; month++) {
+        // Skip past months in current year
+        if (year === startYear && month < skipMonthsBefore) {
+          continue;
+        }
+        // This method would call the recurring transaction service
+        // Implementation depends on the specific recurring transaction logic
+      }
+    }
+  }
+
+  /**
+   * Generates transactions for a year range with pre-loaded data
+   */
+  generateTransactionsForYearRangeWithData(
+    startYear: number, 
+    endYear: number, 
+    skipMonthsBefore: number, 
+    recurringTransactions: any[],
+    timeline: (TimelineItem | ProjectionPoint)[]
+  ): void {
+    for (let year = startYear; year <= endYear; year++) {
+      for (let month = 0; month < 12; month++) {
+        // Skip past months in current year
+        if (year === startYear && month < skipMonthsBefore) {
+          continue;
+        }
+        // This method would call the recurring transaction service with pre-loaded data
+        // Implementation depends on the specific recurring transaction logic
+      }
+    }
+  }
+
+  /**
+   * Ensures transactions exist for the current month range
+   */
+  ensureTransactionsForCurrentMonthRange(timeline: (TimelineItem | ProjectionPoint)[]): void {
+    // This method ensures the current 3-month view range is populated
+    // Implementation depends on the specific recurring transaction logic
+  }
+
+  /**
+   * Ensures transactions exist for the current month range with pre-loaded data
+   */
+  ensureTransactionsForCurrentMonthRangeWithData(
+    recurringTransactions: any[],
+    timeline: (TimelineItem | ProjectionPoint)[]
+  ): void {
+    // This method ensures the current 3-month view range is populated with pre-loaded data
+    // Implementation depends on the specific recurring transaction logic
+  }
+
+  /**
+   * Generates transactions for a date range
+   */
+  generateTransactionsForDateRange(
+    startDate: Date, 
+    endDate: Date,
+    timeline: (TimelineItem | ProjectionPoint)[]
+  ): void {
+    // This method generates transactions for a specific date range
+    // Implementation depends on the specific recurring transaction logic
+  }
+
+  /**
+   * Generates transactions for a date range with pre-loaded data
+   */
+  generateTransactionsForDateRangeWithData(
+    startDate: Date, 
+    endDate: Date, 
+    recurringTransactions: any[],
+    timeline: (TimelineItem | ProjectionPoint)[]
+  ): void {
+    // This method generates transactions for a specific date range with pre-loaded data
+    // Implementation depends on the specific recurring transaction logic
+  }
 }

@@ -11,11 +11,11 @@ import { StorageService } from '../../services/storage.service';
 import { TimelineService } from '../../services/timeline.service';
 import { CustomDropdownComponent } from '../shared/custom-dropdown/custom-dropdown.component';
 import { CustomModalComponent } from '../shared/custom-modal/custom-modal.component';
-import { 
-  MONTH_OPTIONS, 
-  TRANSACTION_TYPE_OPTIONS, 
-  FREQUENCY_OPTIONS, 
-  CATEGORY_OPTIONS, 
+import {
+  MONTH_OPTIONS,
+  TRANSACTION_TYPE_OPTIONS,
+  FREQUENCY_OPTIONS,
+  CATEGORY_OPTIONS,
   CALENDAR_CONFIG,
   RecurringTransactionService,
   RecurringTransactionHelperService,
@@ -374,16 +374,13 @@ export class TransactionsComponent implements OnInit {
     });
   }
 
-  private saveTransactions() {
-    this.storageService.saveTransactions(this.transactions);
-    this.storageService.saveCurrentBalance(this.currentBalance);
-  }
+
 
   calculateTimeline() {
     console.log('🔄 Starting timeline calculation...');
     console.log(`Current transactions count: ${this.transactions.length}`);
     console.log(`Current balance: ${this.currentBalance}`);
-    
+
     // First, get the base timeline from existing transactions
     this.timeline = this.timelineService.calculateTimeline(
       this.transactions,
@@ -405,7 +402,7 @@ export class TransactionsComponent implements OnInit {
 
     // Now generate recurring transactions for all months after starting dates
     // This is now async and will call the completion callback when done
-    this.generateRecurringTransactionsForAllMonths(() => {
+    this.recurringTransactionService.generateRecurringTransactionsForAllMonthsWithCallback(this.timeline, () => {
       // Ensure the timeline has content before proceeding
       if (this.timeline.length === 0) {
         console.log('⚠️ Timeline is empty after generation, restoring base timeline');
@@ -419,9 +416,9 @@ export class TransactionsComponent implements OnInit {
       // Clear the cache when timeline changes
       this.calendarDataService.clearCache();
 
-      this.saveTransactions();
-      this.updateLowestProjections();
-      this.updateGroupedTransactions();
+      this.transactionService.saveTransactions(this.transactions);
+      this.lowestProjections = this.timelineService.updateLowestProjections(this.timeline, this.currentBalance, this.projectionInterval);
+      // updateGroupedTransactions is no longer needed as it's handled by getGroupedTransactions()
     });
   }
 
@@ -434,13 +431,7 @@ export class TransactionsComponent implements OnInit {
     return this.timelineService.isTransaction(item);
   }
 
-  private updateLowestProjections(): void {
-    this.lowestProjections = this.timelineService.calculateLowestProjections(
-      this.timeline,
-      this.currentBalance,
-      this.projectionInterval
-    );
-  }
+
 
   getLowestProjections(): ProjectionPoint[] {
     return this.lowestProjections;
@@ -456,18 +447,15 @@ export class TransactionsComponent implements OnInit {
     this.calculateTimeline();
   }
 
-  private updateGroupedTransactions(): void {
-    // Don't update groupedTransactions here - let getGroupedTransactions() handle the filtering
-    // This method is kept for compatibility but no longer needed
-  }
+
 
   getGroupedTransactions(): { date: Date, transactions: TimelineItem[] }[] {
     console.log(`📅 Getting grouped transactions for month: ${this.currentViewMonth.toLocaleDateString()}`);
     console.log(`Timeline has ${this.timeline.length} items`);
-    
+
     const grouped = this.calendarDataService.getGroupedTransactions(this.timeline, this.currentViewMonth);
     console.log(`📊 Calendar data service returned ${grouped.length} grouped date ranges`);
-    
+
     return grouped;
   }
 
@@ -515,312 +503,6 @@ export class TransactionsComponent implements OnInit {
 
   getCurrentMonthLabel(): string {
     return this.monthOptions[this.currentViewMonth.getMonth()].label;
-  }
-
-  /**
-   * Generates recurring transactions for all months after the starting date
-   */
-  private generateRecurringTransactionsForAllMonths(onComplete?: () => void): void {
-    const today = new Date();
-    const currentYear = today.getFullYear();
-    const currentMonth = today.getMonth();
-
-    // Get recurring transactions once and process them for all months
-    this.transactionService.getRecurringTransactions().subscribe(recurringTransactions => {
-      console.log(`Processing ${recurringTransactions.length} recurring transactions for timeline generation`);
-      
-      // Generate for current year and next year
-      this.generateTransactionsForYearRangeWithData(currentYear, currentYear + 1, currentMonth, recurringTransactions);
-      
-      // Ensure transactions for current view month range
-      this.ensureTransactionsForCurrentMonthRangeWithData(recurringTransactions);
-      
-      // Sort timeline by date
-      this.sortTimelineByDate();
-
-      console.log(`Timeline generation complete. Total timeline items: ${this.timeline.length}`);
-
-      // Call completion callback if provided
-      if (onComplete) {
-        onComplete();
-      }
-    });
-  }
-
-  /**
-   * Generates transactions for a range of years
-   */
-  private generateTransactionsForYearRange(startYear: number, endYear: number, skipMonthsBefore: number): void {
-    for (let year = startYear; year <= endYear; year++) {
-      for (let month = 0; month < 12; month++) {
-        if (year === startYear && month < skipMonthsBefore) {
-          continue;
-        }
-        this.generateRecurringTransactionsForMonth(year, month);
-      }
-    }
-  }
-
-  /**
-   * Generates transactions for a range of years with pre-loaded recurring data
-   */
-  private generateTransactionsForYearRangeWithData(
-    startYear: number, 
-    endYear: number, 
-    skipMonthsBefore: number, 
-    recurringTransactions: any[]
-  ): void {
-    for (let year = startYear; year <= endYear; year++) {
-      for (let month = 0; month < 12; month++) {
-        if (year === startYear && month < skipMonthsBefore) {
-          continue;
-        }
-        this.generateRecurringTransactionsForMonthWithData(year, month, recurringTransactions);
-      }
-    }
-  }
-
-  /**
-   * Sorts timeline by date
-   */
-  private sortTimelineByDate(): void {
-    this.timeline.sort((a, b) => a.date.getTime() - b.date.getTime());
-  }
-
-  /**
-   * Ensures transactions exist for the currently selected month range
-   */
-  private ensureTransactionsForCurrentMonthRange(): void {
-    const startMonth = new Date(this.currentViewMonth.getFullYear(), this.currentViewMonth.getMonth(), 1);
-    const endMonth = new Date(this.currentViewMonth.getFullYear(), this.currentViewMonth.getMonth() + 3, 0);
-
-    this.generateTransactionsForDateRange(startMonth, endMonth);
-  }
-
-  /**
-   * Ensures transactions exist for the currently selected month range with pre-loaded data
-   */
-  private ensureTransactionsForCurrentMonthRangeWithData(recurringTransactions: any[]): void {
-    const startMonth = new Date(this.currentViewMonth.getFullYear(), this.currentViewMonth.getMonth(), 1);
-    const endMonth = new Date(this.currentViewMonth.getFullYear(), this.currentViewMonth.getMonth() + 3, 0);
-
-    this.generateTransactionsForDateRangeWithData(startMonth, endMonth, recurringTransactions);
-  }
-
-  /**
-   * Generates transactions for a date range
-   */
-  private generateTransactionsForDateRange(startDate: Date, endDate: Date): void {
-    let currentDate = new Date(startDate);
-    while (currentDate <= endDate) {
-      const year = currentDate.getFullYear();
-      const month = currentDate.getMonth();
-      this.generateRecurringTransactionsForMonth(year, month);
-      currentDate.setMonth(currentDate.getMonth() + 1);
-    }
-  }
-
-  /**
-   * Generates transactions for a date range with pre-loaded data
-   */
-  private generateTransactionsForDateRangeWithData(startDate: Date, endDate: Date, recurringTransactions: any[]): void {
-    let currentDate = new Date(startDate);
-    while (currentDate <= endDate) {
-      const year = currentDate.getFullYear();
-      const month = currentDate.getMonth();
-      this.generateRecurringTransactionsForMonthWithData(year, month, recurringTransactions);
-      currentDate.setMonth(currentDate.getMonth() + 1);
-    }
-  }
-
-  /**
-   * Generates recurring transactions for a specific month
-   */
-  private generateRecurringTransactionsForMonth(year: number, month: number): void {
-    // Get recurring transactions from the database
-    this.transactionService.getRecurringTransactions().subscribe(recurringTransactions => {
-      console.log(`Generating recurring transactions for ${year}-${month + 1}, found ${recurringTransactions.length} recurring transactions`);
-      
-      recurringTransactions.forEach(recurring => {
-        if (this.shouldGenerateRecurringTransaction(recurring, year, month)) {
-          const transactionDates = this.calculateAllRecurringTransactionDates(recurring, year, month);
-          
-          // Log generation details using helper
-          this.recurringTransactionHelper.logTransactionGeneration(
-            recurring.description, 
-            recurring.frequency, 
-            year, 
-            month, 
-            transactionDates
-          );
-
-          transactionDates.forEach(transactionDate => {
-            // Check if transaction already exists using helper
-            if (!this.recurringTransactionHelper.transactionExists(
-              this.timeline.filter(item => this.isTransaction(item)), 
-              recurring.description, 
-              transactionDate
-            )) {
-              // Log weekly transaction details using helper
-              if (recurring.frequency.toLowerCase() === 'weekly') {
-                this.recurringTransactionHelper.logWeeklyTransaction(recurring.description, transactionDate);
-              }
-
-              // Create transaction using helper
-              const transactionId = this.recurringTransactionHelper.generateTransactionId(recurring, transactionDate);
-              const newTransaction = this.recurringTransactionHelper.createRecurringTransaction(
-                recurring, 
-                transactionDate, 
-                transactionId
-              );
-
-              this.timeline.push(newTransaction);
-              console.log(`Generated recurring transaction: ${recurring.description} on ${transactionDate.toLocaleDateString()}`);
-            }
-          });
-        } else {
-          console.log(`Skipping ${recurring.description} for ${year}-${month + 1} - should not generate`);
-        }
-      });
-    });
-  }
-
-  /**
-   * Generates recurring transactions for a specific month with pre-loaded data
-   */
-  private generateRecurringTransactionsForMonthWithData(year: number, month: number, recurringTransactions: any[]): void {
-    console.log(`Generating recurring transactions for ${year}-${month + 1} with ${recurringTransactions.length} pre-loaded transactions`);
-    
-    recurringTransactions.forEach(recurring => {
-      if (this.shouldGenerateRecurringTransaction(recurring, year, month)) {
-        const transactionDates = this.calculateAllRecurringTransactionDates(recurring, year, month);
-        
-        // Log generation details using helper
-        this.recurringTransactionHelper.logTransactionGeneration(
-          recurring.description, 
-          recurring.frequency, 
-          year, 
-          month, 
-          transactionDates
-        );
-
-        transactionDates.forEach(transactionDate => {
-          // Check if transaction already exists using helper
-          if (!this.recurringTransactionHelper.transactionExists(
-            this.timeline.filter(item => this.isTransaction(item)), 
-            recurring.description, 
-            transactionDate
-          )) {
-            // Log weekly transaction details using helper
-            if (recurring.frequency.toLowerCase() === 'weekly') {
-              this.recurringTransactionHelper.logWeeklyTransaction(recurring.description, transactionDate);
-            }
-
-            // Create transaction using helper
-            const transactionId = this.recurringTransactionHelper.generateTransactionId(recurring, transactionDate);
-            const newTransaction = this.recurringTransactionHelper.createRecurringTransaction(
-              recurring, 
-              transactionDate, 
-              transactionId
-            );
-
-            this.timeline.push(newTransaction);
-            console.log(`Generated recurring transaction: ${recurring.description} on ${transactionDate.toLocaleDateString()}`);
-          }
-        });
-      } else {
-        console.log(`Skipping ${recurring.description} for ${year}-${month + 1} - should not generate`);
-      }
-    });
-  }
-
-  /**
-   * Determines if a recurring transaction should be generated for a specific month
-   */
-  private shouldGenerateRecurringTransaction(recurring: any, year: number, month: number): boolean {
-    const recurringStartDate = new Date(recurring.date);
-    const recurringStartYear = recurringStartDate.getFullYear();
-    const recurringStartMonth = recurringStartDate.getMonth();
-
-    // Only generate for months after the starting date
-    if (year < recurringStartYear || (year === recurringStartYear && month < recurringStartMonth)) {
-      return false;
-    }
-
-    // Check frequency-specific logic
-    switch (recurring.frequency.toLowerCase()) {
-      case 'monthly':
-        return true; // Monthly transactions appear every month after start
-      case 'weekly':
-        const shouldGenerate = this.recurringTransactionHelper.shouldGenerateWeeklyTransaction(
-          recurringStartDate, 
-          year, 
-          month
-        );
-        
-        // Log decision using helper
-        if (recurring.frequency.toLowerCase() === 'weekly') {
-          const { start: monthStart, end: monthEnd } = this.recurringTransactionHelper.getMonthBoundaries(year, month);
-          const firstOccurrence = this.recurringTransactionHelper.calculateFirstWeeklyOccurrence(recurringStartDate, monthStart);
-          this.recurringTransactionHelper.logWeeklyGenerationDecision(
-            recurring.description, 
-            year, 
-            month, 
-            shouldGenerate, 
-            firstOccurrence, 
-            monthStart, 
-            monthEnd
-          );
-        }
-        return shouldGenerate;
-      case 'yearly':
-        return month === recurringStartMonth; // Yearly transactions appear same month every year
-      default:
-        return true;
-    }
-  }
-
-  /**
-   * Calculates ALL dates for recurring transactions in a given month
-   */
-  private calculateAllRecurringTransactionDates(recurring: any, year: number, month: number): Date[] {
-    const recurringStartDate = new Date(recurring.date);
-    const dates: Date[] = [];
-
-    switch (recurring.frequency.toLowerCase()) {
-      case 'monthly':
-        const monthlyDate = this.recurringTransactionHelper.calculateMonthlyTransactionDate(recurring, year, month);
-        dates.push(monthlyDate);
-        
-        // Log using helper
-        const dayOfMonth = recurring.monthly_options?.dayOfMonth || recurringStartDate.getDate();
-        this.recurringTransactionHelper.logMonthlyTransaction(recurring.description, year, month, dayOfMonth);
-        break;
-
-      case 'weekly':
-        const weeklyDates = this.recurringTransactionHelper.calculateWeeklyTransactionDates(
-          recurringStartDate, 
-          year, 
-          month
-        );
-        dates.push(...weeklyDates);
-        break;
-
-      case 'yearly':
-        const yearlyDate = this.recurringTransactionHelper.calculateYearlyTransactionDate(
-          recurringStartDate, 
-          year, 
-          month
-        );
-        dates.push(yearlyDate);
-        break;
-
-      default:
-        dates.push(new Date(year, month, recurringStartDate.getDate()));
-        break;
-    }
-
-    return dates;
   }
 
   // Helper method to determine if a row should have alternate background color
