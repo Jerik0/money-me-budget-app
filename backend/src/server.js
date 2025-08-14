@@ -64,6 +64,96 @@ app.get('/api/transactions', async (req, res) => {
   }
 });
 
+// Create new transaction
+app.post('/api/transactions', async (req, res) => {
+  try {
+    const { description, amount, type, date, category, isRecurring, recurringPattern } = req.body;
+    
+    console.log('📝 Received transaction data:', { description, amount, type, date, category, isRecurring });
+    
+    // Validate required fields
+    if (!description || !amount || !type || !date) {
+      return res.status(400).json({ error: 'Missing required fields: description, amount, type, date' });
+    }
+    
+    // Insert the new transaction
+    const sql = `
+      INSERT INTO transactions (description, amount, type, date, is_recurring, frequency, monthly_options, category_id)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      RETURNING id
+    `;
+    
+    // Get or create category
+    let categoryId = null;
+    if (category) {
+      const categoryResult = await query('SELECT id FROM categories WHERE name = $1', [category]);
+      if (categoryResult.rows.length > 0) {
+        categoryId = categoryResult.rows[0].id;
+      } else {
+        const newCategoryResult = await query('INSERT INTO categories (name) VALUES ($1) RETURNING id', [category]);
+        categoryId = newCategoryResult.rows[0].id;
+      }
+    }
+    
+    // Prepare values for insertion
+    const values = [
+      description,
+      amount,
+      type,
+      date,
+      isRecurring || false,
+      recurringPattern?.frequency || null,
+      recurringPattern ? JSON.stringify(recurringPattern) : null,
+      categoryId
+    ];
+    
+    console.log('💾 Inserting with values:', values);
+    
+    const result = await query(sql, values);
+    
+    console.log(`✅ Created new transaction: ${description} with ID: ${result.rows[0].id}`);
+    res.status(201).json({ 
+      id: result.rows[0].id,
+      message: 'Transaction created successfully' 
+    });
+    
+  } catch (error) {
+    console.error('Error creating transaction:', error);
+    res.status(500).json({ error: 'Failed to create transaction' });
+  }
+});
+
+// Delete transaction by ID
+app.delete('/api/transactions/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    console.log(`🗑️ Attempting to delete transaction with ID: ${id}`);
+    
+    // Check if transaction exists first
+    const checkSql = 'SELECT id, description FROM transactions WHERE id = $1';
+    const checkResult = await query(checkSql, [id]);
+    
+    if (checkResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Transaction not found' });
+    }
+    
+    // Delete the transaction
+    const deleteSql = 'DELETE FROM transactions WHERE id = $1';
+    const deleteResult = await query(deleteSql, [id]);
+    
+    console.log(`✅ Deleted transaction: ${checkResult.rows[0].description} with ID: ${id}`);
+    res.json({ 
+      message: 'Transaction deleted successfully',
+      deletedId: id
+    });
+    
+  } catch (error) {
+    console.error('Error deleting transaction:', error);
+    res.status(500).json({ error: 'Failed to delete transaction' });
+  }
+});
+
 // Get all categories
 app.get('/api/categories', async (req, res) => {
   try {

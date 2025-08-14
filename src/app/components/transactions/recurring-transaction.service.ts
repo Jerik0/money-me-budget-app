@@ -45,7 +45,7 @@ export class RecurringTransactionService {
     
     // Get recurring transactions once and process them for all months
     this.transactionService.getRecurringTransactions().subscribe(recurringTransactions => {
-      console.log(`Processing ${recurringTransactions.length} recurring transactions for timeline generation`);
+
       
       // Generate for current year and next year
       this.generateTransactionsForYearRangeWithData(currentYear, currentYear + 1, currentMonth, recurringTransactions, timeline);
@@ -56,7 +56,7 @@ export class RecurringTransactionService {
       // Sort timeline by date
       timeline.sort((a, b) => a.date.getTime() - b.date.getTime());
       
-      console.log(`Timeline generation complete. Total timeline items: ${timeline.length}`);
+
       
       // Call completion callback if provided
       if (onComplete) {
@@ -152,7 +152,7 @@ export class RecurringTransactionService {
               date: transactionDate,
               description: recurring.description,
               amount: Math.abs(parseFloat(recurring.amount)),
-              type: TransactionType.EXPENSE,
+              type: recurring.type === 'income' ? TransactionType.INCOME : TransactionType.EXPENSE,
               category: recurring.category || 'Uncategorized',
               isRecurring: true,
               recurringPattern: {
@@ -163,7 +163,6 @@ export class RecurringTransactionService {
             };
             
             timeline.push(newTransaction);
-            console.log(`Generated recurring transaction: ${recurring.description} on ${transactionDate.toLocaleDateString()}`);
           }
         });
       }
@@ -182,10 +181,7 @@ export class RecurringTransactionService {
           // Generate ALL occurrences for this month based on frequency
           const transactionDates = this.calculateAllRecurringTransactionDates(recurring, year, month);
           
-          console.log(`Month ${year}-${month + 1}: ${recurring.description} (${recurring.frequency}) - ${transactionDates.length} occurrences`);
-          transactionDates.forEach(date => {
-            console.log(`  - ${date.toLocaleDateString()}`);
-          });
+
           
           transactionDates.forEach(transactionDate => {
             // Check if this transaction already exists
@@ -196,17 +192,14 @@ export class RecurringTransactionService {
             );
             
             if (!existingTransaction) {
-              // For weekly transactions, add extra logging
-              if (recurring.frequency.toLowerCase() === 'weekly') {
-                console.log(`Adding weekly transaction: ${recurring.description} on ${transactionDate.toLocaleDateString()} (${this.getDayName(transactionDate.getDay())})`);
-              }
+
               
               const newTransaction: TimelineItem = {
                 id: `recurring-${recurring.id}-${transactionDate.getTime()}`,
                 date: transactionDate,
                 description: recurring.description,
                 amount: Math.abs(parseFloat(recurring.amount)),
-                type: TransactionType.EXPENSE,
+                type: recurring.type === 'income' ? TransactionType.INCOME : TransactionType.EXPENSE,
                 category: recurring.category || 'Uncategorized',
                 isRecurring: true,
                 recurringPattern: {
@@ -217,7 +210,6 @@ export class RecurringTransactionService {
               };
               
               timeline.push(newTransaction);
-              console.log(`Generated recurring transaction: ${recurring.description} on ${transactionDate.toLocaleDateString()}`);
             }
           });
         }
@@ -257,10 +249,26 @@ export class RecurringTransactionService {
         // Only generate if there's at least one occurrence in this month AND
         // the first occurrence falls within the month boundaries
         const shouldGenerate = currentDate <= monthEnd && currentDate >= monthStart;
-        if (recurring.frequency.toLowerCase() === 'weekly') {
-          console.log(`Weekly ${recurring.description}: Month ${year}-${month + 1} - ${shouldGenerate ? 'WILL generate' : 'WILL NOT generate'} (first occurrence: ${currentDate.toLocaleDateString()}, month: ${monthStart.toLocaleDateString()} to ${monthEnd.toLocaleDateString()})`);
-        }
+
         return shouldGenerate;
+        
+      case 'bi-weekly':
+        // For bi-weekly transactions, we need to check if this month actually contains
+        // any bi-weekly occurrences based on the start date (every 14 days)
+        const biWeekMonthStart = new Date(year, month, 1);
+        const biWeekMonthEnd = new Date(year, month + 1, 0);
+        
+        // Calculate the first bi-weekly occurrence in or after this month
+        let biWeekCurrentDate = new Date(recurringStartDate);
+        while (biWeekCurrentDate < biWeekMonthStart) {
+          biWeekCurrentDate.setDate(biWeekCurrentDate.getDate() + 14);
+        }
+        
+        // Only generate if there's at least one occurrence in this month AND
+        // the first occurrence falls within the month boundaries
+        const biWeekShouldGenerate = biWeekCurrentDate <= biWeekMonthEnd && biWeekCurrentDate >= biWeekMonthStart;
+
+        return biWeekShouldGenerate;
       case 'yearly':
         return month === recurringStartMonth; // Yearly transactions appear same month every year
       default:
@@ -281,16 +289,13 @@ export class RecurringTransactionService {
         let dayOfMonth;
         if (recurring.monthly_options && recurring.monthly_options.dayOfMonth) {
           dayOfMonth = recurring.monthly_options.dayOfMonth;
-          console.log(`Monthly ${recurring.description}: Using dayOfMonth from options: ${dayOfMonth}`);
         } else {
           dayOfMonth = recurringStartDate.getDate();
-          console.log(`Monthly ${recurring.description}: Using dayOfMonth from start date: ${dayOfMonth}`);
         }
         
         const lastDayOfMonth = new Date(year, month + 1, 0).getDate();
         const actualDay = Math.min(dayOfMonth, lastDayOfMonth);
         dates.push(new Date(year, month, actualDay));
-        console.log(`Monthly ${recurring.description}: Generated for ${year}-${month + 1}-${actualDay}`);
         break;
         
       case 'weekly':
@@ -315,13 +320,39 @@ export class RecurringTransactionService {
           while (currentDate <= monthEnd) {
             if (currentDate.getMonth() === month && currentDate.getFullYear() === year) {
               dates.push(new Date(currentDate));
-              console.log(`Weekly ${recurring.description}: Generated for ${currentDate.toLocaleDateString()}`);
             }
-            // Always advance by exactly 7 days to maintain weekly intervals
-            currentDate.setDate(currentDate.getDate() + 7);
+                      // Always advance by exactly 7 days to maintain weekly intervals
+          currentDate.setDate(currentDate.getDate() + 7);
+        }
+        }
+        break;
+        
+      case 'bi-weekly':
+        // For bi-weekly transactions, we need to calculate based on the actual starting date
+        // and generate dates that are multiples of 14 days from the start
+        const biWeekStartDate = new Date(recurringStartDate);
+        const biWeekMonthStart = new Date(year, month, 1);
+        const biWeekMonthEnd = new Date(year, month + 1, 0);
+        
+        // Find the first occurrence in or after this month
+        let biWeekCurrentDate = new Date(biWeekStartDate);
+        
+        // If we're before the month, advance to the first occurrence in this month
+        while (biWeekCurrentDate < biWeekMonthStart) {
+          biWeekCurrentDate.setDate(biWeekCurrentDate.getDate() + 14);
+        }
+        
+        // Only generate if the first occurrence falls within this month AND
+        // we're not generating for a month before the actual start date
+        if (biWeekCurrentDate <= biWeekMonthEnd && biWeekCurrentDate >= biWeekMonthStart && biWeekCurrentDate >= biWeekStartDate) {
+          // Generate bi-weekly transactions for this month, ensuring exactly 14-day intervals
+          while (biWeekCurrentDate <= biWeekMonthEnd) {
+            if (biWeekCurrentDate.getMonth() === month && biWeekCurrentDate.getFullYear() === year) {
+              dates.push(new Date(biWeekCurrentDate));
+            }
+            // Always advance by exactly 14 days to maintain bi-weekly intervals
+            biWeekCurrentDate.setDate(biWeekCurrentDate.getDate() + 14);
           }
-        } else {
-          console.log(`Weekly ${recurring.description}: Skipping month ${year}-${month + 1} - first occurrence ${currentDate.toLocaleDateString()}, start date: ${startDate.toLocaleDateString()}`);
         }
         break;
         
@@ -345,6 +376,7 @@ export class RecurringTransactionService {
     switch (frequency.toLowerCase()) {
       case 'daily': return RecurrenceFrequency.DAILY;
       case 'weekly': return RecurrenceFrequency.WEEKLY;
+      case 'bi-weekly': return RecurrenceFrequency.BI_WEEKLY;
       case 'monthly': return RecurrenceFrequency.MONTHLY;
       case 'yearly': return RecurrenceFrequency.YEARLY;
       default: return RecurrenceFrequency.MONTHLY;

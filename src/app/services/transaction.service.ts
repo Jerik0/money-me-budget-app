@@ -36,7 +36,7 @@ export class TransactionService {
   private loadAllTransactions(): void {
     this.apiService.get<any[]>('/transactions').pipe(
       tap(data => {
-        console.log('Loaded all transactions from API:', data);
+        console.log('📊 Raw API response:', data);
         this.allTransactions = this.convertApiDataToTransactions(data);
         this.allTransactionsSubject.next(this.allTransactions);
       }),
@@ -48,19 +48,32 @@ export class TransactionService {
   }
 
   private convertApiDataToTransactions(apiData: any[]): Transaction[] {
-    return apiData.map(item => ({
-      id: item.id.toString(),
-      date: new Date(item.date),
-      description: item.description,
-      amount: Math.abs(parseFloat(item.amount)),
-      type: item.type === 'income' ? TransactionType.INCOME : TransactionType.EXPENSE,
-      category: item.category || 'Uncategorized',
-      isRecurring: item.is_recurring || false,
-      recurringPattern: item.is_recurring ? {
-        frequency: this.mapFrequency(item.frequency),
-        interval: 1
-      } : undefined
-    }));
+    return apiData.map(item => {
+      const amount = parseFloat(item.amount);
+      const type = item.type === 'income' ? TransactionType.INCOME : TransactionType.EXPENSE;
+      
+      console.log(`🔄 Converting API data: ${item.description}, amount: ${item.amount}, type: ${item.type} -> ${type}`);
+      
+      // Handle timezone conversion properly
+      // The database stores dates as UTC, but we want to preserve the local date
+      const dbDate = new Date(item.date);
+      const localDate = new Date(dbDate.getFullYear(), dbDate.getMonth(), dbDate.getDate(), 12, 0, 0, 0);
+      console.log(`📅 Date conversion: ${item.date} -> ${dbDate.toDateString()} -> ${localDate.toDateString()}`);
+      
+      return {
+        id: item.id.toString(),
+        date: localDate,
+        description: item.description,
+        amount: Math.abs(amount), // Always store as positive, TimelineService will handle the sign
+        type: type,
+        category: item.category || 'Uncategorized',
+        isRecurring: item.is_recurring || false,
+        recurringPattern: item.is_recurring ? {
+          frequency: this.mapFrequency(item.frequency),
+          interval: 1
+        } : undefined
+      };
+    });
   }
 
   private loadRecurringTransactions(): void {
@@ -104,7 +117,7 @@ export class TransactionService {
           date: transactionDate,
           description: recurring.description,
           amount: Math.abs(amount), // Always positive for display
-          type: TransactionType.EXPENSE, // These are all expenses
+          type: recurring.type === 'income' ? TransactionType.INCOME : TransactionType.EXPENSE,
           category: recurring.category || 'Uncategorized',
           isRecurring: true,
           recurringPattern: {
@@ -126,7 +139,7 @@ export class TransactionService {
             date: transactionDate,
             description: recurring.description,
             amount: Math.abs(amount), // Always positive for display
-            type: TransactionType.EXPENSE, // These are all expenses
+            type: recurring.type === 'income' ? TransactionType.INCOME : TransactionType.EXPENSE,
             category: recurring.category || 'Uncategorized',
             isRecurring: true,
             recurringPattern: {
@@ -136,6 +149,28 @@ export class TransactionService {
           };
           transactions.push(transaction);
           console.log(`  Added weekly transaction: ${recurring.description} on ${transactionDate.toDateString()}`);
+        }
+      } else if (recurring.frequency === 'bi-weekly') {
+        // Bi-weekly transactions - show on alternating weeks
+        console.log(`  Bi-weekly transaction - creating 2 instances`);
+        for (let week = 0; week < 2; week++) {
+          const transactionDate = new Date(currentYear, currentMonth, 1 + (week * 14));
+          
+          const transaction: Transaction = {
+            id: `recurring-${recurring.id}-biweek-${week}`,
+            date: transactionDate,
+            description: recurring.description,
+            amount: Math.abs(amount), // Always positive for display
+            type: recurring.type === 'income' ? TransactionType.INCOME : TransactionType.EXPENSE,
+            category: recurring.category || 'Uncategorized',
+            isRecurring: true,
+            recurringPattern: {
+              frequency: this.mapFrequency(recurring.frequency),
+              interval: 1
+            }
+          };
+          transactions.push(transaction);
+          console.log(`  Added bi-weekly transaction: ${recurring.description} on ${transactionDate.toDateString()}`);
         }
       } else {
         console.log(`  Skipping transaction: ${recurring.description} - frequency: ${recurring.frequency}, monthly_options:`, recurring.monthly_options);
@@ -153,6 +188,7 @@ export class TransactionService {
     switch (frequency.toLowerCase()) {
       case 'daily': return RecurrenceFrequency.DAILY;
       case 'weekly': return RecurrenceFrequency.WEEKLY;
+      case 'bi-weekly': return RecurrenceFrequency.BI_WEEKLY;
       case 'monthly': return RecurrenceFrequency.MONTHLY;
       case 'yearly': return RecurrenceFrequency.YEARLY;
       default: return RecurrenceFrequency.MONTHLY;
@@ -245,4 +281,27 @@ export class TransactionService {
     localStorage.setItem('transactions', JSON.stringify(transactions));
     console.log(`Saved ${transactions.length} transactions to storage`);
   }
+
+  /**
+   * Adds a new transaction to the database
+   */
+  addTransactionToDatabase(transaction: Omit<Transaction, 'id'>): Observable<any> {
+    const newTransaction: Transaction = {
+      ...transaction,
+      id: Date.now().toString()
+    };
+    
+    return this.apiService.post<any>('/transactions', newTransaction).pipe(
+      tap(() => {
+        // Refresh the transactions list after adding
+        this.loadAllTransactions();
+        console.log(`Added transaction to database: ${newTransaction.description}`);
+      }),
+      catchError(error => {
+        console.error('Error adding transaction to database:', error);
+        return of(null);
+      })
+    );
+  }
+
 }

@@ -62,23 +62,16 @@ export class CalendarDataService {
   ): { date: Date, transactions: TimelineItem[] }[] {
     
     if (!timeline || timeline.length === 0) {
-      console.log('⚠️ Timeline is empty, returning empty array');
       return [];
     }
 
     // Check cache first
     const cacheKey = `${currentViewMonth.getFullYear()}-${currentViewMonth.getMonth()}`;
     if (this.lastCachedMonth === cacheKey && this.cachedGroupedTransactions.length > 0) {
-      console.log('📋 Using cached grouped transactions');
       return this.cachedGroupedTransactions;
     }
 
-    console.log('🔍 Filtering transactions:');
-    console.log(`Current view month: ${currentViewMonth.toLocaleDateString()}`);
-    
     const { startMonth, endMonth } = this.calendarNavigationService.calculateDateRange(currentViewMonth);
-    console.log(`Start month: ${startMonth.toLocaleDateString()}`);
-    console.log(`End month: ${endMonth.toLocaleDateString()}`);
 
     // Filter timeline items to only include transactions within the current view range
     const filteredTimeline = timeline.filter(item => {
@@ -88,9 +81,6 @@ export class CalendarDataService {
       }
       return false;
     }) as TimelineItem[];
-
-    console.log(`Timeline items before filtering: ${timeline.length}`);
-    console.log(`Filtered timeline items: ${filteredTimeline.length}`);
 
     // Group transactions by date
     const groupedByDate = new Map<string, TimelineItem[]>();
@@ -111,8 +101,6 @@ export class CalendarDataService {
       }))
       .sort((a, b) => a.date.getTime() - b.date.getTime());
 
-    console.log(`Final grouped transactions: ${groupedTransactions.length} groups`);
-
     // Update cache
     this.cachedGroupedTransactions = groupedTransactions;
     this.lastCachedMonth = cacheKey;
@@ -126,7 +114,6 @@ export class CalendarDataService {
   clearCache(): void {
     this.cachedGroupedTransactions = [];
     this.lastCachedMonth = '';
-    console.log('🗑️ Cleared grouped transactions cache');
   }
 
   /**

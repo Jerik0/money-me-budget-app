@@ -27,7 +27,7 @@ import {
 @Component({
     selector: 'app-transactions',
     standalone: true,
-    imports: [CommonModule, FormsModule, HttpClientModule, CustomDropdownComponent, CustomModalComponent, BalanceProjectionChartComponent],
+    imports: [CommonModule, FormsModule, HttpClientModule, CustomDropdownComponent, CustomModalComponent, BalanceProjectionChartComponent, NgbDatepicker],
     templateUrl: './transactions.component.html',
     styleUrls: ['./transactions.component.scss']
 })
@@ -105,9 +105,12 @@ export class TransactionsComponent implements OnInit {
       return;
     }
 
+    // Use the selected start date if available, otherwise use current date
+    const transactionDate = this.newRecurringTransaction.date || new Date();
+
     const transaction: Transaction = {
       id: Date.now().toString(),
-      date: new Date(),
+      date: transactionDate,
       description: this.newRecurringTransaction.description!,
       amount: this.newRecurringTransaction.amount!,
       type: this.newRecurringTransaction.type!,
@@ -119,10 +122,55 @@ export class TransactionsComponent implements OnInit {
       }
     };
 
-    this.transactions.push(transaction);
-    this.calculateTimeline();
-    this.resetForm();
-    this.showAddForm = false;
+    console.log('📤 Creating transaction object:', {
+      description: transaction.description,
+      amount: transaction.amount,
+      type: transaction.type,
+      date: transaction.date,
+      category: transaction.category
+    });
+
+    // Save the transaction to the database first
+    this.transactionService.addTransactionToDatabase(transaction).subscribe({
+      next: (result) => {
+        if (result) {
+          console.log(`✅ Transaction saved to database: ${transaction.description}`);
+          
+          // Force a complete refresh of all data from the database
+          this.transactionService.refreshTransactions();
+          
+          // Wait a moment for the refresh to complete, then recalculate timeline
+          setTimeout(() => {
+            console.log('🔄 Starting timeline recalculation...');
+            this.calculateTimeline();
+            this.calendarDataService.clearCache();
+            console.log(`✅ Timeline recalculated after database refresh`);
+            
+            // Force a manual refresh of the calendar data
+            setTimeout(() => {
+              console.log('🔄 Forcing calendar data refresh...');
+              this.refreshCalendarData();
+            }, 100);
+          }, 1000);
+          
+          // Reset form and close modal
+          this.resetForm();
+          this.showAddForm = false;
+          
+          console.log(`Added new recurring transaction: ${transaction.description} on ${transaction.date.toDateString()}`);
+        }
+      },
+      error: (error) => {
+        console.error('❌ Failed to save transaction to database:', error);
+        // Still add to local arrays even if database save fails
+        this.transactions.push(transaction);
+        this.allTransactions.push(transaction);
+        this.calculateTimeline();
+        this.calendarDataService.clearCache();
+        this.resetForm();
+        this.showAddForm = false;
+      }
+    });
   }
 
   private resetForm() {
@@ -200,7 +248,8 @@ export class TransactionsComponent implements OnInit {
     if (date) {
       this.startDate = date;
       this.startDateString = `${date.month}/${date.day}/${date.year}`;
-      const jsDate = new Date(date.year, date.month - 1, date.day);
+      // Create date at noon to avoid timezone issues
+      const jsDate = new Date(date.year, date.month - 1, date.day, 12, 0, 0, 0);
       this.newRecurringTransaction.date = jsDate;
       this.showDatePicker = false;
     }
@@ -309,6 +358,15 @@ export class TransactionsComponent implements OnInit {
     if (this.showMonthPicker && !this.isClickInsideMonthPicker(event)) {
       this.showMonthPicker = false;
     }
+    
+    // Close date pickers when clicking outside
+    if (this.showDatePicker && !this.isClickInsideDatePicker(event, 'start')) {
+      this.showDatePicker = false;
+    }
+    
+    if (this.showEndDatePicker && !this.isClickInsideDatePicker(event, 'end')) {
+      this.showEndDatePicker = false;
+    }
   }
 
   onCategoryChange(transaction: Transaction, newCategory: string): void {
@@ -330,6 +388,22 @@ export class TransactionsComponent implements OnInit {
     const monthPickerButton = target.closest('button[title="Select Month"]');
     const monthPickerDropdown = target.closest('.month-picker-dropdown');
     return !!(monthPickerButton || monthPickerDropdown);
+  }
+
+  private isClickInsideDatePicker(event: Event, pickerType: 'start' | 'end'): boolean {
+    const target = event.target as HTMLElement;
+    
+    if (pickerType === 'start') {
+      // Check if click is inside the start date input, calendar, or clear button
+      const startDateInput = target.closest('.start-date-container');
+      const startDatePicker = target.closest('ngb-datepicker');
+      return !!(startDateInput || startDatePicker);
+    } else {
+      // Check if click is inside the end date input, calendar, or clear button
+      const endDateInput = target.closest('.end-date-container');
+      const endDatePicker = target.closest('ngb-datepicker');
+      return !!(endDateInput || endDatePicker);
+    }
   }
 
     private loadTransactions() {
@@ -357,12 +431,16 @@ export class TransactionsComponent implements OnInit {
   }
 
   calculateTimeline() {
+    console.log(`🔄 calculateTimeline called with ${this.allTransactions.length} transactions from database`);
+    
     // Use the TimelineService to calculate the complete timeline with recurring transactions
     this.timelineService.calculateTimelineWithRecurring(
-      this.transactions,
+      this.allTransactions,
       this.currentBalance,
       this.projectionInterval,
       (updatedTimeline) => {
+        console.log(`✅ Timeline callback received ${updatedTimeline.length} items`);
+        
         // Update the component's timeline with the updated version
         this.timeline = updatedTimeline;
         
@@ -371,15 +449,57 @@ export class TransactionsComponent implements OnInit {
         this.calendarDataService.clearCache();
 
         // Save transactions and update projections
-        this.transactionService.saveTransactions(this.transactions);
+        this.transactionService.saveTransactions(this.allTransactions);
         this.lowestProjections = this.timelineService.updateLowestProjections(this.timeline, this.currentBalance, this.projectionInterval);
+        
+        console.log(`📊 Final timeline has ${this.timeline.length} items`);
+        
+        // Debug: Log the first transaction in the timeline
+        if (this.timeline.length > 0) {
+          const firstTransaction = this.timeline.find(item => this.isTransaction(item));
+          if (firstTransaction) {
+            console.log('🔍 Timeline Transaction Debug:', {
+              description: firstTransaction.description,
+              type: firstTransaction.type,
+              amount: firstTransaction.amount,
+              TransactionType_INCOME: TransactionType.INCOME,
+              TransactionType_EXPENSE: TransactionType.EXPENSE
+            });
+          }
+        }
       }
     );
   }
 
   deleteTransaction(id: string) {
-    this.transactions = this.transactions.filter(t => t.id !== id);
-    this.calculateTimeline();
+    console.log(`🗑️ Deleting transaction with ID: ${id}`);
+    
+    // Call the backend DELETE endpoint
+    this.transactionService.deleteTransactionFromDatabase(id).subscribe({
+      next: (result) => {
+        if (result) {
+          console.log(`✅ Transaction deleted from database: ${id}`);
+          
+          // Force a complete refresh of all data from the database
+          this.transactionService.refreshTransactions();
+          
+          // Wait a moment for the refresh to complete, then recalculate timeline
+          setTimeout(() => {
+            this.calculateTimeline();
+            this.calendarDataService.clearCache();
+            console.log(`🔄 Timeline recalculated after database deletion`);
+          }, 500);
+        }
+      },
+      error: (error) => {
+        console.error('❌ Failed to delete transaction from database:', error);
+        // Fallback: remove from local arrays
+        this.transactions = this.transactions.filter(t => t.id !== id);
+        this.allTransactions = this.allTransactions.filter(t => t.id !== id);
+        this.calculateTimeline();
+        this.calendarDataService.clearCache();
+      }
+    });
   }
 
   isTransaction(item: any): item is TimelineItem {
@@ -401,18 +521,23 @@ export class TransactionsComponent implements OnInit {
   }
 
   getGroupedTransactions(): { date: Date, transactions: TimelineItem[] }[] {
-    console.log(`📅 Getting grouped transactions for month: ${this.currentViewMonth.toLocaleDateString()}`);
-    console.log(`Timeline has ${this.timeline.length} items`);
-
     const grouped = this.calendarDataService.getGroupedTransactions(this.timeline, this.currentViewMonth);
-    console.log(`📊 Calendar data service returned ${grouped.length} grouped date ranges`);
-
     return grouped;
   }
 
   goToCurrentMonth(): void {
     this.currentViewMonth = new Date();
-    // Month data is now handled by filtering existing transactions
+    // Force refresh of calendar data
+    this.refreshCalendarData();
+  }
+
+  /**
+   * Force refresh of calendar data
+   */
+  refreshCalendarData(): void {
+    console.log('🔄 Forcing calendar data refresh...');
+    this.calendarDataService.clearCache();
+    this.calculateTimeline();
   }
 
   // Month picker methods
@@ -471,5 +596,21 @@ export class TransactionsComponent implements OnInit {
     totalRowIndex += transactionIndex;
 
     return totalRowIndex % 2 === 0;
+  }
+
+  // Transaction editing methods
+  startEditing(transaction: Transaction): void {
+    this.transactionManagementService.startEditing(transaction);
+  }
+
+  saveTransaction(transaction: Transaction): void {
+    this.transactionManagementService.saveTransaction(transaction, () => {
+      // Refresh the timeline after saving
+      this.calculateTimeline();
+    });
+  }
+
+  cancelEditing(transaction: Transaction): void {
+    this.transactionManagementService.cancelEditing(transaction);
   }
 }

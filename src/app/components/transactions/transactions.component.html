@@ -586,7 +586,7 @@
           <div class="w-36">Category</div>
           <div class="w-20 text-right">Amount</div>
           <div class="w-20 text-center">Frequency</div>
-          <div class="w-16 text-center">Actions</div>
+          <div class="w-20 text-center">Actions</div>
         </div>
       </div>
 
@@ -613,9 +613,19 @@
 
              <!-- Description -->
              <div class="flex-1 min-w-0">
-               <span class="text-sm font-medium text-gray-900 dark:text-chatgpt-text truncate">
+               <div *ngIf="!transaction.isEditing" 
+                    class="text-sm font-medium text-gray-900 dark:text-chatgpt-text truncate cursor-pointer hover:text-teal-600 dark:hover:text-teal-400 editable-field"
+                    (click)="startEditing(transaction)">
                  {{ transaction.description }}
-               </span>
+               </div>
+               <input *ngIf="transaction.isEditing"
+                      type="text"
+                      [(ngModel)]="transaction.description"
+                      (blur)="saveTransaction(transaction)"
+                      (keydown.enter)="saveTransaction(transaction)"
+                      (keydown.escape)="cancelEditing(transaction)"
+                      class="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-chatgpt-text focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all duration-200"
+                      placeholder="Enter description">
              </div>
 
              <!-- Category (Dropdown) -->
@@ -634,12 +644,26 @@
 
              <!-- Amount -->
               <div class="w-20 flex-shrink-0">
-                <span class="text-sm font-semibold" [ngClass]="{
-                  'text-red-600 dark:text-red-400': transaction.type === TransactionType.EXPENSE,
-                  'text-chatgpt-accent dark:text-chatgpt-accent': transaction.type === TransactionType.INCOME
-                }">
-                  {{ transaction.type === TransactionType.EXPENSE ? '-' : '+' }}${{ transaction.amount | number:'1.0-0' }}
-                </span>
+                <div *ngIf="!transaction.isEditing" 
+                     class="text-sm font-semibold cursor-pointer hover:text-teal-600 dark:hover:text-teal-400 transition-colors duration-200 editable-field"
+                     [ngClass]="{
+                       'text-red-600 dark:text-red-400': transaction.type === TransactionType.EXPENSE,
+                       'text-chatgpt-accent dark:text-chatgpt-accent': transaction.type === TransactionType.INCOME
+                     }"
+                     (click)="startEditing(transaction)">
+                                    {{ transaction.type === TransactionType.EXPENSE ? '-' : '+' }}${{ transaction.amount | number:'1.0-0' }}
+                <!-- Debug: {{ transaction.type }} | {{ transaction.amount }} -->
+                  <!-- Debug: {{ transaction.type }} | {{ transaction.amount }} -->
+                </div>
+                <input *ngIf="transaction.isEditing"
+                       type="number"
+                       [(ngModel)]="transaction.amount"
+                       (blur)="saveTransaction(transaction)"
+                       (keydown.enter)="saveTransaction(transaction)"
+                       (keydown.escape)="cancelEditing(transaction)"
+                       class="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-chatgpt-text focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all duration-200"
+                       placeholder="0.00"
+                       step="0.01">
               </div>
 
              <!-- Frequency -->
@@ -650,7 +674,44 @@
              </div>
 
              <!-- Actions -->
-             <div class="w-16 flex-shrink-0 flex items-center space-x-2">
+             <div class="w-20 flex-shrink-0 flex items-center space-x-2">
+               <!-- Edit Button (shown when not editing) -->
+               <button
+                 (click)="startEditing(transaction)"
+                 class="p-1.5 text-gray-400 hover:text-teal-600 dark:hover:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-900/20 rounded-md transition-colors"
+                 title="Edit transaction"
+                 [class.hidden]="transaction.isEditing"
+               >
+                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                 </svg>
+               </button>
+               
+               <!-- Save Button (shown when editing) -->
+               <button
+                 *ngIf="transaction.isEditing"
+                 (click)="saveTransaction(transaction)"
+                 class="p-1.5 text-green-600 hover:text-green-700 dark:text-green-400 dark:hover:text-green-300 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-md transition-colors"
+                 title="Save changes"
+               >
+                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                 </svg>
+               </button>
+               
+               <!-- Cancel Button (shown when editing) -->
+               <button
+                 *ngIf="transaction.isEditing"
+                 (click)="cancelEditing(transaction)"
+                 class="p-1.5 text-gray-600 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900/20 rounded-md transition-colors"
+                 title="Cancel editing"
+               >
+                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                 </svg>
+               </button>
+               
+               <!-- Delete Button -->
                <button
                  (click)="deleteTransactionFromDatabase(transaction.id)"
                  class="p-1.5 text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors"
