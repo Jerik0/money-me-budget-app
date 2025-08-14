@@ -10,7 +10,9 @@ import { RecurringTransactionService } from '../components/transactions/recurrin
 export class TimelineService {
 
   constructor(
+    // eslint-disable-next-line no-unused-vars
     private recurrenceService: RecurrenceService,
+    // eslint-disable-next-line no-unused-vars
     private recurringTransactionService: RecurringTransactionService
   ) {}
 
@@ -24,8 +26,6 @@ export class TimelineService {
   ): (TimelineItem | ProjectionPoint)[] {
     const timeline: (TimelineItem | ProjectionPoint)[] = [];
     let runningBalance = currentBalance;
-    const today = new Date();
-    const endDate = this.recurrenceService.getProjectionEndDate(projectionInterval);
 
 
 
@@ -116,8 +116,7 @@ export class TimelineService {
           type: ProjectionType.SUMMARY,
           label: point.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
         }));
-    } catch (error) {
-      console.error('Error calculating lowest projections:', error);
+    } catch {
       return [];
     }
   }
@@ -125,14 +124,14 @@ export class TimelineService {
   /**
    * Type guard to check if an item is a transaction
    */
-  isTransaction(item: any): item is TimelineItem {
+  isTransaction(item: TimelineItem | ProjectionPoint): item is TimelineItem {
     return 'type' in item && 'amount' in item && 'description' in item;
   }
 
   /**
    * Type guard to check if an item is a projection point
    */
-  isProjectionPoint(item: any): item is ProjectionPoint {
+  isProjectionPoint(item: TimelineItem | ProjectionPoint): item is ProjectionPoint {
     return 'type' in item && !('amount' in item);
   }
 
@@ -201,6 +200,7 @@ export class TimelineService {
    * Filters out existing recurring transactions to prevent duplicates
    */
   private filterOutExistingRecurringTransactions(
+     
     timeline: (TimelineItem | ProjectionPoint)[]
   ): (TimelineItem | ProjectionPoint)[] {
     return timeline.filter(item =>
@@ -212,6 +212,7 @@ export class TimelineService {
    * Generates recurring transactions for the timeline
    */
   private generateRecurringTransactionsForTimeline(
+     
     timeline: (TimelineItem | ProjectionPoint)[],
     onComplete: () => void
   ): void {

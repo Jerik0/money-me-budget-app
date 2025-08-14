@@ -24,8 +24,8 @@ export class PreferencesService {
     if (stored) {
       try {
         return JSON.parse(stored);
-      } catch (e) {
-        console.warn('Failed to parse stored preferences, using defaults');
+      } catch {
+        // Use defaults if parsing fails
       }
     }
     

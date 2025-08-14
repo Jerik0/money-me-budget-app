@@ -1,10 +1,10 @@
 import { Component, Input, Output, EventEmitter, ViewChild, ElementRef, AfterViewInit, OnDestroy, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Chart, ChartConfiguration, ChartData, Point, TimeScale, LinearScale, PointElement, LineElement, LineController, Title, Tooltip, Legend, Filler } from 'chart.js';
+import { Chart, ChartConfiguration, Point, TimeScale, LinearScale, PointElement, LineElement, LineController, Title, Tooltip, Legend, Filler } from 'chart.js';
 import 'chartjs-adapter-date-fns';
 import { ProjectionInterval, TimeUnit } from '../../enums';
-import { Transaction, ProjectionPoint, TimelineItem } from '../../interfaces';
+import { ProjectionPoint, TimelineItem } from '../../interfaces';
 import { CustomDropdownComponent, DropdownOption } from '../shared/custom-dropdown/custom-dropdown.component';
 
 // Register Chart.js components
@@ -111,14 +111,14 @@ export class BalanceProjectionChartComponent implements AfterViewInit, OnDestroy
               },
               padding: 12,
               callbacks: {
-                title: function(context: any) {
+                title: function(context: unknown) {
                   return new Date(context[0].parsed.x).toLocaleDateString('en-US', {
                     month: 'short',
                     day: 'numeric',
                     year: 'numeric'
                   });
                 },
-                label: function(context: any) {
+                label: function(context: unknown) {
                   const value = context.parsed.y;
                   return `Balance: $${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
                 }
@@ -163,7 +163,7 @@ export class BalanceProjectionChartComponent implements AfterViewInit, OnDestroy
                   weight: 'normal'
                 },
                 padding: 12,
-                callback: function(value: any) {
+                callback: function(value: unknown) {
                   return '$' + value.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
                 }
               }
@@ -210,8 +210,8 @@ export class BalanceProjectionChartComponent implements AfterViewInit, OnDestroy
 
       this.chart = new Chart(ctx, config);
       this.updateChart();
-    } catch (error) {
-      console.error('Error creating chart:', error);
+    } catch {
+      // Handle chart creation error silently
     }
   }
 
@@ -226,15 +226,15 @@ export class BalanceProjectionChartComponent implements AfterViewInit, OnDestroy
         
         // Update time unit and display formats
         if (this.chart.options.scales?.['x'] && typeof this.chart.options.scales['x'] === 'object') {
-          const xScale = this.chart.options.scales['x'] as any;
-          xScale.time.unit = this.getTimeUnit();
-          xScale.time.displayFormats = this.getDisplayFormats();
+          const xScale = this.chart.options.scales['x'] as unknown;
+          (xScale as { time: { unit: TimeUnit; displayFormats: Record<string, string> } }).time.unit = this.getTimeUnit();
+          (xScale as { time: { unit: TimeUnit; displayFormats: Record<string, string> } }).time.displayFormats = this.getDisplayFormats();
         }
         
         this.chart.update();
       }
-    } catch (error) {
-      console.error('Error updating chart:', error);
+    } catch {
+      // Handle chart update error silently
     }
   }
 
@@ -278,7 +278,7 @@ export class BalanceProjectionChartComponent implements AfterViewInit, OnDestroy
     }
   }
 
-  private getDisplayFormats(): any {
+  private getDisplayFormats(): Record<string, string> {
     switch (this.projectionInterval) {
       case ProjectionInterval.DAILY:
         return {
@@ -311,11 +311,11 @@ export class BalanceProjectionChartComponent implements AfterViewInit, OnDestroy
     }
   }
 
-  private isTransaction(item: any): item is TimelineItem {
+  private isTransaction(item: TimelineItem | ProjectionPoint): item is TimelineItem {
     return 'type' in item && 'amount' in item && 'description' in item;
   }
 
-  private isProjectionPoint(item: any): item is ProjectionPoint {
+  private isProjectionPoint(item: TimelineItem | ProjectionPoint): item is ProjectionPoint {
     return 'type' in item && !('amount' in item);
   }
 

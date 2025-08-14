@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 @Injectable({
@@ -8,15 +8,18 @@ import { Observable } from 'rxjs';
 export class ApiService {
   private baseUrl = 'http://localhost:3000/api';
 
-  constructor(private http: HttpClient) { }
+  constructor(
+    // eslint-disable-next-line no-unused-vars
+    private http: HttpClient
+  ) { }
 
   // Health check
-  getHealth(): Observable<any> {
+  getHealth(): Observable<unknown> {
     return this.http.get(`${this.baseUrl}/health`);
   }
 
   // Test basic connectivity
-  testConnection(): Observable<any> {
+  testConnection(): Observable<unknown> {
     return this.http.get(`${this.baseUrl}/health`);
   }
 
@@ -26,12 +29,12 @@ export class ApiService {
   }
 
   // Generic POST request
-  post<T>(endpoint: string, data: any): Observable<T> {
+  post<T>(endpoint: string, data: unknown): Observable<T> {
     return this.http.post<T>(`${this.baseUrl}${endpoint}`, data);
   }
 
   // Generic PUT request
-  put<T>(endpoint: string, data: any): Observable<T> {
+  put<T>(endpoint: string, data: unknown): Observable<T> {
     return this.http.put<T>(`${this.baseUrl}${endpoint}`, data);
   }
 

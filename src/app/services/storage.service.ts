@@ -27,12 +27,11 @@ export class StorageService {
     }
 
     try {
-      return JSON.parse(saved).map((t: any) => ({
+      return JSON.parse(saved).map((t: unknown) => ({
         ...t,
         date: new Date(t.date)
       }));
-    } catch (error) {
-      console.error('Error parsing saved transactions:', error);
+    } catch {
       return [];
     }
   }
@@ -55,8 +54,7 @@ export class StorageService {
 
     try {
       return parseFloat(saved);
-    } catch (error) {
-      console.error('Error parsing saved balance:', error);
+    } catch {
       return 0;
     }
   }

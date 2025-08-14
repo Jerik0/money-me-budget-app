@@ -3,13 +3,13 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
 import { NgbDatepicker, NgbDate } from '@ng-bootstrap/ng-bootstrap';
-import { ProjectionInterval, ProjectionType, RecurrenceFrequency, TransactionType } from '../../enums';
+import { ProjectionInterval, RecurrenceFrequency, TransactionType } from '../../enums';
 import { BalanceProjectionChartComponent } from '../balance-projection-chart/balance-projection-chart.component';
 import { Transaction, ProjectionPoint, TimelineItem } from '../../interfaces';
 import { TransactionService } from '../../services/transaction.service';
 import { StorageService } from '../../services/storage.service';
 import { TimelineService } from '../../services/timeline.service';
-import { PreferencesService } from '../../services/preferences.service';
+
 import { CustomDropdownComponent } from '../shared/custom-dropdown/custom-dropdown.component';
 import { CustomModalComponent } from '../shared/custom-modal/custom-modal.component';
 import {
@@ -17,10 +17,6 @@ import {
   TRANSACTION_TYPE_OPTIONS,
   FREQUENCY_OPTIONS,
   CATEGORY_OPTIONS,
-  CALENDAR_CONFIG,
-  RecurringTransactionService,
-  RecurringTransactionHelperService,
-  CalendarNavigationService,
   CalendarDataService,
   TransactionManagementService
 } from './index';
@@ -49,15 +45,16 @@ export class TransactionsComponent implements OnInit {
   currentViewMonth: Date = new Date();
 
   constructor(
+    // eslint-disable-next-line no-unused-vars
     private transactionService: TransactionService,
+    // eslint-disable-next-line no-unused-vars
     private storageService: StorageService,
+    // eslint-disable-next-line no-unused-vars
     private timelineService: TimelineService,
-    private recurringTransactionService: RecurringTransactionService,
-    private recurringTransactionHelper: RecurringTransactionHelperService,
-    private calendarNavigationService: CalendarNavigationService,
+    // eslint-disable-next-line no-unused-vars
     private calendarDataService: CalendarDataService,
-    private transactionManagementService: TransactionManagementService,
-    private preferencesService: PreferencesService
+    // eslint-disable-next-line no-unused-vars
+    private transactionManagementService: TransactionManagementService
   ) {}
 
   // Properties for view/edit mode
@@ -80,11 +77,11 @@ export class TransactionsComponent implements OnInit {
   newRecurringTransaction: Partial<Transaction> = {
     description: '',
     amount: 0,
-    type: 'expense' as any,
+    type: 'expense' as TransactionType,
     category: '',
     isRecurring: true,
     recurringPattern: {
-      frequency: 'monthly' as any,
+      frequency: 'monthly' as RecurrenceFrequency,
       interval: null,
       endDate: undefined,
       lastDayOfMonth: false,
@@ -182,9 +179,7 @@ export class TransactionsComponent implements OnInit {
           }, 1500); // Show success for 1.5 seconds
         }
       },
-      error: (error) => {
-        console.error('❌ Failed to save transaction to database:', error);
-        
+      error: () => {
         // Show error state
         this.isSaving = false;
         this.saveError = 'Failed to save transaction. Please try again.';
@@ -201,11 +196,11 @@ export class TransactionsComponent implements OnInit {
     this.newRecurringTransaction = {
       description: '',
       amount: 0,
-      type: 'expense' as any,
+      type: 'expense' as TransactionType,
       category: '',
       isRecurring: true,
       recurringPattern: {
-        frequency: 'monthly' as any,
+        frequency: 'monthly' as RecurrenceFrequency,
         interval: null,
         endDate: undefined,
         lastDayOfMonth: false,
@@ -336,13 +331,12 @@ export class TransactionsComponent implements OnInit {
 
     // Subscribe to all transactions from database
     this.transactionService.getAllTransactions().subscribe(transactions => {
-      console.log('Loaded all transactions from database:', transactions);
       this.allTransactions = transactions;
     });
 
     // Subscribe to recurring transactions to see what's available
-    this.transactionService.getRecurringTransactions().subscribe(recurringTransactions => {
-
+    this.transactionService.getRecurringTransactions().subscribe(() => {
+      // Handle recurring transactions if needed
     });
 
     // Mark component as initialized
@@ -410,12 +404,11 @@ export class TransactionsComponent implements OnInit {
   saveInlineEdit(transaction: Transaction) {
     // Update the transaction in the database
     this.transactionService.updateFullTransaction(transaction).subscribe({
-      next: (updatedTransaction) => {
+      next: () => {
         this.cancelInlineEdit(transaction);
         this.calculateTimeline(); // Refresh timeline
       },
-      error: (error) => {
-        console.error('❌ Failed to update transaction:', error);
+      error: () => {
         // Revert to original values on error
         if (transaction.originalValues) {
           transaction.description = transaction.originalValues.description;
@@ -580,9 +573,7 @@ export class TransactionsComponent implements OnInit {
   }
 
   toggleViewMode() {
-    const oldMode = this.viewMode;
     this.viewMode = this.viewMode === 'grid' ? 'list' : 'grid';
-    console.log('🔄 View mode changed from', oldMode, 'to', this.viewMode);
     // No additional calculations needed - view switching is now instant
   }
 
@@ -661,15 +652,12 @@ export class TransactionsComponent implements OnInit {
     // Subscribe to real data from the service
     this.transactionService.getTransactions().subscribe(transactions => {
       if (transactions && transactions.length > 0) {
-        console.log('Loaded real transactions from service:', transactions);
         this.transactions = transactions;
         this.allTransactions = transactions; // Assign to allTransactions
         // Calculate timeline to populate the timeline array for filtering
         this.calculateTimeline();
-      } else {
-        console.log('No real transactions from service');
-        // No transactions to calculate timeline for
       }
+      // No transactions to calculate timeline for
     });
   }
 
@@ -681,8 +669,6 @@ export class TransactionsComponent implements OnInit {
       this.currentBalance,
       this.projectionInterval,
       (updatedTimeline) => {
-        console.log(`✅ Timeline callback received ${updatedTimeline.length} items`);
-        
         // Update the component's timeline with the updated version
         this.timeline = updatedTimeline;
         
@@ -693,8 +679,6 @@ export class TransactionsComponent implements OnInit {
         // Save transactions and update projections
         this.transactionService.saveTransactions(this.allTransactions);
         this.lowestProjections = this.timelineService.updateLowestProjections(this.timeline, this.currentBalance, this.projectionInterval);
-        
-
       }
     );
   }
@@ -716,8 +700,7 @@ export class TransactionsComponent implements OnInit {
           }, 500);
         }
       },
-      error: (error) => {
-        console.error('❌ Failed to delete transaction from database:', error);
+      error: () => {
         // Fallback: remove from local arrays
         this.transactions = this.transactions.filter(t => t.id !== id);
         this.allTransactions = this.allTransactions.filter(t => t.id !== id);
@@ -727,7 +710,7 @@ export class TransactionsComponent implements OnInit {
     });
   }
 
-  isTransaction(item: any): item is TimelineItem {
+  isTransaction(item: TimelineItem | ProjectionPoint): item is TimelineItem {
     return this.timelineService.isTransaction(item);
   }
 

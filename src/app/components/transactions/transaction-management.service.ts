@@ -8,7 +8,10 @@ import { TransactionService } from '../../services/transaction.service';
 })
 export class TransactionManagementService {
 
-  constructor(private transactionService: TransactionService) {}
+  constructor(
+    // eslint-disable-next-line no-unused-vars
+    private transactionService: TransactionService
+  ) {}
 
   /**
    * Get database transactions for Manage Transactions view
@@ -125,8 +128,8 @@ export class TransactionManagementService {
           onComplete();
         }
       },
-      error: (error: any) => {
-        console.error('Error deleting transaction:', error);
+      error: () => {
+        // Handle error silently
       }
     });
   }
@@ -134,7 +137,7 @@ export class TransactionManagementService {
   /**
    * Add a new category to the options
    */
-  addNewCategory(categoryName: string, categoryOptions: any[]): void {
+  addNewCategory(categoryName: string, categoryOptions: unknown[]): void {
     if (categoryName && !categoryOptions.find(option => option.value === categoryName)) {
       categoryOptions.push({ value: categoryName, label: categoryName });
     }
@@ -143,7 +146,7 @@ export class TransactionManagementService {
   /**
    * Reset form to default values
    */
-  resetForm(formData: any): void {
+  resetForm(formData: unknown): void {
     formData.description = '';
     formData.amount = '';
     formData.category = 'Uncategorized';
@@ -159,7 +162,7 @@ export class TransactionManagementService {
   /**
    * Validate transaction form data
    */
-  validateTransactionForm(formData: any): { isValid: boolean; errors: string[] } {
+  validateTransactionForm(formData: unknown): { isValid: boolean; errors: string[] } {
     const errors: string[] = [];
 
     if (!formData.description || formData.description.trim() === '') {

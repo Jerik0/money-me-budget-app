@@ -16,7 +16,9 @@ export class AppComponent implements OnInit {
   currentPageTitle = 'Dashboard';
 
   constructor(
+    // eslint-disable-next-line no-unused-vars
     @Inject(PLATFORM_ID) private platformId: Object,
+    // eslint-disable-next-line no-unused-vars
     private router: Router
   ) {}
 

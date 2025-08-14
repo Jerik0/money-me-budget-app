@@ -1,9 +1,9 @@
-import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges, ElementRef, ViewChild, HostListener } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges, ElementRef, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
 export interface DropdownOption {
-  value: any;
+  value: unknown;
   label: string;
 }
 
@@ -16,15 +16,15 @@ export interface DropdownOption {
 })
 export class CustomDropdownComponent implements OnInit, OnChanges {
   @Input() options: DropdownOption[] = [];
-  @Input() selectedValue: any;
+  @Input() selectedValue: unknown;
   @Input() placeholder: string = 'Select an option';
   @Input() size: 'sm' | 'md' | 'lg' = 'md';
   @Input() variant: 'outline' | 'filled' = 'outline';
   @Input() disabled: boolean = false;
   @Input() allowAdd: boolean = false;
   
-  @Output() selectedValueChange = new EventEmitter<any>();
-  @Output() valueChange = new EventEmitter<any>();
+  @Output() selectedValueChange = new EventEmitter<unknown>();
+  @Output() valueChange = new EventEmitter<unknown>();
   @Output() optionAdded = new EventEmitter<string>();
 
   isOpen = false;
@@ -38,7 +38,10 @@ export class CustomDropdownComponent implements OnInit, OnChanges {
     }
   }
 
-  constructor(private elementRef: ElementRef) {}
+  constructor(
+    // eslint-disable-next-line no-unused-vars
+    private elementRef: ElementRef
+  ) {}
 
   ngOnInit() {
     this.updateSelectedLabel();

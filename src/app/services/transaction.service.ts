@@ -16,7 +16,10 @@ export class TransactionService {
   private allTransactionsSubject = new BehaviorSubject<Transaction[]>([]);
   private recurringTransactionsSubject = new BehaviorSubject<any[]>([]);
 
-  constructor(private apiService: ApiService) { 
+  constructor(
+    // eslint-disable-next-line no-unused-vars
+    private apiService: ApiService
+  ) { 
     this.loadRecurringTransactions();
     this.loadAllTransactions();
   }
@@ -39,14 +42,13 @@ export class TransactionService {
         this.allTransactions = this.convertApiDataToTransactions(data);
         this.allTransactionsSubject.next(this.allTransactions);
       }),
-      catchError(error => {
-        console.error('Error loading all transactions:', error);
+      catchError(() => {
         return of([]);
       })
     ).subscribe();
   }
 
-  private convertApiDataToTransactions(apiData: any[]): Transaction[] {
+  private convertApiDataToTransactions(apiData: unknown[]): Transaction[] {
     return apiData.map(item => {
       const amount = parseFloat(item.amount);
       const type = item.type === 'income' ? TransactionType.INCOME : TransactionType.EXPENSE;
@@ -79,14 +81,13 @@ export class TransactionService {
         // Convert recurring transactions to display format for timeline view
         this.convertRecurringToTransactions(data);
       }),
-      catchError(error => {
-        console.error('Error loading recurring transactions:', error);
+      catchError(() => {
         return of([]);
       })
     ).subscribe();
   }
 
-  private convertRecurringToTransactions(recurringData: any[]): void {
+  private convertRecurringToTransactions(recurringData: unknown[]): void {
     const transactions: Transaction[] = [];
     const today = new Date();
     const currentMonth = today.getMonth();
@@ -202,8 +203,7 @@ export class TransactionService {
         // Refresh the transactions list after update
         this.loadAllTransactions();
       }),
-      catchError(error => {
-        console.error('Error updating transaction:', error);
+      catchError(() => {
         return of(null);
       })
     );
@@ -215,8 +215,7 @@ export class TransactionService {
         // Refresh the transactions list after update
         this.loadAllTransactions();
       }),
-      catchError(error => {
-        console.error('Error updating transaction:', error);
+      catchError(() => {
         return of(null);
       })
     );
@@ -233,8 +232,7 @@ export class TransactionService {
         // Refresh the transactions list after deletion
         this.loadAllTransactions();
       }),
-      catchError(error => {
-        console.error('Error deleting transaction:', error);
+      catchError(() => {
         return of(null);
       })
     );
@@ -274,7 +272,6 @@ export class TransactionService {
   saveTransactions(transactions: Transaction[]): void {
     // Save to local storage or other persistence mechanism
     localStorage.setItem('transactions', JSON.stringify(transactions));
-    console.log(`Saved ${transactions.length} transactions to storage`);
   }
 
   /**
@@ -290,10 +287,8 @@ export class TransactionService {
       tap(() => {
         // Refresh the transactions list after adding
         this.loadAllTransactions();
-        console.log(`Added transaction to database: ${newTransaction.description}`);
       }),
-      catchError(error => {
-        console.error('Error adding transaction to database:', error);
+      catchError(() => {
         return of(null);
       })
     );

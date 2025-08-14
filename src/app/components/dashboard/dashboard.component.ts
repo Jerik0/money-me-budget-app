@@ -27,7 +27,10 @@ export class DashboardComponent implements OnInit {
     { value: 'Last 3 Months', label: 'Last 3 Months' }
   ];
 
-  constructor(private transactionService: TransactionService) {}
+  constructor(
+    // eslint-disable-next-line no-unused-vars
+    private transactionService: TransactionService
+  ) {}
 
   ngOnInit(): void {
     this.loadData();

@@ -1,7 +1,7 @@
 import { Component, Input, Output, EventEmitter, OnInit, OnDestroy, ElementRef, HostListener, Inject, PLATFORM_ID } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { trigger, state, style, transition, animate } from '@angular/animations';
+import { trigger, style, transition, animate } from '@angular/animations';
 
 @Component({
   selector: 'app-custom-modal',
@@ -38,7 +38,9 @@ export class CustomModalComponent implements OnInit, OnDestroy {
   @Output() closeModal = new EventEmitter<void>();
 
   constructor(
+    // eslint-disable-next-line no-unused-vars
     private elementRef: ElementRef,
+    // eslint-disable-next-line no-unused-vars
     @Inject(PLATFORM_ID) private platformId: Object
   ) {}
 
@@ -54,8 +56,8 @@ export class CustomModalComponent implements OnInit, OnDestroy {
     }
   }
 
-  @HostListener('document:keydown.escape', ['$event'])
-  onEscapeKey(event: KeyboardEvent) {
+  @HostListener('document:keydown.escape')
+  onEscapeKey() {
     if (this.isOpen) {
       this.close();
     }
