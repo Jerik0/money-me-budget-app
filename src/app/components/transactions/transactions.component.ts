@@ -95,6 +95,10 @@ export class TransactionsComponent implements OnInit {
   saveSuccess = false;
   saveError: string | null = null;
 
+  // Validation state
+  validationErrors: { [key: string]: string } = {};
+  isFormValid = false;
+
   // Date picker properties still needed by template
   startDate: NgbDate | null = null;
   startDateString: string = '';
@@ -108,7 +112,8 @@ export class TransactionsComponent implements OnInit {
 
   // Methods still needed by template
   addRecurringTransaction() {
-    if (!this.newRecurringTransaction.description || !this.newRecurringTransaction.amount) {
+    // Validate form before proceeding
+    if (!this.validateForm()) {
       return;
     }
 
@@ -220,6 +225,10 @@ export class TransactionsComponent implements OnInit {
     this.isSaving = false;
     this.saveSuccess = false;
     this.saveError = null;
+    
+    // Reset validation
+    this.validationErrors = {};
+    this.isFormValid = false;
   }
 
   onLastDayOptionChange(option: 'lastDay' | 'lastWeekday', event: Event) {
@@ -284,6 +293,9 @@ export class TransactionsComponent implements OnInit {
       const jsDate = new Date(date.year, date.month - 1, date.day, 12, 0, 0, 0);
       this.newRecurringTransaction.date = jsDate;
       this.showDatePicker = false;
+      
+      // Validate form after date change
+      this.validateForm();
     }
   }
 
@@ -363,6 +375,8 @@ export class TransactionsComponent implements OnInit {
       this.showAddForm = true;
       // Pre-fill with user preferences
       this.prefillFormWithPreferences();
+      // Validate the form after pre-filling
+      this.validateForm();
       // Auto-focus the description input after the animation completes
       setTimeout(() => {
         if (this.descriptionInput) {
@@ -405,11 +419,76 @@ export class TransactionsComponent implements OnInit {
       return 'px-6 py-2 bg-green-600 text-white font-medium rounded-lg focus:ring-2 focus:ring-green-500 focus:ring-offset-2 shadow-sm transition-colors duration-200';
     }
     
-    if (this.isTransactionFormValid()) {
+    if (this.isFormValid) {
       return 'px-6 py-2 bg-teal-600 hover:bg-teal-700 text-white font-medium rounded-lg focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 shadow-sm hover:shadow-md transition-colors duration-200';
     }
     
     return 'px-6 py-2 bg-gray-400 text-gray-200 font-medium rounded-lg cursor-not-allowed transition-colors duration-200';
+  }
+
+  /**
+   * Validate the transaction form
+   */
+  validateForm(): boolean {
+    this.validationErrors = {};
+    
+    // Description validation
+    if (!this.newRecurringTransaction.description || this.newRecurringTransaction.description.trim().length === 0) {
+      this.validationErrors['description'] = 'Description is required';
+    } else if (this.newRecurringTransaction.description.trim().length < 3) {
+      this.validationErrors['description'] = 'Description must be at least 3 characters';
+    }
+    
+    // Amount validation
+    if (!this.newRecurringTransaction.amount && this.newRecurringTransaction.amount !== 0) {
+      this.validationErrors['amount'] = 'Amount is required';
+    } else if (this.newRecurringTransaction.amount <= 0) {
+      this.validationErrors['amount'] = 'Amount must be greater than 0';
+    } else if (this.newRecurringTransaction.amount > 999999) {
+      this.validationErrors['amount'] = 'Amount cannot exceed $999,999';
+    }
+    
+    // Category validation
+    if (!this.newRecurringTransaction.category || this.newRecurringTransaction.category.trim().length === 0) {
+      this.validationErrors['category'] = 'Category is required';
+    }
+    
+    // Date validation
+    if (!this.newRecurringTransaction.date) {
+      this.validationErrors['date'] = 'Start date is required';
+    } else {
+      const selectedDate = new Date(this.newRecurringTransaction.date);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      if (selectedDate < today) {
+        this.validationErrors['date'] = 'Start date cannot be in the past';
+      }
+      
+      // Check if date is more than 10 years in the future
+      const maxDate = new Date();
+      maxDate.setFullYear(maxDate.getFullYear() + 10);
+      if (selectedDate > maxDate) {
+        this.validationErrors['date'] = 'Start date cannot be more than 10 years in the future';
+      }
+    }
+    
+    this.isFormValid = Object.keys(this.validationErrors).length === 0;
+    return this.isFormValid;
+  }
+
+  /**
+   * Get validation error for a specific field
+   */
+  getFieldError(fieldName: string): string | null {
+    return this.validationErrors[fieldName] || null;
+  }
+
+  /**
+   * Check if a field has validation errors
+   */
+  hasFieldError(fieldName: string): boolean {
+    return !!this.validationErrors[fieldName];
   }
 
   toggleViewMode() {
