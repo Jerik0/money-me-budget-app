@@ -85,6 +85,8 @@
 ngb-datepicker {
   border-radius: 0.5rem !important;
   overflow: hidden !important;
+  border: 1px solid #e5e7eb !important;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
 }
 
 // Ensure the date picker header has proper border radius
@@ -97,6 +99,243 @@ ngb-datepicker .ngb-dp-header {
 ngb-datepicker .ngb-dp-navigation {
   border-top-left-radius: 0.5rem !important;
   border-top-right-radius: 0.5rem !important;
+}
+
+// Dark theme date picker overrides - using more direct selectors
+.dark ngb-datepicker,
+:host-context(.dark) ngb-datepicker {
+  background-color: #2d2d30 !important; /* chatgpt-darker - matches modal */
+  border-color: #484848 !important; /* chatgpt-border */
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2) !important;
+}
+
+// Date picker header styling - force override
+ngb-datepicker .ngb-dp-header {
+  background-color: #f9fafb !important;
+  border-bottom: 1px solid #e5e7eb !important;
+  padding: 0.75rem !important;
+}
+
+// Force dark header
+.dark ngb-datepicker .ngb-dp-header,
+:host-context(.dark) ngb-datepicker .ngb-dp-header {
+  background-color: #484848 !important; /* chatgpt-light - darker header */
+  border-bottom-color: #565869 !important; /* chatgpt-border */
+}
+
+// Global dark theme overrides for ng-bootstrap date picker
+// These will work because ng-bootstrap renders outside the component
+.dark .ngb-datepicker {
+  background-color: #2d2d30 !important;
+  border-color: #484848 !important;
+}
+
+.dark .ngb-datepicker .ngb-dp-header {
+  background-color: #2d2d30 !important; /* Same as calendar body */
+  border-bottom-color: #565869 !important;
+}
+
+.dark .ngb-datepicker .ngb-dp-day:not(.disabled):not(.outside) {
+  color: #ffffff !important;
+}
+
+.dark .ngb-datepicker .ngb-dp-day.outside {
+  color: #8e8ea0 !important;
+}
+
+.dark .ngb-datepicker .ngb-dp-weekday {
+  color: #e5e7eb !important;
+}
+
+/* Override Bootstrap CSS variables for weekdays row */
+.dark .ngb-datepicker .ngb-dp-weekdays,
+.dark ngb-datepicker .ngb-dp-weekdays {
+  background-color: #2d2d30 !important; /* Force override Bootstrap variable */
+}
+
+.dark .ngb-datepicker .ngb-dp-month-name,
+.dark .ngb-datepicker .ngb-dp-year {
+  background-color: #2d2d30 !important; /* Match calendar body */
+  border-color: #565869 !important; /* Slightly lighter border */
+  color: #ffffff !important;
+}
+
+/* Override the general select rule for date picker month/year selectors */
+.dark .ngb-datepicker select,
+.dark ngb-datepicker select {
+  background-color: #2d2d30 !important; /* Override general select rule */
+  color: #ffffff !important; /* Same light text as calendar dates */
+  margin-right: 8px !important; /* Add margin between selects */
+}
+
+.dark .ngb-datepicker .ngb-dp-arrow {
+  color: #e5e7eb !important;
+}
+
+.dark .ngb-datepicker .ngb-dp-arrow:hover {
+  background-color: #565869 !important;
+  color: #ffffff !important;
+}
+
+// Additional force overrides for the date picker
+.dark .ngb-dp-header {
+  background-color: #2d2d30 !important; /* Same as calendar body */
+}
+
+.dark .ngb-dp-day {
+  color: #ffffff !important;
+}
+
+.dark .ngb-dp-weekday {
+  color: #e5e7eb !important;
+}
+
+.dark .ngb-dp-month-name,
+.dark .ngb-dp-year {
+  background-color: #2d2d30 !important; /* Match calendar body */
+  color: #ffffff !important;
+}
+
+// Navigation arrows styling
+ngb-datepicker .ngb-dp-arrow {
+  background-color: transparent !important;
+  border: none !important;
+  color: #6b7280 !important;
+  padding: 0.25rem !important;
+  border-radius: 0.375rem !important;
+  transition: all 0.2s ease-in-out !important;
+}
+
+ngb-datepicker .ngb-dp-arrow:hover {
+  background-color: #f3f4f6 !important;
+  color: #374151 !important;
+}
+
+.dark ngb-datepicker .ngb-dp-arrow,
+:host-context(.dark) ngb-datepicker .ngb-dp-arrow {
+  color: #e5e7eb !important; /* Very light text for contrast */
+}
+
+.dark ngb-datepicker .ngb-dp-arrow:hover,
+:host-context(.dark) ngb-datepicker .ngb-dp-arrow:hover {
+  background-color: #565869 !important; /* chatgpt-border */
+  color: #ffffff !important;
+}
+
+// Month/Year selector styling
+ngb-datepicker .ngb-dp-month-name,
+ngb-datepicker .ngb-dp-year {
+  background-color: transparent !important;
+  border: 1px solid #d1d5db !important;
+  border-radius: 0.375rem !important;
+  padding: 0.25rem 0.5rem !important;
+  color: #374151 !important;
+  font-weight: 500 !important;
+  transition: all 0.2s ease-in-out !important;
+}
+
+ngb-datepicker .ngb-dp-month-name:hover,
+ngb-datepicker .ngb-dp-year:hover {
+  border-color: #10b981 !important;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1) !important;
+}
+
+.dark ngb-datepicker .ngb-dp-month-name,
+.dark ngb-datepicker .ngb-dp-year,
+:host-context(.dark) ngb-datepicker .ngb-dp-month-name,
+:host-context(.dark) ngb-datepicker .ngb-dp-year {
+  background-color: #565869 !important; /* chatgpt-border */
+  border-color: #8e8ea0 !important; /* chatgpt-border-hover */
+  color: #ffffff !important; /* Bright white text */
+}
+
+.dark ngb-datepicker .ngb-dp-month-name:hover,
+.dark ngb-datepicker .ngb-dp-year:hover,
+:host-context(.dark) ngb-datepicker .ngb-dp-month-name:hover,
+:host-context(.dark) ngb-datepicker .ngb-dp-year:hover {
+  border-color: #34d399 !important;
+  box-shadow: 0 0 0 3px rgba(52, 211, 153, 0.1) !important;
+}
+
+// Day labels styling
+ngb-datepicker .ngb-dp-weekday {
+  color: #6b7280 !important;
+  font-weight: 500 !important;
+  padding: 0.5rem 0.25rem !important;
+  text-align: center !important;
+}
+
+.dark ngb-datepicker .ngb-dp-weekday,
+:host-context(.dark) ngb-datepicker .ngb-dp-weekday {
+  color: #e5e7eb !important; /* Very light text for contrast */
+}
+
+// Date cells styling
+ngb-datepicker .ngb-dp-day {
+  border-radius: 0.375rem !important;
+  transition: all 0.2s ease-in-out !important;
+}
+
+ngb-datepicker .ngb-dp-day:not(.disabled):not(.outside) {
+  color: #374151 !important;
+}
+
+ngb-datepicker .ngb-dp-day:not(.disabled):not(.outside):hover {
+  background-color: #f3f4f6 !important;
+}
+
+ngb-datepicker .ngb-dp-day.selected {
+  background-color: #10b981 !important;
+  color: white !important;
+}
+
+ngb-datepicker .ngb-dp-day.focused {
+  background-color: #d1fae5 !important;
+  color: #065f46 !important;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1) !important;
+}
+
+ngb-datepicker .ngb-dp-day.outside {
+  color: #9ca3af !important;
+}
+
+ngb-datepicker .ngb-dp-day.disabled {
+  color: #d1d5db !important;
+  cursor: not-allowed !important;
+}
+
+// Dark theme date cells - force override
+.dark ngb-datepicker .ngb-dp-day:not(.disabled):not(.outside),
+:host-context(.dark) ngb-datepicker .ngb-dp-day:not(.disabled):not(.outside) {
+  color: #ffffff !important; /* Bright white text for contrast */
+}
+
+.dark ngb-datepicker .ngb-dp-day:not(.disabled):not(.outside):hover,
+:host-context(.dark) ngb-datepicker .ngb-dp-day:not(.disabled):not(.outside):hover {
+  background-color: #565869 !important; /* chatgpt-border */
+}
+
+.dark ngb-datepicker .ngb-dp-day.selected,
+:host-context(.dark) ngb-datepicker .ngb-dp-day.selected {
+  background-color: #34d399 !important; /* Keep teal for selection */
+  color: #064e3b !important;
+}
+
+.dark ngb-datepicker .ngb-dp-day.focused,
+:host-context(.dark) ngb-datepicker .ngb-dp-day.focused {
+  background-color: #065f46 !important;
+  color: #d1fae5 !important;
+  box-shadow: 0 0 0 3px rgba(52, 211, 153, 0.1) !important;
+}
+
+.dark ngb-datepicker .ngb-dp-day.outside,
+:host-context(.dark) ngb-datepicker .ngb-dp-day.outside {
+  color: #8e8ea0 !important; /* chatgpt-border-hover - lighter than main dates */
+}
+
+.dark ngb-datepicker .ngb-dp-day.disabled,
+:host-context(.dark) ngb-datepicker .ngb-dp-day.disabled {
+  color: #565869 !important; /* chatgpt-border - very muted */
 }
 
 // Month picker dropdown styling

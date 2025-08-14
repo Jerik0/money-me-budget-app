@@ -98,6 +98,98 @@ html.dark .bg-gray-100 {
   background-color: #3e3e42 !important;
 }
 
+/* ng-bootstrap Date Picker Dark Theme Overrides - FORCE OVERRIDE */
+html.dark .ngb-datepicker,
+html.dark ngb-datepicker {
+  background-color: #2d2d30 !important;
+  border-color: #484848 !important;
+}
+
+html.dark .ngb-datepicker .ngb-dp-header,
+html.dark ngb-datepicker .ngb-dp-header {
+  background-color: #2d2d30 !important; /* Same as calendar body */
+  border-bottom-color: #565869 !important;
+}
+
+/* Force ALL date text to be light colored */
+html.dark .ngb-datepicker .ngb-dp-day,
+html.dark ngb-datepicker .ngb-dp-day {
+  color: #ffffff !important;
+}
+
+html.dark .ngb-datepicker .ngb-dp-day:not(.disabled):not(.outside),
+html.dark ngb-datepicker .ngb-dp-day:not(.disabled):not(.outside) {
+  color: #ffffff !important;
+}
+
+html.dark .ngb-datepicker .ngb-dp-day.outside,
+html.dark ngb-datepicker .ngb-dp-day.outside {
+  color: #8e8ea0 !important;
+}
+
+html.dark .ngb-datepicker .ngb-dp-day.disabled,
+html.dark ngb-datepicker .ngb-dp-day.disabled {
+  color: #565869 !important;
+}
+
+html.dark .ngb-datepicker .ngb-dp-weekday,
+html.dark ngb-datepicker .ngb-dp-weekday {
+  color: #e5e7eb !important;
+}
+
+/* Override Bootstrap CSS variables for weekdays row */
+html.dark .ngb-datepicker .ngb-dp-weekdays,
+html.dark ngb-datepicker .ngb-dp-weekdays {
+  background-color: #2d2d30 !important; /* Force override Bootstrap variable */
+}
+
+html.dark .ngb-datepicker .ngb-dp-month-name,
+html.dark .ngb-datepicker .ngb-dp-year,
+html.dark ngb-datepicker .ngb-dp-month-name,
+html.dark ngb-datepicker .ngb-dp-year {
+  background-color: #2d2d30 !important; /* Match calendar body */
+  border-color: #565869 !important; /* Slightly lighter border */
+  color: #ffffff !important;
+}
+
+/* Override the general select rule for date picker month/year selectors */
+html.dark .ngb-datepicker select,
+html.dark ngb-datepicker select {
+  background-color: #2d2d30 !important; /* Override general select rule */
+  color: #ffffff !important; /* Same light text as calendar dates */
+  margin-right: 8px !important; /* Add margin between selects */
+}
+
+html.dark .ngb-datepicker .ngb-dp-arrow,
+html.dark ngb-datepicker .ngb-dp-arrow {
+  color: #e5e7eb !important;
+}
+
+html.dark .ngb-datepicker .ngb-dp-arrow:hover,
+html.dark ngb-datepicker .ngb-dp-arrow:hover {
+  background-color: #565869 !important;
+  color: #ffffff !important;
+}
+
+/* Additional force overrides for ng-bootstrap */
+html.dark .ngb-dp-header {
+  background-color: #2d2d30 !important; /* Same as calendar body */
+}
+
+html.dark .ngb-dp-day {
+  color: #ffffff !important;
+}
+
+html.dark .ngb-dp-weekday {
+  color: #e5e7eb !important;
+}
+
+html.dark .ngb-dp-month-name,
+html.dark .ngb-dp-year {
+  background-color: #2d2d30 !important; /* Match calendar body */
+  color: #ffffff !important;
+}
+
 html.dark .text-gray-900 {
   color: #cccccc !important;
 }

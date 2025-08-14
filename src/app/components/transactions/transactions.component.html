@@ -212,6 +212,25 @@
    >
      <!-- Modal Content -->
      <div class="space-y-4">
+       <!-- Status Messages -->
+       <div *ngIf="saveError" class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3">
+         <div class="flex items-center">
+           <svg class="w-5 h-5 text-red-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
+             <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
+           </svg>
+           <span class="text-red-800 dark:text-red-200 text-sm">{{ saveError }}</span>
+         </div>
+       </div>
+       
+       <div *ngIf="saveSuccess" class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3">
+         <div class="flex items-center">
+           <svg class="w-5 h-5 text-green-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
+             <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+           </svg>
+           <span class="text-green-800 dark:text-green-200 text-sm">Transaction saved successfully!</span>
+         </div>
+       </div>
+       
        <!-- Description and Amount row -->
        <div class="grid grid-cols-2 gap-4">
          <div>
@@ -397,12 +416,23 @@
          </button>
          <button
            (click)="addRecurringTransaction()"
-           [disabled]="!isTransactionFormValid()"
-           [class]="isTransactionFormValid()
-             ? 'px-6 py-2 bg-teal-600 hover:bg-teal-700 text-white font-medium rounded-lg focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 shadow-sm hover:shadow-md transition-colors duration-200'
-             : 'px-6 py-2 bg-gray-400 text-gray-200 font-medium rounded-lg cursor-not-allowed transition-colors duration-200'"
+           [disabled]="!isTransactionFormValid() || isSaving"
+           [class]="getSaveButtonClasses()"
          >
-           Add Transaction
+           <span *ngIf="!isSaving && !saveSuccess">Add Transaction</span>
+           <span *ngIf="isSaving" class="flex items-center">
+             <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+               <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+             </svg>
+             Saving...
+           </span>
+           <span *ngIf="saveSuccess" class="flex items-center">
+             <svg class="w-4 h-4 mr-2 text-white" fill="currentColor" viewBox="0 0 20 20">
+               <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+             </svg>
+             Saved!
+           </span>
          </button>
        </div>
      </div>

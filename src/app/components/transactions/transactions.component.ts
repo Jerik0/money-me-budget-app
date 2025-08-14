@@ -9,6 +9,7 @@ import { Transaction, ProjectionPoint, TimelineItem } from '../../interfaces';
 import { TransactionService } from '../../services/transaction.service';
 import { StorageService } from '../../services/storage.service';
 import { TimelineService } from '../../services/timeline.service';
+import { PreferencesService } from '../../services/preferences.service';
 import { CustomDropdownComponent } from '../shared/custom-dropdown/custom-dropdown.component';
 import { CustomModalComponent } from '../shared/custom-modal/custom-modal.component';
 import {
@@ -53,7 +54,8 @@ export class TransactionsComponent implements OnInit {
     private recurringTransactionHelper: RecurringTransactionHelperService,
     private calendarNavigationService: CalendarNavigationService,
     private calendarDataService: CalendarDataService,
-    private transactionManagementService: TransactionManagementService
+    private transactionManagementService: TransactionManagementService,
+    private preferencesService: PreferencesService
   ) {}
 
   // Properties for view/edit mode
@@ -88,6 +90,11 @@ export class TransactionsComponent implements OnInit {
     }
   };
 
+  // Form state management
+  isSaving = false;
+  saveSuccess = false;
+  saveError: string | null = null;
+
   // Date picker properties still needed by template
   startDate: NgbDate | null = null;
   startDateString: string = '';
@@ -104,6 +111,10 @@ export class TransactionsComponent implements OnInit {
     if (!this.newRecurringTransaction.description || !this.newRecurringTransaction.amount) {
       return;
     }
+
+    // Set saving state
+    this.isSaving = true;
+    this.saveError = null;
 
     // Use the selected start date if available, otherwise use current date
     const transactionDate = this.newRecurringTransaction.date || new Date();
@@ -136,39 +147,55 @@ export class TransactionsComponent implements OnInit {
         if (result) {
           console.log(`✅ Transaction saved to database: ${transaction.description}`);
           
-          // Force a complete refresh of all data from the database
-          this.transactionService.refreshTransactions();
+          // Save user preferences for next time
+          this.preferencesService.updateLastTransactionType(transaction.type);
+          this.preferencesService.updateLastCategory(transaction.category);
+          this.preferencesService.updateLastAmount(transaction.amount);
+          this.preferencesService.addPreferredCategory(transaction.category);
           
-          // Wait a moment for the refresh to complete, then recalculate timeline
+          // Show success state
+          this.isSaving = false;
+          this.saveSuccess = true;
+          
+          // Wait a moment to show success, then proceed
           setTimeout(() => {
-            console.log('🔄 Starting timeline recalculation...');
-            this.calculateTimeline();
-            this.calendarDataService.clearCache();
-            console.log(`✅ Timeline recalculated after database refresh`);
+            // Force a complete refresh of all data from the database
+            this.transactionService.refreshTransactions();
             
-            // Force a manual refresh of the calendar data
+            // Wait a moment for the refresh to complete, then recalculate timeline
             setTimeout(() => {
-              console.log('🔄 Forcing calendar data refresh...');
-              this.refreshCalendarData();
-            }, 100);
-          }, 1000);
-          
-          // Reset form and close modal
-          this.resetForm();
-          this.showAddForm = false;
-          
-          console.log(`Added new recurring transaction: ${transaction.description} on ${transaction.date.toDateString()}`);
+              console.log('🔄 Starting timeline recalculation...');
+              this.calculateTimeline();
+              this.calendarDataService.clearCache();
+              console.log(`✅ Timeline recalculated after database refresh`);
+              
+              // Force a manual refresh of the calendar data
+              setTimeout(() => {
+                console.log('🔄 Forcing calendar data refresh...');
+                this.refreshCalendarData();
+              }, 100);
+            }, 1000);
+            
+            // Reset form and close modal
+            this.resetForm();
+            this.showAddForm = false;
+            this.saveSuccess = false;
+            
+            console.log(`Added new recurring transaction: ${transaction.description} on ${transaction.date.toDateString()}`);
+          }, 1500); // Show success for 1.5 seconds
         }
       },
       error: (error) => {
         console.error('❌ Failed to save transaction to database:', error);
-        // Still add to local arrays even if database save fails
-        this.transactions.push(transaction);
-        this.allTransactions.push(transaction);
-        this.calculateTimeline();
-        this.calendarDataService.clearCache();
-        this.resetForm();
-        this.showAddForm = false;
+        
+        // Show error state
+        this.isSaving = false;
+        this.saveError = 'Failed to save transaction. Please try again.';
+        
+        // Clear error after 5 seconds
+        setTimeout(() => {
+          this.saveError = null;
+        }, 5000);
       }
     });
   }
@@ -188,6 +215,11 @@ export class TransactionsComponent implements OnInit {
         lastWeekdayOfMonth: false
       }
     };
+    
+    // Reset form states
+    this.isSaving = false;
+    this.saveSuccess = false;
+    this.saveError = null;
   }
 
   onLastDayOptionChange(option: 'lastDay' | 'lastWeekday', event: Event) {
@@ -329,6 +361,8 @@ export class TransactionsComponent implements OnInit {
     } else {
       // If form is closed and we're opening it
       this.showAddForm = true;
+      // Pre-fill with user preferences
+      this.prefillFormWithPreferences();
       // Auto-focus the description input after the animation completes
       setTimeout(() => {
         if (this.descriptionInput) {
@@ -336,6 +370,46 @@ export class TransactionsComponent implements OnInit {
         }
       }, 550); // Slightly after the 500ms transition
     }
+  }
+
+  /**
+   * Pre-fill the form with user preferences
+   */
+  private prefillFormWithPreferences(): void {
+    const preferences = this.preferencesService.getPreferences();
+    
+    // Set today's date as default
+    const today = new Date();
+    this.startDate = new NgbDate(today.getFullYear(), today.getMonth() + 1, today.getDate());
+    this.startDateString = `${today.getMonth() + 1}/${today.getDate()}/${today.getFullYear()}`;
+    this.newRecurringTransaction.date = today;
+    
+    // Pre-fill with last used values
+    this.newRecurringTransaction.type = preferences.lastTransactionType;
+    this.newRecurringTransaction.category = preferences.lastCategory;
+    
+    // Don't pre-fill amount - let user enter it fresh
+    this.newRecurringTransaction.amount = 0;
+    this.newRecurringTransaction.description = '';
+  }
+
+  /**
+   * Get CSS classes for the save button based on current state
+   */
+  getSaveButtonClasses(): string {
+    if (this.isSaving) {
+      return 'px-6 py-2 bg-teal-600 text-white font-medium rounded-lg focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 shadow-sm transition-colors duration-200 cursor-not-allowed';
+    }
+    
+    if (this.saveSuccess) {
+      return 'px-6 py-2 bg-green-600 text-white font-medium rounded-lg focus:ring-2 focus:ring-green-500 focus:ring-offset-2 shadow-sm transition-colors duration-200';
+    }
+    
+    if (this.isTransactionFormValid()) {
+      return 'px-6 py-2 bg-teal-600 hover:bg-teal-700 text-white font-medium rounded-lg focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 shadow-sm hover:shadow-md transition-colors duration-200';
+    }
+    
+    return 'px-6 py-2 bg-gray-400 text-gray-200 font-medium rounded-lg cursor-not-allowed transition-colors duration-200';
   }
 
   toggleViewMode() {
