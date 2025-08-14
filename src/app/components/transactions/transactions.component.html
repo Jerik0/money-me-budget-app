@@ -465,70 +465,70 @@
 
     <!-- Grid View (Current Calendar Layout) -->
     <div #calendarSection [class.hidden]="viewMode !== 'grid'" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-2 grid-aligned-with-toggle w-full max-w-full overflow-hidden">
-    <div *ngFor="let group of getGroupedTransactions()" class="border border-gray-200 dark:border-chatgpt-border rounded-md overflow-hidden bg-white dark:bg-chatgpt-darker hover:shadow-md">
-     <!-- Date Header - More Compact -->
-     <div class="bg-gray-100 dark:bg-chatgpt-light px-2 py-1 border-b border-gray-200 dark:border-chatgpt-border">
-      <div class="flex items-center justify-between">
-       <!-- Left: Month -->
-       <div class="text-xs font-medium text-gray-500 dark:text-gray-400 leading-none">
-        {{ group.date | date:'MMM' }}
-       </div>
-       <!-- Center: Date & Day -->
-       <div class="text-center">
-        <div class="font-bold text-teal-600 dark:text-teal-400 text-sm leading-none">{{ group.date | date:'d' }}</div>
-        <div class="font-medium text-gray-600 dark:text-gray-300 text-xs leading-none">{{ group.date | date:'EEE' }}</div>
-       </div>
-       <!-- Right: Spacer for balance -->
-       <div class="text-xs w-8"></div>
-      </div>
-     </div>
+      <div *ngFor="let group of getGroupedTransactions()" class="border border-gray-200 dark:border-chatgpt-border rounded-md overflow-hidden bg-white dark:bg-chatgpt-darker hover:shadow-md">
+        <!-- Date Header - More Compact -->
+        <div class="bg-gray-100 dark:bg-chatgpt-light px-2 py-1 border-b border-gray-200 dark:border-chatgpt-border">
+          <div class="flex items-center justify-between">
+            <!-- Left: Month -->
+            <div class="text-xs font-medium text-gray-500 dark:text-gray-400 leading-none">
+              {{ group.date | date:'MMM' }}
+            </div>
 
-      <!-- Transactions in this date card - More Compact -->
-      <div class="p-1.5 space-y-1 min-h-[90px] max-h-[120px] overflow-y-auto">
-        <div *ngFor="let transaction of group.transactions; let transactionIndex = index"
-          class="group rounded px-1.5 py-1"
-          [class.bg-white]="transactionIndex % 2 === 0"
-          [class.bg-gray-50]="transactionIndex % 2 !== 0"
-          [class.dark:bg-chatgpt-darker]="transactionIndex % 2 === 0"
-          [class.dark:bg-chatgpt-light]="transactionIndex % 2 !== 0"
-          [class.hover:bg-gray-100]="transactionIndex % 2 === 0"
-          [class.hover:bg-gray-200]="transactionIndex % 2 !== 0"
-          [class.dark:hover:bg-gray-800]="transactionIndex % 2 === 0"
-          [class.dark:hover:bg-gray-700]="transactionIndex % 2 !== 0">
-
-       <!-- Single Line Layout -->
-       <div class="flex items-center justify-between">
-        <!-- Left: Description -->
-        <div class="flex-1 min-w-0">
-         <div class="font-medium text-gray-900 dark:text-gray-100 truncate text-xs leading-tight">{{ transaction.description }}</div>
-        </div>
-
-        <!-- Right: Amount + Delete -->
-        <div class="flex items-center space-x-1 flex-shrink-0">
-          <div class="font-medium text-xs" [ngClass]="{
-            'text-red-600 dark:text-red-400': transaction.type === TransactionType.EXPENSE,
-            'text-chatgpt-accent dark:text-chatgpt-accent': transaction.type === TransactionType.INCOME
-          }">
-            {{ transaction.type === TransactionType.EXPENSE ? '-' : '+' }}${{ transaction.amount | number:'1.0-0' }}
+            <!-- Center: Date & Day -->
+            <div class="text-center">
+              <div class="font-bold text-teal-600 dark:text-teal-400 text-sm leading-none">{{ group.date | date:'d' }}</div>
+              <div class="font-medium text-gray-600 dark:text-gray-300 text-xs leading-none">{{ group.date | date:'EEE' }}</div>
+            </div>
+            <!-- Right: Spacer for balance -->
+            <div class="text-xs w-8"></div>
           </div>
-          <button
-            (click)="deleteTransaction(transaction.id)"
-            class="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 w-3 h-3 flex items-center justify-center"
-            title="Delete"
-          >
-            ×
-          </button>
         </div>
-       </div>
-      </div>
 
-      <!-- Empty state for cards with no transactions -->
-      <div *ngIf="group.transactions.length === 0" class="text-center py-2 text-gray-400 dark:text-gray-500 text-xs">
-       No transactions
+        <!-- Transactions in this date card - More Compact -->
+        <div class="p-1.5 space-y-1 min-h-[90px] max-h-[120px] overflow-y-auto">
+          <div *ngFor="let transaction of group.transactions; let transactionIndex = index"
+            class="group rounded px-1.5 py-1"
+            [class.bg-white]="transactionIndex % 2 === 0"
+            [class.bg-gray-50]="transactionIndex % 2 !== 0"
+            [class.dark:bg-chatgpt-darker]="transactionIndex % 2 === 0"
+            [class.dark:bg-chatgpt-light]="transactionIndex % 2 !== 0"
+            [class.hover:bg-gray-100]="transactionIndex % 2 === 0"
+            [class.hover:bg-gray-200]="transactionIndex % 2 !== 0"
+            [class.dark:hover:bg-gray-800]="transactionIndex % 2 === 0"
+            [class.dark:hover:bg-gray-700]="transactionIndex % 2 !== 0">
+            <!-- Single Line Layout -->
+            <div class="flex items-center justify-between">
+              <!-- Left: Description -->
+              <div class="flex-1 min-w-0">
+                <div class="font-medium text-gray-900 dark:text-gray-100 truncate text-xs leading-tight">{{ transaction.description }}</div>
+              </div>
+
+              <!-- Right: Amount + Delete -->
+              <div class="flex items-center space-x-1 flex-shrink-0">
+                <div class="font-medium text-xs" [ngClass]="{
+                  'text-red-600 dark:text-red-400': transaction.type === TransactionType.EXPENSE,
+                  'text-chatgpt-accent dark:text-chatgpt-accent': transaction.type === TransactionType.INCOME
+                }">
+                  {{ transaction.type === TransactionType.EXPENSE ? '-' : '+' }}${{ transaction.amount | number:'1.0-0' }}
+                </div>
+                <button
+                  (click)="deleteTransaction(transaction.id)"
+                  class="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 w-3 h-3 flex items-center justify-center"
+                  title="Delete"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Empty state for cards with no transactions -->
+          <div *ngIf="group.transactions.length === 0" class="text-center py-2 text-gray-400 dark:text-gray-500 text-xs">
+           No transactions
+          </div>
+        </div>
       </div>
-     </div>
     </div>
-   </div>
 
     <!-- List View (New Compact Layout) -->
     <div [class.hidden]="viewMode !== 'list'" class="border border-gray-200 dark:border-chatgpt-border rounded-lg overflow-hidden flex flex-col h-96 w-full max-w-full">
