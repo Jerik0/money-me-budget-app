@@ -263,8 +263,6 @@ export class TransactionsComponent implements OnInit {
       console.log('Recurring transactions count:', recurringTransactions.length);
     });
 
-    // Month data is now handled by filtering existing transactions
-
     // Mark component as initialized
     this.componentInitialized = true;
   }
@@ -326,22 +324,6 @@ export class TransactionsComponent implements OnInit {
     this.transactionService.deleteTransactionFromDatabase(id).subscribe();
   }
 
-  private isClickInsideDatePicker(event: Event, pickerType: 'start' | 'end'): boolean {
-    const target = event.target as HTMLElement;
-
-    if (pickerType === 'start') {
-      // Check if click is inside the start date input or its date picker
-      const startDateInput = target.closest('.start-date-container');
-      const startDatePicker = target.closest('ngb-datepicker');
-      return !!(startDateInput || startDatePicker);
-    } else {
-      // Check if click is inside the end date input or its date picker
-      const endDateInput = target.closest('.end-date-container');
-      const endDatePicker = target.closest('ngb-datepicker');
-      return !!(endDateInput || endDatePicker);
-    }
-  }
-
   private isClickInsideMonthPicker(event: Event): boolean {
     const target = event.target as HTMLElement;
     // Check if click is inside the month picker button or dropdown
@@ -374,52 +356,25 @@ export class TransactionsComponent implements OnInit {
     });
   }
 
-
-
   calculateTimeline() {
-    console.log('🔄 Starting timeline calculation...');
-    console.log(`Current transactions count: ${this.transactions.length}`);
-    console.log(`Current balance: ${this.currentBalance}`);
-
-    // First, get the base timeline from existing transactions
-    this.timeline = this.timelineService.calculateTimeline(
+    // Use the TimelineService to calculate the complete timeline with recurring transactions
+    this.timelineService.calculateTimelineWithRecurring(
       this.transactions,
       this.currentBalance,
-      this.projectionInterval
-    );
+      this.projectionInterval,
+      (updatedTimeline) => {
+        // Update the component's timeline with the updated version
+        this.timeline = updatedTimeline;
+        
+        // Post-processing callback
+        // Clear the cache when timeline changes
+        this.calendarDataService.clearCache();
 
-    console.log(`Base timeline created with ${this.timeline.length} items`);
-
-    // Store the base timeline temporarily
-    const baseTimeline = [...this.timeline];
-
-    // Clear any existing recurring transactions from the timeline to prevent duplicates
-    this.timeline = this.timeline.filter(item =>
-      !this.isTransaction(item) || !item.isRecurring
-    );
-
-    console.log(`Timeline after filtering recurring: ${this.timeline.length} items`);
-
-    // Now generate recurring transactions for all months after starting dates
-    // This is now async and will call the completion callback when done
-    this.recurringTransactionService.generateRecurringTransactionsForAllMonthsWithCallback(this.timeline, () => {
-      // Ensure the timeline has content before proceeding
-      if (this.timeline.length === 0) {
-        console.log('⚠️ Timeline is empty after generation, restoring base timeline');
-        this.timeline = baseTimeline;
+        // Save transactions and update projections
+        this.transactionService.saveTransactions(this.transactions);
+        this.lowestProjections = this.timelineService.updateLowestProjections(this.timeline, this.currentBalance, this.projectionInterval);
       }
-
-      console.log('✅ Timeline calculation complete!');
-      console.log('Timeline calculated with recurring transactions:', this.timeline);
-      console.log('Timeline length:', this.timeline.length);
-
-      // Clear the cache when timeline changes
-      this.calendarDataService.clearCache();
-
-      this.transactionService.saveTransactions(this.transactions);
-      this.lowestProjections = this.timelineService.updateLowestProjections(this.timeline, this.currentBalance, this.projectionInterval);
-      // updateGroupedTransactions is no longer needed as it's handled by getGroupedTransactions()
-    });
+    );
   }
 
   deleteTransaction(id: string) {
@@ -430,8 +385,6 @@ export class TransactionsComponent implements OnInit {
   isTransaction(item: any): item is TimelineItem {
     return this.timelineService.isTransaction(item);
   }
-
-
 
   getLowestProjections(): ProjectionPoint[] {
     return this.lowestProjections;
@@ -446,8 +399,6 @@ export class TransactionsComponent implements OnInit {
     this.projectionInterval = interval;
     this.calculateTimeline();
   }
-
-
 
   getGroupedTransactions(): { date: Date, transactions: TimelineItem[] }[] {
     console.log(`📅 Getting grouped transactions for month: ${this.currentViewMonth.toLocaleDateString()}`);

@@ -38,7 +38,7 @@ export class RecurringTransactionService {
    */
   generateRecurringTransactionsForAllMonthsWithCallback(
     timeline: (TimelineItem | any)[], 
-    onComplete?: () => void
+    onComplete?: (timeline: (TimelineItem | any)[]) => void
   ): void {
     const currentYear = new Date().getFullYear();
     const currentMonth = new Date().getMonth();
@@ -60,7 +60,7 @@ export class RecurringTransactionService {
       
       // Call completion callback if provided
       if (onComplete) {
-        onComplete();
+        onComplete(timeline);
       }
     });
   }

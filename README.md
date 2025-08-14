@@ -1,6 +1,6 @@
 # Money Me App 2025
 
-A comprehensive money management application built with Angular frontend, Node.js/Express backend, and PostgreSQL database.
+A comprehensive money management application built with Angular frontend, Node.js/Express backend, and PostgreSQL database. Features recurring transaction management, timeline projections, and a modern calendar-based interface.
 
 ## 🚀 Quick Start
 
@@ -65,10 +65,34 @@ ng serve
 
 ## 🏗️ Architecture
 
-- **Frontend**: Angular 20 with Tailwind CSS
-- **Backend**: Node.js/Express API
+### Frontend Architecture
+- **Framework**: Angular 20 with standalone components
+- **Styling**: Tailwind CSS with custom SCSS
+- **State Management**: Service-based with RxJS observables
+- **Component Architecture**: Modular, single-responsibility components
+
+### Backend Architecture
+- **Runtime**: Node.js with Express.js
 - **Database**: PostgreSQL 15 with Docker
-- **Styling**: SCSS with Tailwind CSS
+- **API**: RESTful endpoints for transactions and categories
+- **Data Layer**: Direct database connections with connection pooling
+
+### Service Architecture
+The application follows a service-oriented architecture with clear separation of concerns:
+
+#### Core Services (`src/app/services/`)
+- **`TransactionService`**: Manages transaction CRUD operations and API communication
+- **`TimelineService`**: Handles timeline calculations, projections, and data grouping
+- **`StorageService`**: Manages local storage and persistence
+- **`ApiService`**: Centralized HTTP client for backend communication
+- **`RecurrenceService`**: Manages recurring transaction patterns and calculations
+
+#### Component Services (`src/app/components/transactions/`)
+- **`RecurringTransactionService`**: Generates and manages recurring transactions
+- **`RecurringTransactionHelperService`**: Helper utilities for recurring transaction logic
+- **`CalendarDataService`**: Manages calendar view data and caching
+- **`CalendarNavigationService`**: Handles month/year navigation and date calculations
+- **`TransactionManagementService`**: Manages transaction form state and validation
 
 ## 📁 Project Structure
 
@@ -77,12 +101,30 @@ money-me-app-2025/
 ├── src/                    # Angular frontend
 │   ├── app/
 │   │   ├── components/     # Angular components
-│   │   ├── services/       # Angular services
-│   │   └── interfaces/     # TypeScript interfaces
+│   │   │   ├── transactions/           # Transaction management
+│   │   │   │   ├── transactions.component.ts          # Main component (497 lines)
+│   │   │   │   ├── recurring-transaction.service.ts   # Recurring transaction logic
+│   │   │   │   ├── recurring-transaction-helper.service.ts # Helper utilities
+│   │   │   │   ├── calendar-data.service.ts           # Calendar data management
+│   │   │   │   ├── calendar-navigation.service.ts     # Navigation logic
+│   │   │   │   ├── transaction-management.service.ts  # Form management
+│   │   │   │   └── transactions.constants.ts          # Constants and options
+│   │   │   ├── dashboard/              # Dashboard component
+│   │   │   ├── balance-projection-chart/ # Balance projection visualization
+│   │   │   └── shared/                 # Reusable components
+│   │   │       ├── custom-dropdown/     # Custom dropdown component
+│   │   │       └── custom-modal/        # Modal component
+│   │   ├── services/       # Core Angular services
+│   │   ├── interfaces/     # TypeScript interfaces
+│   │   ├── enums/          # Application enums
+│   │   └── utils/          # Utility functions
 ├── backend/                # Node.js backend
 │   ├── src/
 │   │   ├── controllers/    # API controllers
 │   │   ├── database/       # Database connection & schema
+│   │   │   ├── connection.js           # Database connection config
+│   │   │   ├── schema.js              # Database schema definition
+│   │   │   └── migrations/            # Database migration scripts
 │   │   └── routes/         # API routes
 └── docker-compose.yml      # Database & backend containers
 ```
@@ -116,10 +158,48 @@ money-me-app-2025/
 - **Backend API**: http://localhost:3000
 - **Database**: localhost:5432
 
-### 🗄️ Database Access & Management
+## 🗄️ Database Interaction
+
+### Database Schema
+The application uses a PostgreSQL database with the following key tables:
+
+- **`transactions`**: Stores all transaction data including recurring transactions
+- **`categories`**: Manages transaction categories
+- **`recurring_patterns`**: Stores recurring transaction patterns and frequencies
+
+### Database Connection
+- **Host**: `postgres` (Docker container name)
+- **Port**: 5432
+- **Database**: `money_me_app`
+- **Username**: `postgres_admin`
+- **Password**: `password123`
+
+**Important**: The application connects to the Docker database, not localhost. The connection is configured in `backend/src/database/connection.js`.
+
+### Database Operations
+The application performs the following database operations:
+
+1. **Transaction Management**:
+   - Fetch all transactions
+   - Fetch recurring transactions
+   - Insert new transactions
+   - Update existing transactions
+   - Delete transactions
+
+2. **Recurring Transaction Generation**:
+   - Automatically generates recurring transactions based on patterns
+   - Supports daily, weekly, monthly, and yearly frequencies
+   - Handles complex date calculations and month boundaries
+
+3. **Data Migration**:
+   - Database initialization scripts
+   - Sample data insertion
+   - Schema updates and migrations
+
+### Database Access & Management
 
 **Connection Details:**
-- **Host**: localhost (or 127.0.0.1)
+- **Host**: postgres (Docker container)
 - **Port**: 5432
 - **Database**: money_me_app
 - **Username**: postgres_admin
@@ -181,6 +261,18 @@ docker-compose down -v
 docker-compose up -d
 ```
 
+**Running Database Migrations:**
+```bash
+# Navigate to backend directory
+cd backend
+
+# Run migrations
+node src/database/migrations/run-migration.js
+
+# Insert sample data
+node src/database/insert-transactions.sql
+```
+
 **GUI Database Tools:**
 ```bash
 # Popular PostgreSQL GUI clients you can use:
@@ -197,26 +289,24 @@ docker-compose up -d
 # Password: password123
 ```
 
-### 🎯 Benefits of Single-Command Management
+## 🎯 Key Features
 
-**Start Command (`npm run start:all`):**
-- Automatically stops conflicting processes
-- Coordinates Docker containers and local services
-- Waits for each service to be healthy before proceeding
-- Includes intelligent frontend detection with timeout handling
-- Perfect for initial setup or after system restarts
+### Transaction Management
+- **Recurring Transactions**: Support for daily, weekly, monthly, and yearly recurring transactions
+- **Category Management**: Flexible category system with add/edit capabilities
+- **Transaction Timeline**: Visual timeline showing transaction history and projections
+- **Balance Projections**: Future balance calculations based on recurring transactions
 
-**Stop Command (`npm run stop:all`):**
-- Cleanly stops all services in the correct order
-- Frees up ports 3000, 4200, and 5432
-- Provides detailed status of what was stopped
-- Safe to run multiple times
+### Calendar Interface
+- **Month Navigation**: Easy month/year navigation with dropdown picker
+- **3-Month View**: Shows current month plus two following months
+- **Transaction Display**: Transactions displayed on their respective dates
+- **Responsive Design**: Works on desktop and mobile devices
 
-**Restart Command (`npm run restart:all`):**
-- Complete service refresh - perfect for troubleshooting
-- Stops everything cleanly, then starts fresh
-- Ensures no lingering processes or port conflicts
-- Ideal after code changes or when services become unresponsive
+### Data Persistence
+- **Local Storage**: User preferences and settings stored locally
+- **Database Storage**: All transaction data stored in PostgreSQL
+- **Real-time Updates**: Changes reflected immediately across all views
 
 ## 🐛 Troubleshooting
 
@@ -234,9 +324,16 @@ If you get port conflicts, the startup scripts will automatically:
 - Check container logs: `docker logs money-me-postgres`
 - Verify port 5432 is accessible: `netstat -an | findstr :5432`
 
+**Important**: The application connects to the Docker database (`postgres`), not localhost. Check `backend/src/database/connection.js` for the correct connection settings.
+
 ### Frontend Not Loading
 - Check if Angular is running: `netstat -an | findstr :4200`
 - Restart with: `ng serve`
+
+### Transaction Data Not Showing
+- Verify database has data: `docker exec -it money-me-postgres psql -U postgres_admin -d money_me_app -c "SELECT COUNT(*) FROM transactions;"`
+- Check browser console for errors
+- Verify backend API is responding: `curl http://localhost:3000/api/transactions`
 
 ### PowerShell Files Opening in Editor Instead of Running
 **Problem**: `.ps1` files open in Notepad++ or another text editor instead of executing.
@@ -263,10 +360,38 @@ If you get port conflicts, the startup scripts will automatically:
    - Right-click a `.ps1` file → "Open with" → "Choose another app"
    - Select "Windows PowerShell" and check "Always use this app"
 
-## 📝 Notes
+## 📝 Development Notes
 
+### Code Organization
+- **Component Size**: Main transactions component reduced from 744 to 497 lines (33% reduction)
+- **Service Architecture**: Business logic moved to appropriate services
+- **Single Responsibility**: Each service has a clear, focused purpose
+- **Maintainability**: Code is easier to understand, test, and modify
+
+### Styling Guidelines
 - The app uses SCSS files for styling (not CSS)
 - Buttons use subtle shading feedback instead of outlines
 - Toggled content uses `[class.hidden]` for instant performance
 - Main accent color is teal with gradients
 - All components use separate HTML template files
+
+### Performance Considerations
+- **Caching**: Calendar data service implements caching to prevent infinite loops
+- **Lazy Loading**: Services are loaded only when needed
+- **Efficient Filtering**: Timeline filtering optimized for performance
+- **Memory Management**: Proper cleanup of subscriptions and caches
+
+## 🔄 Recent Updates
+
+### Refactoring Completed
+- ✅ Moved complex timeline logic to `TimelineService`
+- ✅ Consolidated recurring transaction logic in `RecurringTransactionService`
+- ✅ Separated calendar data management into `CalendarDataService`
+- ✅ Improved component maintainability and testability
+- ✅ Fixed transaction data display issues
+
+### Architecture Improvements
+- ✅ Service-oriented architecture with clear separation of concerns
+- ✅ Reduced component complexity and improved maintainability
+- ✅ Better error handling and debugging capabilities
+- ✅ Improved code organization and readability
