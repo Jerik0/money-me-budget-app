@@ -18,6 +18,7 @@ export class CalendarDataService {
    */
   private cachedGroupedTransactions: { date: Date, transactions: TimelineItem[] }[] = [];
   private lastCachedMonth: string = '';
+  private specificStartDate: Date | undefined = undefined;
 
   /**
    * Calculate timeline with recurring transactions
@@ -65,13 +66,14 @@ export class CalendarDataService {
       return [];
     }
 
-    // Check cache first
-    const cacheKey = `${currentViewMonth.getFullYear()}-${currentViewMonth.getMonth()}`;
+    // Check cache first - include specific start date in cache key if it exists
+    const specificStartDateStr = this.specificStartDate ? `-${this.specificStartDate.getTime()}` : '';
+    const cacheKey = `${currentViewMonth.getFullYear()}-${currentViewMonth.getMonth()}${specificStartDateStr}`;
     if (this.lastCachedMonth === cacheKey && this.cachedGroupedTransactions.length > 0) {
       return this.cachedGroupedTransactions;
     }
 
-    const { startMonth, endMonth } = this.calendarNavigationService.calculateDateRange(currentViewMonth);
+    const { startMonth, endMonth } = this.calendarNavigationService.calculateDateRange(currentViewMonth, this.specificStartDate);
 
     // Filter timeline items to only include transactions within the current view range
     const filteredTimeline = timeline.filter(item => {
@@ -114,6 +116,27 @@ export class CalendarDataService {
   clearCache(): void {
     this.cachedGroupedTransactions = [];
     this.lastCachedMonth = '';
+    this.specificStartDate = undefined;
+  }
+
+  /**
+   * Set a specific start date for the timeline view
+   */
+  setSpecificStartDate(startDate: Date | undefined): void {
+    this.specificStartDate = startDate;
+    // Clear cache but preserve the specific start date
+    this.cachedGroupedTransactions = [];
+    this.lastCachedMonth = '';
+    // Don't reset this.specificStartDate here!
+  }
+
+  /**
+   * Clear cache without resetting specific start date
+   */
+  clearCachePreserveStartDate(): void {
+    this.cachedGroupedTransactions = [];
+    this.lastCachedMonth = '';
+    // Don't reset this.specificStartDate!
   }
 
   /**
@@ -131,7 +154,7 @@ export class CalendarDataService {
     groupedTransactions: { date: Date, transactions: TimelineItem[] }[]
   ): { month: Date, transactions: { date: Date, transactions: TimelineItem[] }[] }[] {
     
-    const { startMonth, endMonth } = this.calendarNavigationService.calculateDateRange(currentViewMonth);
+    const { startMonth, endMonth } = this.calendarNavigationService.calculateDateRange(currentViewMonth, this.specificStartDate);
     const visibleMonths: { month: Date, transactions: { date: Date, transactions: TimelineItem[] }[] }[] = [];
     
     // Group transactions by month

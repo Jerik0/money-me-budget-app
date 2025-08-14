@@ -23,6 +23,7 @@ export class BalanceProjectionChartComponent implements AfterViewInit, OnDestroy
   @Input() currentBalance: number = 0;
 
   @Output() intervalChange = new EventEmitter<ProjectionInterval>();
+  @Output() chartClick = new EventEmitter<Date>();
 
   // Dropdown options
   projectionIntervalOptions: DropdownOption[] = [
@@ -173,6 +174,17 @@ export class BalanceProjectionChartComponent implements AfterViewInit, OnDestroy
             axis: 'x',
             intersect: false
           },
+          onClick: (event, elements) => {
+            if (elements.length > 0) {
+              const element = elements[0];
+              const dataPoint = this.chart?.data.datasets[0].data[element.index];
+              if (dataPoint && typeof dataPoint === 'object' && 'x' in dataPoint) {
+                const clickedDate = new Date(dataPoint.x);
+                console.log('Chart clicked on date:', clickedDate);
+                this.chartClick.emit(clickedDate);
+              }
+            }
+          },
           elements: {
             point: {
               hoverRadius: 8
@@ -181,6 +193,10 @@ export class BalanceProjectionChartComponent implements AfterViewInit, OnDestroy
           animation: {
             duration: 750,
             easing: 'easeInOutQuart'
+          },
+          hover: {
+            mode: 'nearest',
+            intersect: false
           },
           layout: {
             padding: {

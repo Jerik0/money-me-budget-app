@@ -34,6 +34,7 @@ import {
 })
 export class TransactionsComponent implements OnInit {
   @ViewChild('descriptionInput') descriptionInput!: ElementRef;
+  @ViewChild('calendarSection') calendarSection!: ElementRef;
 
   currentBalance: number = 0;
   lastBalanceUpdate: Date = new Date();
@@ -171,7 +172,7 @@ export class TransactionsComponent implements OnInit {
             setTimeout(() => {
               console.log('🔄 Starting timeline recalculation...');
               this.calculateTimeline();
-              this.calendarDataService.clearCache();
+              this.calendarDataService.clearCachePreserveStartDate();
               console.log(`✅ Timeline recalculated after database refresh`);
               
               // Force a manual refresh of the calendar data
@@ -599,7 +600,7 @@ export class TransactionsComponent implements OnInit {
         
         // Post-processing callback
         // Clear the cache when timeline changes
-        this.calendarDataService.clearCache();
+        this.calendarDataService.clearCachePreserveStartDate();
 
         // Save transactions and update projections
         this.transactionService.saveTransactions(this.allTransactions);
@@ -639,7 +640,7 @@ export class TransactionsComponent implements OnInit {
           // Wait a moment for the refresh to complete, then recalculate timeline
           setTimeout(() => {
             this.calculateTimeline();
-            this.calendarDataService.clearCache();
+            this.calendarDataService.clearCachePreserveStartDate();
             console.log(`🔄 Timeline recalculated after database deletion`);
           }, 500);
         }
@@ -650,7 +651,7 @@ export class TransactionsComponent implements OnInit {
         this.transactions = this.transactions.filter(t => t.id !== id);
         this.allTransactions = this.allTransactions.filter(t => t.id !== id);
         this.calculateTimeline();
-        this.calendarDataService.clearCache();
+        this.calendarDataService.clearCachePreserveStartDate();
       }
     });
   }
@@ -673,6 +674,36 @@ export class TransactionsComponent implements OnInit {
     this.calculateTimeline();
   }
 
+  onChartClick(clickedDate: Date) {
+    console.log('Chart clicked on date:', clickedDate);
+    
+    // Set the current view month to the clicked date (not just the 1st of the month)
+    this.currentViewMonth = new Date(clickedDate);
+    
+    // Set the specific start date to the clicked date
+    this.calendarDataService.setSpecificStartDate(clickedDate);
+    
+    // Force a refresh of the calendar data
+    this.refreshCalendarData();
+    
+    // Switch to grid view to show the calendar
+    this.viewMode = 'grid';
+    
+    // Scroll to the calendar section after a short delay to ensure the view has updated
+    setTimeout(() => {
+      if (this.calendarSection) {
+        this.calendarSection.nativeElement.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'start' 
+        });
+      }
+    }, 100);
+    
+    console.log('Updated current view month to:', this.currentViewMonth);
+    console.log('Set specific start date to:', clickedDate);
+    console.log('Switched to grid view to show calendar');
+  }
+
   getGroupedTransactions(): { date: Date, transactions: TimelineItem[] }[] {
     const grouped = this.calendarDataService.getGroupedTransactions(this.timeline, this.currentViewMonth);
     return grouped;
@@ -680,6 +711,8 @@ export class TransactionsComponent implements OnInit {
 
   goToCurrentMonth(): void {
     this.currentViewMonth = new Date();
+    // Clear specific start date since this is normal navigation
+    this.calendarDataService.setSpecificStartDate(undefined);
     // Force refresh of calendar data
     this.refreshCalendarData();
   }
@@ -689,7 +722,8 @@ export class TransactionsComponent implements OnInit {
    */
   refreshCalendarData(): void {
     console.log('🔄 Forcing calendar data refresh...');
-    this.calendarDataService.clearCache();
+    // Clear cache but preserve specific start date
+    this.calendarDataService.clearCachePreserveStartDate();
     this.calculateTimeline();
   }
 
@@ -703,8 +737,8 @@ export class TransactionsComponent implements OnInit {
     this.currentViewMonth = new Date(this.currentViewMonth.getFullYear(), monthValue, 1);
     this.showMonthPicker = false;
 
-    // Clear cache to force recalculation for new month
-    this.calendarDataService.clearCache();
+    // Clear specific start date since this is normal navigation
+    this.calendarDataService.setSpecificStartDate(undefined);
 
     // Recalculate timeline to ensure we have transactions for the new month range
     this.calculateTimeline();
@@ -712,16 +746,16 @@ export class TransactionsComponent implements OnInit {
 
   goToPreviousYear(): void {
     this.currentViewMonth = new Date(this.currentViewMonth.getFullYear() - 1, this.currentViewMonth.getMonth(), 1);
-    // Clear cache to force recalculation for new year
-    this.calendarDataService.clearCache();
+    // Clear specific start date since this is normal navigation
+    this.calendarDataService.setSpecificStartDate(undefined);
     // Recalculate timeline to ensure we have transactions for the new year
     this.calculateTimeline();
   }
 
   goToNextYear(): void {
     this.currentViewMonth = new Date(this.currentViewMonth.getFullYear() + 1, this.currentViewMonth.getMonth(), 1);
-    // Clear cache to force recalculation for new year
-    this.calendarDataService.clearCache();
+    // Clear specific start date since this is normal navigation
+    this.calendarDataService.setSpecificStartDate(undefined);
     // Recalculate timeline to ensure we have transactions for the new year
     this.calculateTimeline();
   }

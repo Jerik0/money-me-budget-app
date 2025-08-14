@@ -72,8 +72,9 @@ export class CalendarNavigationService {
   /**
    * Calculate date range for 3-month view (current + 2 following months)
    */
-  calculateDateRange(currentViewMonth: Date): { startMonth: Date, endMonth: Date } {
-    const startMonth = new Date(currentViewMonth.getFullYear(), currentViewMonth.getMonth(), 1);
+  calculateDateRange(currentViewMonth: Date, startDate?: Date): { startMonth: Date, endMonth: Date } {
+    // If a specific start date is provided, use it; otherwise start from the 1st of the month
+    const startMonth = startDate || new Date(currentViewMonth.getFullYear(), currentViewMonth.getMonth(), 1);
     
     // Calculate end month properly, handling year boundaries
     let endYear = currentViewMonth.getFullYear();
