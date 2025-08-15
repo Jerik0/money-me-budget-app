@@ -137,7 +137,7 @@ export class TransactionManagementService {
   /**
    * Add a new category to the options
    */
-  addNewCategory(categoryName: string, categoryOptions: unknown[]): void {
+  addNewCategory(categoryName: string, categoryOptions: { value: string; label: string }[]): void {
     if (categoryName && !categoryOptions.find(option => option.value === categoryName)) {
       categoryOptions.push({ value: categoryName, label: categoryName });
     }
@@ -146,7 +146,7 @@ export class TransactionManagementService {
   /**
    * Reset form to default values
    */
-  resetForm(formData: unknown): void {
+  resetForm(formData: any): void {
     formData.description = '';
     formData.amount = '';
     formData.category = 'Uncategorized';
@@ -162,7 +162,7 @@ export class TransactionManagementService {
   /**
    * Validate transaction form data
    */
-  validateTransactionForm(formData: unknown): { isValid: boolean; errors: string[] } {
+  validateTransactionForm(formData: any): { isValid: boolean; errors: string[] } {
     const errors: string[] = [];
 
     if (!formData.description || formData.description.trim() === '') {

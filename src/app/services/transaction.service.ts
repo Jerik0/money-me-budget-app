@@ -48,7 +48,7 @@ export class TransactionService {
     ).subscribe();
   }
 
-  private convertApiDataToTransactions(apiData: unknown[]): Transaction[] {
+  private convertApiDataToTransactions(apiData: any[]): Transaction[] {
     return apiData.map(item => {
       const amount = parseFloat(item.amount);
       const type = item.type === 'income' ? TransactionType.INCOME : TransactionType.EXPENSE;
@@ -87,7 +87,7 @@ export class TransactionService {
     ).subscribe();
   }
 
-  private convertRecurringToTransactions(recurringData: unknown[]): void {
+  private convertRecurringToTransactions(recurringData: any[]): void {
     const transactions: Transaction[] = [];
     const today = new Date();
     const currentMonth = today.getMonth();

@@ -111,14 +111,14 @@ export class BalanceProjectionChartComponent implements AfterViewInit, OnDestroy
               },
               padding: 12,
               callbacks: {
-                title: function(context: unknown) {
+                title: function(context: any) {
                   return new Date(context[0].parsed.x).toLocaleDateString('en-US', {
                     month: 'short',
                     day: 'numeric',
                     year: 'numeric'
                   });
                 },
-                label: function(context: unknown) {
+                label: function(context: any) {
                   const value = context.parsed.y;
                   return `Balance: $${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
                 }
@@ -163,7 +163,7 @@ export class BalanceProjectionChartComponent implements AfterViewInit, OnDestroy
                   weight: 'normal'
                 },
                 padding: 12,
-                callback: function(value: unknown) {
+                callback: function(value: any) {
                   return '$' + value.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
                 }
               }

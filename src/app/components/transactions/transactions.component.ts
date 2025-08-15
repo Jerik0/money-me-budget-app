@@ -9,6 +9,7 @@ import { Transaction, ProjectionPoint, TimelineItem } from '../../interfaces';
 import { TransactionService } from '../../services/transaction.service';
 import { StorageService } from '../../services/storage.service';
 import { TimelineService } from '../../services/timeline.service';
+import { PreferencesService } from '../../services/preferences.service';
 
 import { CustomDropdownComponent } from '../shared/custom-dropdown/custom-dropdown.component';
 import { CustomModalComponent } from '../shared/custom-modal/custom-modal.component';
@@ -54,7 +55,9 @@ export class TransactionsComponent implements OnInit {
     // eslint-disable-next-line no-unused-vars
     private calendarDataService: CalendarDataService,
     // eslint-disable-next-line no-unused-vars
-    private transactionManagementService: TransactionManagementService
+    private transactionManagementService: TransactionManagementService,
+    // eslint-disable-next-line no-unused-vars
+    private preferencesService: PreferencesService
   ) {}
 
   // Properties for view/edit mode
@@ -317,6 +320,16 @@ export class TransactionsComponent implements OnInit {
     this.currentBalance = this.storageService.loadCurrentBalance();
     this.lastBalanceUpdate = new Date(); // For now, use current date
 
+    // Set the calendar to start with today's date by default
+    const today = new Date();
+    console.log('🔍 Setting calendar to start with today:', today.toDateString());
+    this.calendarDataService.setSpecificStartDate(today);
+    
+    // Set the current view month to the month containing today's date
+    // This ensures the calendar shows the correct month range starting from today
+    this.currentViewMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    console.log('🔍 Set currentViewMonth to month containing today:', this.currentViewMonth.toDateString());
+
     // Subscribe to transaction service
     this.transactionService.getTransactions().subscribe(transactions => {
       if (transactions && transactions.length > 0) {
@@ -324,6 +337,11 @@ export class TransactionsComponent implements OnInit {
         this.allTransactions = transactions; // Assign to allTransactions
         // Calculate timeline to populate the timeline array for filtering
         this.calculateTimeline();
+        // Force refresh of calendar data to ensure the specific start date is applied
+        setTimeout(() => {
+          console.log('🔍 Refreshing calendar data...');
+          this.refreshCalendarData();
+        }, 100);
       } else {
         this.loadTransactions();
       }
@@ -757,6 +775,12 @@ export class TransactionsComponent implements OnInit {
 
   getGroupedTransactions(): { date: Date, transactions: TimelineItem[] }[] {
     const grouped = this.calendarDataService.getGroupedTransactions(this.timeline, this.currentViewMonth);
+    console.log('🔍 getGroupedTransactions called with currentViewMonth:', this.currentViewMonth.toDateString());
+    console.log('🔍 Returned grouped transactions:', grouped.length, 'groups');
+    if (grouped.length > 0) {
+      console.log('🔍 First group date:', grouped[0].date.toDateString());
+      console.log('🔍 Last group date:', grouped[grouped.length - 1].date.toDateString());
+    }
     return grouped;
   }
 

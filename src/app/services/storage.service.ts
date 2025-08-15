@@ -27,7 +27,7 @@ export class StorageService {
     }
 
     try {
-      return JSON.parse(saved).map((t: unknown) => ({
+      return JSON.parse(saved).map((t: any) => ({
         ...t,
         date: new Date(t.date)
       }));
