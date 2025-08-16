@@ -77,20 +77,21 @@ export class TransactionsComponent implements OnInit {
 
   // Properties still needed by template
   isEditingBalance = false;
-  newRecurringTransaction: Partial<Transaction> = {
+  newTransaction: Partial<Transaction> = {
     description: '',
     amount: 0,
     type: 'expense' as TransactionType,
     category: '',
-    isRecurring: true,
+    isRecurring: false,
     recurringPattern: {
-      frequency: 'monthly' as RecurrenceFrequency,
-      interval: null,
-      endDate: undefined,
+      frequency: RecurrenceFrequency.MONTHLY,
+      interval: 1,
       lastDayOfMonth: false,
       lastWeekdayOfMonth: false
     }
   };
+
+
 
   // Form state management
   isSaving = false;
@@ -113,7 +114,7 @@ export class TransactionsComponent implements OnInit {
   viewMode: 'grid' | 'list' = 'grid';
 
   // Methods still needed by template
-  addRecurringTransaction() {
+  addTransaction() {
     // Validate form before proceeding
     if (!this.validateForm()) {
       return;
@@ -124,20 +125,16 @@ export class TransactionsComponent implements OnInit {
     this.saveError = null;
 
     // Use the selected start date if available, otherwise use current date
-    const transactionDate = this.newRecurringTransaction.date || new Date();
+    const transactionDate = this.newTransaction.date || new Date();
 
     const transaction: Transaction = {
       id: Date.now().toString(),
       date: transactionDate,
-      description: this.newRecurringTransaction.description!,
-      amount: this.newRecurringTransaction.amount!,
-      type: this.newRecurringTransaction.type!,
-      category: this.newRecurringTransaction.category!,
-      isRecurring: true,
-      recurringPattern: {
-        ...this.newRecurringTransaction.recurringPattern!,
-        interval: this.newRecurringTransaction.recurringPattern!.interval || 1
-      }
+      description: this.newTransaction.description!,
+      amount: this.newTransaction.amount!,
+      type: this.newTransaction.type!,
+      category: this.newTransaction.category!,
+      isRecurring: false
     };
 
 
@@ -196,16 +193,15 @@ export class TransactionsComponent implements OnInit {
   }
 
   private resetForm() {
-    this.newRecurringTransaction = {
+    this.newTransaction = {
       description: '',
       amount: 0,
       type: 'expense' as TransactionType,
       category: '',
-      isRecurring: true,
+      isRecurring: false,
       recurringPattern: {
-        frequency: 'monthly' as RecurrenceFrequency,
-        interval: null,
-        endDate: undefined,
+        frequency: RecurrenceFrequency.MONTHLY,
+        interval: 1,
         lastDayOfMonth: false,
         lastWeekdayOfMonth: false
       }
@@ -226,20 +222,20 @@ export class TransactionsComponent implements OnInit {
     const isChecked = target.checked;
 
     if (option === 'lastDay') {
-      this.newRecurringTransaction.recurringPattern!.lastDayOfMonth = isChecked;
+      this.newTransaction.recurringPattern!.lastDayOfMonth = isChecked;
       if (isChecked) {
-        this.newRecurringTransaction.recurringPattern!.lastWeekdayOfMonth = false;
+        this.newTransaction.recurringPattern!.lastWeekdayOfMonth = false;
       }
     } else if (option === 'lastWeekday') {
-      this.newRecurringTransaction.recurringPattern!.lastWeekdayOfMonth = isChecked;
+      this.newTransaction.recurringPattern!.lastWeekdayOfMonth = isChecked;
       if (isChecked) {
-        this.newRecurringTransaction.recurringPattern!.lastDayOfMonth = false;
+        this.newTransaction.recurringPattern!.lastDayOfMonth = false;
       }
     }
   }
 
   isTransactionFormValid(): boolean {
-    const transaction = this.newRecurringTransaction;
+    const transaction = this.newTransaction;
 
     if (!transaction.description || !transaction.description.trim()) {
       return false;
@@ -256,9 +252,10 @@ export class TransactionsComponent implements OnInit {
     return true;
   }
 
-  onCategoryAdded(newCategory: string): void {
-    if (!this.categoryOptions.find(option => option.value === newCategory)) {
-      this.categoryOptions.push({ value: newCategory, label: newCategory });
+  onCategoryAdded(newCategory: unknown): void {
+    const category = String(newCategory);
+    if (!this.categoryOptions.find(option => option.value === category)) {
+      this.categoryOptions.push({ value: category, label: category });
     }
   }
 
@@ -281,7 +278,7 @@ export class TransactionsComponent implements OnInit {
       this.startDateString = `${date.month}/${date.day}/${date.year}`;
       // Create date at noon to avoid timezone issues
       const jsDate = new Date(date.year, date.month - 1, date.day, 12, 0, 0, 0);
-      this.newRecurringTransaction.date = jsDate;
+      this.newTransaction.date = jsDate;
       this.showDatePicker = false;
       
       // Validate form after date change
@@ -292,7 +289,7 @@ export class TransactionsComponent implements OnInit {
   clearStartDate() {
     this.startDate = null;
     this.startDateString = '';
-    this.newRecurringTransaction.date = undefined;
+    this.newTransaction.date = undefined;
   }
 
   onEndDateChange(date: NgbDate | null) {
@@ -300,7 +297,7 @@ export class TransactionsComponent implements OnInit {
       this.endDate = date;
       this.endDateString = `${date.month}/${date.day}/${date.year}`;
       const jsDate = new Date(date.year, date.month - 1, date.day);
-      this.newRecurringTransaction.recurringPattern!.endDate = jsDate;
+      this.newTransaction.recurringPattern!.endDate = jsDate;
       this.showEndDatePicker = false;
     }
   }
@@ -308,7 +305,7 @@ export class TransactionsComponent implements OnInit {
   clearEndDate() {
     this.endDate = null;
     this.endDateString = '';
-    this.newRecurringTransaction.recurringPattern!.endDate = undefined;
+    this.newTransaction.recurringPattern!.endDate = undefined;
   }
 
   onDatePickerClick(event: Event) {
@@ -318,50 +315,48 @@ export class TransactionsComponent implements OnInit {
   ngOnInit(): void {
     // Load balance from storage
     this.currentBalance = this.storageService.loadCurrentBalance();
+    
+    // Set a default balance if none is saved
+    if (this.currentBalance === 0) {
+      this.currentBalance = 5000; // Default starting balance
+      this.storageService.saveCurrentBalance(this.currentBalance);
+    }
+    
     this.lastBalanceUpdate = new Date(); // For now, use current date
 
     // Set the calendar to start with today's date by default
     const today = new Date();
-    console.log('🔍 Setting calendar to start with today:', today.toDateString());
     this.calendarDataService.setSpecificStartDate(today);
     
     // Set the current view month to the month containing today's date
     // This ensures the calendar shows the correct month range starting from today
     this.currentViewMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-    console.log('🔍 Set currentViewMonth to month containing today:', this.currentViewMonth.toDateString());
 
-    // Subscribe to transaction service
-    this.transactionService.getTransactions().subscribe(transactions => {
+    // Subscribe to all transactions from database
+    this.transactionService.getAllTransactions().subscribe(transactions => {
+      console.log('🏠 Component received transactions:', transactions);
+      this.allTransactions = transactions;
+      this.transactions = transactions; // Also assign to transactions for backward compatibility
+      
       if (transactions && transactions.length > 0) {
-        this.transactions = transactions;
-        this.allTransactions = transactions; // Assign to allTransactions
         // Calculate timeline to populate the timeline array for filtering
         this.calculateTimeline();
         // Force refresh of calendar data to ensure the specific start date is applied
         setTimeout(() => {
-          console.log('🔍 Refreshing calendar data...');
           this.refreshCalendarData();
         }, 100);
-      } else {
-        this.loadTransactions();
       }
     });
 
-    // Subscribe to all transactions from database
-    this.transactionService.getAllTransactions().subscribe(transactions => {
-      this.allTransactions = transactions;
-    });
 
-    // Subscribe to recurring transactions to see what's available
-    this.transactionService.getRecurringTransactions().subscribe(() => {
-      // Handle recurring transactions if needed
-    });
 
     // Mark component as initialized
     this.componentInitialized = true;
   }
 
   updateBalance() {
+    // Save the current balance to storage
+    this.storageService.saveCurrentBalance(this.currentBalance);
     this.lastBalanceUpdate = new Date();
     this.calculateTimeline();
   }
@@ -419,14 +414,81 @@ export class TransactionsComponent implements OnInit {
     }, 10);
   }
 
+  /**
+   * Start inline editing for calendar view transactions
+   */
+  startCalendarInlineEdit(transaction: Transaction, field: 'description' | 'amount', event: MouseEvent) {
+    // Store original values
+    transaction.originalValues = {
+      description: transaction.description,
+      category: transaction.category,
+      amount: transaction.amount
+    };
+    
+    // Set editing state for calendar view
+    if (field === 'description') transaction.isEditing = true;
+    if (field === 'amount') transaction.isEditingAmount = true;
+    
+    // Prevent event bubbling
+    event.stopPropagation();
+    
+    // Focus the input after a short delay
+    setTimeout(() => {
+      const inputElement = document.querySelector(`[data-calendar-edit-field="${field}"][data-transaction-id="${transaction.id}"]`) as HTMLInputElement;
+      if (inputElement) {
+        inputElement.focus();
+        inputElement.select();
+      }
+    }, 10);
+  }
+
   saveInlineEdit(transaction: Transaction) {
+    console.log('🚀 EDITING: Starting inline edit for:', transaction.description);
+    
     // Update the transaction in the database
     this.transactionService.updateFullTransaction(transaction).subscribe({
-      next: () => {
+      next: (result) => {
+        // Check if the update was actually successful
+        if (result === null) {
+          console.log('⚠️ WARNING: Database update returned null result');
+          // Revert to original values
+          if (transaction.originalValues) {
+            transaction.description = transaction.originalValues.description;
+            transaction.category = transaction.originalValues.category;
+            transaction.amount = transaction.originalValues.amount;
+          }
+          this.cancelInlineEdit(transaction);
+          alert('Failed to update transaction. Please try again.');
+          return;
+        }
+        
+        console.log('✅ SUCCESS: Database update completed');
+        
         this.cancelInlineEdit(transaction);
-        this.calculateTimeline(); // Refresh timeline
+        
+        // Update the local transaction in allTransactions array
+        const index = this.allTransactions.findIndex(t => t.id === transaction.id);
+        if (index !== -1) {
+          this.allTransactions[index] = { ...transaction };
+          console.log('🔄 LOCAL: Transaction updated in local array');
+        } else {
+          console.log('⚠️ WARNING: Transaction not found in local array');
+        }
+        
+        // Clear calendar cache to force refresh
+        this.calendarDataService.clearCachePreserveStartDate();
+        
+        // Recalculate timeline with updated data
+        this.calculateTimeline();
+        
+        // Force refresh of calendar data to show updated transactions
+        setTimeout(() => {
+          this.refreshCalendarData();
+          console.log('🔄 REFRESH: Calendar data refreshed');
+        }, 300);
       },
-      error: () => {
+      error: (error) => {
+        console.error('❌ ERROR: Database update failed:', error);
         // Revert to original values on error
         if (transaction.originalValues) {
           transaction.description = transaction.originalValues.description;
@@ -434,6 +496,7 @@ export class TransactionsComponent implements OnInit {
           transaction.amount = transaction.originalValues.amount;
         }
         this.cancelInlineEdit(transaction);
+        alert('Failed to update transaction. Please try again.');
       }
     });
   }
@@ -495,15 +558,15 @@ export class TransactionsComponent implements OnInit {
     const today = new Date();
     this.startDate = new NgbDate(today.getFullYear(), today.getMonth() + 1, today.getDate());
     this.startDateString = `${today.getMonth() + 1}/${today.getDate()}/${today.getFullYear()}`;
-    this.newRecurringTransaction.date = today;
+    this.newTransaction.date = today;
     
     // Pre-fill with last used values
-    this.newRecurringTransaction.type = preferences.lastTransactionType;
-    this.newRecurringTransaction.category = preferences.lastCategory;
+    this.newTransaction.type = preferences.lastTransactionType;
+    this.newTransaction.category = preferences.lastCategory;
     
     // Don't pre-fill amount - let user enter it fresh
-    this.newRecurringTransaction.amount = 0;
-    this.newRecurringTransaction.description = '';
+    this.newTransaction.amount = 0;
+    this.newTransaction.description = '';
   }
 
   /**
@@ -532,31 +595,31 @@ export class TransactionsComponent implements OnInit {
     this.validationErrors = {};
     
     // Description validation
-    if (!this.newRecurringTransaction.description || this.newRecurringTransaction.description.trim().length === 0) {
+    if (!this.newTransaction.description || this.newTransaction.description.trim().length === 0) {
       this.validationErrors['description'] = 'Description is required';
-    } else if (this.newRecurringTransaction.description.trim().length < 3) {
+    } else if (this.newTransaction.description.trim().length < 3) {
       this.validationErrors['description'] = 'Description must be at least 3 characters';
     }
     
     // Amount validation
-    if (!this.newRecurringTransaction.amount && this.newRecurringTransaction.amount !== 0) {
+    if (!this.newTransaction.amount && this.newTransaction.amount !== 0) {
       this.validationErrors['amount'] = 'Amount is required';
-    } else if (this.newRecurringTransaction.amount <= 0) {
+    } else if (this.newTransaction.amount <= 0) {
       this.validationErrors['amount'] = 'Amount must be greater than 0';
-    } else if (this.newRecurringTransaction.amount > 999999) {
+    } else if (this.newTransaction.amount > 999999) {
       this.validationErrors['amount'] = 'Amount cannot exceed $999,999';
     }
     
     // Category validation
-    if (!this.newRecurringTransaction.category || this.newRecurringTransaction.category.trim().length === 0) {
+    if (!this.newTransaction.category || this.newTransaction.category.trim().length === 0) {
       this.validationErrors['category'] = 'Category is required';
     }
     
     // Date validation
-    if (!this.newRecurringTransaction.date) {
+    if (!this.newTransaction.date) {
       this.validationErrors['date'] = 'Start date is required';
     } else {
-      const selectedDate = new Date(this.newRecurringTransaction.date);
+      const selectedDate = new Date(this.newTransaction.date);
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       
@@ -621,12 +684,13 @@ export class TransactionsComponent implements OnInit {
     }
   }
 
-  onCategoryChange(transaction: Transaction, newCategory: string): void {
+  onCategoryChange(transaction: Transaction, newCategory: unknown): void {
     // Update the transaction category
-    transaction.category = newCategory;
+    const category = String(newCategory);
+    transaction.category = category;
 
     // Save the change to the database
-    this.transactionService.updateTransactionInDatabase(transaction.id, { category: newCategory }).subscribe();
+    this.transactionService.updateTransactionInDatabase(transaction.id, { category: category }).subscribe();
   }
 
   deleteTransactionFromDatabase(id: string): void {
@@ -680,12 +744,15 @@ export class TransactionsComponent implements OnInit {
   }
 
   calculateTimeline() {
+    // Get the specific start date from the calendar data service
+    const specificStartDate = this.calendarDataService.getSpecificStartDate();
     
     // Use the TimelineService to calculate the complete timeline with recurring transactions
     this.timelineService.calculateTimelineWithRecurring(
       this.allTransactions,
       this.currentBalance,
       this.projectionInterval,
+      specificStartDate,
       (updatedTimeline) => {
         // Update the component's timeline with the updated version
         this.timeline = updatedTimeline;
@@ -694,8 +761,8 @@ export class TransactionsComponent implements OnInit {
         // Clear the cache when timeline changes
         this.calendarDataService.clearCachePreserveStartDate();
 
-        // Save transactions and update projections
-        this.transactionService.saveTransactions(this.allTransactions);
+        // Don't save transactions here during inline editing to avoid conflicts
+        // this.transactionService.saveTransactions(this.allTransactions);
         this.lowestProjections = this.timelineService.updateLowestProjections(this.timeline, this.currentBalance, this.projectionInterval);
       }
     );
@@ -775,12 +842,6 @@ export class TransactionsComponent implements OnInit {
 
   getGroupedTransactions(): { date: Date, transactions: TimelineItem[] }[] {
     const grouped = this.calendarDataService.getGroupedTransactions(this.timeline, this.currentViewMonth);
-    console.log('🔍 getGroupedTransactions called with currentViewMonth:', this.currentViewMonth.toDateString());
-    console.log('🔍 Returned grouped transactions:', grouped.length, 'groups');
-    if (grouped.length > 0) {
-      console.log('🔍 First group date:', grouped[0].date.toDateString());
-      console.log('🔍 Last group date:', grouped[grouped.length - 1].date.toDateString());
-    }
     return grouped;
   }
 

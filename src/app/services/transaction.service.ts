@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable, of } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';
 import { Transaction } from '../interfaces';
-import { TransactionType, RecurrenceFrequency } from '../enums';
+import { TransactionType } from '../enums';
 import { ApiService } from './api.service';
 
 @Injectable({
@@ -14,13 +14,10 @@ export class TransactionService {
 
   private transactionsSubject = new BehaviorSubject<Transaction[]>([]);
   private allTransactionsSubject = new BehaviorSubject<Transaction[]>([]);
-  private recurringTransactionsSubject = new BehaviorSubject<any[]>([]);
-
   constructor(
     // eslint-disable-next-line no-unused-vars
     private apiService: ApiService
   ) { 
-    this.loadRecurringTransactions();
     this.loadAllTransactions();
   }
 
@@ -32,17 +29,19 @@ export class TransactionService {
     return this.allTransactionsSubject.asObservable();
   }
 
-  getRecurringTransactions(): Observable<any[]> {
-    return this.recurringTransactionsSubject.asObservable();
-  }
+
 
   private loadAllTransactions(): void {
+    console.log('🔄 Loading transactions from API...');
     this.apiService.get<any[]>('/transactions').pipe(
       tap(data => {
+        console.log('📊 API Response:', data);
         this.allTransactions = this.convertApiDataToTransactions(data);
+        console.log('✅ Converted transactions:', this.allTransactions);
         this.allTransactionsSubject.next(this.allTransactions);
       }),
-      catchError(() => {
+      catchError((error) => {
+        console.error('❌ Error loading transactions:', error);
         return of([]);
       })
     ).subscribe();
@@ -58,6 +57,18 @@ export class TransactionService {
       const dbDate = new Date(item.date);
       const localDate = new Date(dbDate.getFullYear(), dbDate.getMonth(), dbDate.getDate(), 12, 0, 0, 0);
       
+      // Convert recurring pattern from database format to frontend format
+      let recurringPattern = undefined;
+      if (item.is_recurring && item.frequency) {
+        const monthlyOptions = item.monthly_options || {};
+        recurringPattern = {
+          frequency: item.frequency as any, // The enum values match the database strings
+          interval: monthlyOptions.interval || 1,
+          lastDayOfMonth: monthlyOptions.lastDayOfMonth || false,
+          lastWeekdayOfMonth: monthlyOptions.lastWeekdayOfMonth || false
+        };
+      }
+      
       return {
         id: item.id.toString(),
         date: localDate,
@@ -66,117 +77,14 @@ export class TransactionService {
         type: type,
         category: item.category || 'Uncategorized',
         isRecurring: item.is_recurring || false,
-        recurringPattern: item.is_recurring ? {
-          frequency: this.mapFrequency(item.frequency),
-          interval: 1
-        } : undefined
+        recurringPattern: recurringPattern
       };
     });
   }
 
-  private loadRecurringTransactions(): void {
-    this.apiService.get<any[]>('/transactions?is_recurring=true').pipe(
-      tap(data => {
-        this.recurringTransactionsSubject.next(data);
-        // Convert recurring transactions to display format for timeline view
-        this.convertRecurringToTransactions(data);
-      }),
-      catchError(() => {
-        return of([]);
-      })
-    ).subscribe();
-  }
 
-  private convertRecurringToTransactions(recurringData: any[]): void {
-    const transactions: Transaction[] = [];
-    const today = new Date();
-    const currentMonth = today.getMonth();
-    const currentYear = today.getFullYear();
-    
-    recurringData.forEach(recurring => {
-      const amount = parseFloat(recurring.amount);
-      
-      if (recurring.frequency === 'monthly' && recurring.monthly_options?.dayOfMonth) {
-        // Monthly transactions with specific day of month
-        const dayOfMonth = recurring.monthly_options.dayOfMonth;
-        const transactionDate = new Date(currentYear, currentMonth, dayOfMonth);
-        
-        // Always add monthly transactions for the current month (ignore start_date)
-        const transaction: Transaction = {
-          id: `recurring-${recurring.id}`,
-          date: transactionDate,
-          description: recurring.description,
-          amount: Math.abs(amount), // Always positive for display
-          type: recurring.type === 'income' ? TransactionType.INCOME : TransactionType.EXPENSE,
-          category: recurring.category || 'Uncategorized',
-          isRecurring: true,
-          recurringPattern: {
-            frequency: this.mapFrequency(recurring.frequency),
-            interval: 1
-          }
-        };
-        transactions.push(transaction);
-        
-      } else if (recurring.frequency === 'weekly') {
-        // Weekly transactions - show on multiple days
-        for (let week = 0; week < 4; week++) {
-          const transactionDate = new Date(currentYear, currentMonth, 1 + (week * 7));
-          
-          const transaction: Transaction = {
-            id: `recurring-${recurring.id}-week-${week}`,
-            date: transactionDate,
-            description: recurring.description,
-            amount: Math.abs(amount), // Always positive for display
-            type: recurring.type === 'income' ? TransactionType.INCOME : TransactionType.EXPENSE,
-            category: recurring.category || 'Uncategorized',
-            isRecurring: true,
-            recurringPattern: {
-              frequency: this.mapFrequency(recurring.frequency),
-              interval: 1
-            }
-          };
-          transactions.push(transaction);
-        }
-      } else if (recurring.frequency === 'bi-weekly') {
-        // Bi-weekly transactions - show on alternating weeks
-        for (let week = 0; week < 2; week++) {
-          const transactionDate = new Date(currentYear, currentMonth, 1 + (week * 14));
-          
-          const transaction: Transaction = {
-            id: `recurring-${recurring.id}-biweek-${week}`,
-            date: transactionDate,
-            description: recurring.description,
-            amount: Math.abs(amount), // Always positive for display
-            type: recurring.type === 'income' ? TransactionType.INCOME : TransactionType.EXPENSE,
-            category: recurring.category || 'Uncategorized',
-            isRecurring: true,
-            recurringPattern: {
-              frequency: this.mapFrequency(recurring.frequency),
-              interval: 1
-            }
-          };
-          transactions.push(transaction);
-        }
-      } else {
-        // Skip unsupported frequency
-      }
-    });
-    
-    // Sort transactions by date
-    transactions.sort((a, b) => a.date.getTime() - b.date.getTime());
-    this.transactionsSubject.next(transactions);
-  }
 
-  private mapFrequency(frequency: string): RecurrenceFrequency {
-    switch (frequency.toLowerCase()) {
-      case 'daily': return RecurrenceFrequency.DAILY;
-      case 'weekly': return RecurrenceFrequency.WEEKLY;
-      case 'bi-weekly': return RecurrenceFrequency.BI_WEEKLY;
-      case 'monthly': return RecurrenceFrequency.MONTHLY;
-      case 'yearly': return RecurrenceFrequency.YEARLY;
-      default: return RecurrenceFrequency.MONTHLY;
-    }
-  }
+
 
   // Removed getSampleTransactionsData method - now using real data from database
 
@@ -200,10 +108,17 @@ export class TransactionService {
   updateTransactionInDatabase(id: string, updates: Partial<Transaction>): Observable<any> {
     return this.apiService.put<any>(`/transactions/${id}`, updates).pipe(
       tap(() => {
-        // Refresh the transactions list after update
+        // Update local state immediately for better UX
+        const index = this.allTransactions.findIndex(t => t.id === id);
+        if (index !== -1) {
+          this.allTransactions[index] = { ...this.allTransactions[index], ...updates };
+          this.allTransactionsSubject.next([...this.allTransactions]);
+        }
+        // Also refresh from database to ensure consistency
         this.loadAllTransactions();
       }),
-      catchError(() => {
+      catchError((error) => {
+        console.error('Failed to update transaction:', error);
         return of(null);
       })
     );
@@ -212,10 +127,17 @@ export class TransactionService {
   updateFullTransaction(transaction: Transaction): Observable<any> {
     return this.apiService.put<any>(`/transactions/${transaction.id}`, transaction).pipe(
       tap(() => {
-        // Refresh the transactions list after update
-        this.loadAllTransactions();
+        // Update local state immediately for better UX
+        const index = this.allTransactions.findIndex(t => t.id === transaction.id);
+        if (index !== -1) {
+          this.allTransactions[index] = { ...transaction };
+          this.allTransactionsSubject.next([...this.allTransactions]);
+        }
+        // Don't immediately refresh from database to avoid race conditions
+        // The component will handle the refresh timing
       }),
-      catchError(() => {
+      catchError((error) => {
+        console.error('Failed to update transaction:', error);
         return of(null);
       })
     );
@@ -229,16 +151,24 @@ export class TransactionService {
   deleteTransactionFromDatabase(id: string): Observable<any> {
     return this.apiService.delete<any>(`/transactions/${id}`).pipe(
       tap(() => {
-        // Refresh the transactions list after deletion
+        // Update local state immediately for better UX
+        this.allTransactions = this.allTransactions.filter(t => t.id !== id);
+        this.allTransactionsSubject.next([...this.allTransactions]);
+        // Also refresh from database to ensure consistency
         this.loadAllTransactions();
       }),
-      catchError(() => {
+      catchError((error) => {
+        console.error('Failed to delete transaction:', error);
         return of(null);
       })
     );
   }
 
   refreshTransactions(): void {
+    this.loadAllTransactions();
+  }
+
+  loadTransactions(): void {
     this.loadAllTransactions();
   }
 
@@ -264,6 +194,70 @@ export class TransactionService {
 
   getBalance(): number {
     return this.getTotalIncome() - this.getTotalExpenses();
+  }
+
+  /**
+   * Calculate balance for a specific date based on all transactions up to that date
+   */
+  getBalanceForDate(targetDate: Date, startingBalance: number = 0): number {
+    const targetTime = targetDate.getTime();
+    
+    // Get all transactions up to the target date (inclusive)
+    const relevantTransactions = this.allTransactions.filter(t => {
+      const transactionTime = new Date(t.date).getTime();
+      return transactionTime <= targetTime;
+    });
+
+    // Calculate running balance
+    let balance = startingBalance;
+    relevantTransactions.forEach(transaction => {
+      if (transaction.type === TransactionType.INCOME) {
+        balance += transaction.amount;
+      } else {
+        balance -= transaction.amount;
+      }
+    });
+
+    return balance;
+  }
+
+  /**
+   * Calculate daily balance changes for a range of dates
+   */
+  getDailyBalances(startDate: Date, endDate: Date, startingBalance: number = 0): Map<string, number> {
+    const dailyBalances = new Map<string, number>();
+    let currentBalance = startingBalance;
+    
+    // Sort transactions by date
+    const sortedTransactions = [...this.allTransactions].sort((a, b) => 
+      new Date(a.date).getTime() - new Date(b.date).getTime()
+    );
+
+    // Calculate balance for each day in the range
+    const currentDate = new Date(startDate);
+    while (currentDate <= endDate) {
+      const dateKey = currentDate.toDateString();
+      
+      // Find transactions for this specific date
+      const dayTransactions = sortedTransactions.filter(t => {
+        const transactionDate = new Date(t.date);
+        return transactionDate.toDateString() === dateKey;
+      });
+
+      // Apply day's transactions to balance
+      dayTransactions.forEach(transaction => {
+        if (transaction.type === TransactionType.INCOME) {
+          currentBalance += transaction.amount;
+        } else {
+          currentBalance -= transaction.amount;
+        }
+      });
+
+      dailyBalances.set(dateKey, currentBalance);
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+
+    return dailyBalances;
   }
 
   /**

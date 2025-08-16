@@ -130,6 +130,13 @@ export class CalendarDataService {
   }
 
   /**
+   * Get the specific start date for the timeline view
+   */
+  getSpecificStartDate(): Date | undefined {
+    return this.specificStartDate;
+  }
+
+  /**
    * Clear cache without resetting specific start date
    */
   clearCachePreserveStartDate(): void {

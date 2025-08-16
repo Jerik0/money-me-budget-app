@@ -24,6 +24,9 @@ const initSchema = async () => {
         category_id INTEGER REFERENCES categories(id) ON DELETE SET NULL,
         date DATE NOT NULL,
         type VARCHAR(20) NOT NULL CHECK (type IN ('income', 'expense')),
+        is_recurring BOOLEAN DEFAULT FALSE,
+        frequency VARCHAR(20),
+        monthly_options JSONB,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
