@@ -258,7 +258,8 @@ export class TimelineService {
         const instance: Transaction = {
           ...transaction,
           id: `${transaction.id}_${currentDate.getTime()}`, // Unique ID for this instance
-          date: new Date(currentDate)
+          date: new Date(currentDate),
+          originalDatabaseId: transaction.id // Preserve the original database ID for editing
         };
         instances.push(instance);
         console.log(`🔄 TimelineService: Generated instance for ${currentDate.toDateString()}`);

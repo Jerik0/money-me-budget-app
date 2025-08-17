@@ -123,6 +123,76 @@ app.post('/api/transactions', async (req, res) => {
   }
 });
 
+// Update existing transaction
+app.put('/api/transactions/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { description, amount, type, date, category, isRecurring, recurringPattern } = req.body;
+    
+    console.log(`📝 Updating transaction with ID: ${id}`, { description, amount, type, date, category, isRecurring });
+    
+    // Check if transaction exists first
+    const checkSql = 'SELECT id, description FROM transactions WHERE id = $1';
+    const checkResult = await query(checkSql, [id]);
+    
+    if (checkResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Transaction not found' });
+    }
+    
+    // Validate required fields
+    if (!description || !amount || !type || !date) {
+      return res.status(400).json({ error: 'Missing required fields: description, amount, type, date' });
+    }
+    
+    // Get or create category
+    let categoryId = null;
+    if (category) {
+      const categoryResult = await query('SELECT id FROM categories WHERE name = $1', [category]);
+      if (categoryResult.rows.length > 0) {
+        categoryId = categoryResult.rows[0].id;
+      } else {
+        const newCategoryResult = await query('INSERT INTO categories (name) VALUES ($1) RETURNING id', [category]);
+        categoryId = newCategoryResult.rows[0].id;
+      }
+    }
+    
+    // Update the transaction
+    const sql = `
+      UPDATE transactions 
+      SET description = $1, amount = $2, type = $3, date = $4, is_recurring = $5, frequency = $6, monthly_options = $7, category_id = $8
+      WHERE id = $9
+      RETURNING id
+    `;
+    
+    // Map frontend fields to database columns
+    const values = [
+      description,
+      amount,
+      type,
+      date,
+      isRecurring || false,  // Map isRecurring to is_recurring
+      recurringPattern?.frequency || null,
+      recurringPattern ? JSON.stringify(recurringPattern) : null,
+      categoryId,
+      id
+    ];
+    
+    console.log('💾 Updating with values:', values);
+    
+    const result = await query(sql, values);
+    
+    console.log(`✅ Updated transaction: ${description} with ID: ${id}`);
+    res.json({ 
+      id: result.rows[0].id,
+      message: 'Transaction updated successfully' 
+    });
+    
+  } catch (error) {
+    console.error('Error updating transaction:', error);
+    res.status(500).json({ error: 'Failed to update transaction' });
+  }
+});
+
 // Delete transaction by ID
 app.delete('/api/transactions/:id', async (req, res) => {
   try {

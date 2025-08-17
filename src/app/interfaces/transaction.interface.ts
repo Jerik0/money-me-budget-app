@@ -16,6 +16,7 @@ export interface Transaction {
     lastWeekdayOfMonth?: boolean;
     dayOfMonth?: number | null;
   };
+  originalDatabaseId?: string; // For recurring instances to track the original transaction ID
   // Editing properties
   isEditing?: boolean;
   isEditingCategory?: boolean;

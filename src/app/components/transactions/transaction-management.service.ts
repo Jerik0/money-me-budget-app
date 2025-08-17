@@ -17,7 +17,13 @@ export class TransactionManagementService {
    * Get database transactions for Manage Transactions view
    */
   getDatabaseTransactions(allTransactions: Transaction[]): Transaction[] {
-    return allTransactions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    // Filter out generated recurring instances (those with '_' in their ID)
+    // Only return original database transactions
+    const originalTransactions = allTransactions.filter(transaction => 
+      !transaction.id.includes('_') // Original transactions have simple numeric IDs
+    );
+    
+    return originalTransactions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }
 
   /**

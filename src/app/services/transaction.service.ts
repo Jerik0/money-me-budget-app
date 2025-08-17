@@ -126,7 +126,24 @@ export class TransactionService {
   }
 
   updateFullTransaction(transaction: Transaction): Observable<any> {
-    return this.apiService.put<any>(`/transactions/${transaction.id}`, transaction).pipe(
+    // Clean the transaction data before sending to backend
+    // Remove editing properties that shouldn't be stored in the database
+    
+    // Use originalDatabaseId if available (for recurring instances) or the current id
+    const databaseId = transaction.originalDatabaseId || transaction.id;
+    
+    const cleanTransaction = {
+      id: databaseId,
+      date: transaction.date,
+      description: transaction.description,
+      amount: transaction.amount,
+      type: transaction.type,
+      category: transaction.category,
+      isRecurring: transaction.isRecurring,
+      recurringPattern: transaction.recurringPattern
+    };
+    
+    return this.apiService.put<any>(`/transactions/${cleanTransaction.id}`, cleanTransaction).pipe(
       tap(() => {
         // Update local state immediately for better UX
         const index = this.allTransactions.findIndex(t => t.id === transaction.id);

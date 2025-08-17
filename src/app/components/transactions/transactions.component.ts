@@ -418,16 +418,70 @@ export class TransactionsComponent implements OnInit {
    * Start inline editing for calendar view transactions
    */
   startCalendarInlineEdit(transaction: Transaction, field: 'description' | 'amount', event: MouseEvent) {
-    // Store original values
+    console.log('🔄 startCalendarInlineEdit called for:', transaction.description, 'field:', field, 'ID:', transaction.id);
+    
+    // If this is a recurring instance (has '_' in ID), find the original transaction
+    let originalTransaction = null;
+    if (transaction.id.includes('_')) {
+      // This is a generated recurring instance, find the original transaction
+      const originalId = transaction.id.split('_')[0];
+      originalTransaction = this.allTransactions.find(t => t.id === originalId);
+      if (originalTransaction) {
+        console.log(`🔄 Calendar edit: Found original transaction ${originalId} for recurring instance ${transaction.id}`);
+      } else {
+        console.warn(`⚠️ Calendar edit: Could not find original transaction ${originalId} for recurring instance ${transaction.id}`);
+      }
+    }
+    
+    // Store the original transaction reference for later use
+    if (originalTransaction) {
+      transaction.originalDatabaseId = originalTransaction.id;
+    }
+    
+    // Store original values on the clicked transaction (for UI display)
     transaction.originalValues = {
       description: transaction.description,
       category: transaction.category,
       amount: transaction.amount
     };
     
-    // Set editing state for calendar view
-    if (field === 'description') transaction.isEditing = true;
-    if (field === 'amount') transaction.isEditingAmount = true;
+    // Set editing state on the clicked transaction (for UI display)
+    if (field === 'description') {
+      transaction.isEditing = true;
+      console.log('✅ Set isEditing = true for transaction:', transaction.id);
+    }
+    if (field === 'amount') {
+      transaction.isEditingAmount = true;
+      console.log('✅ Set isEditingAmount = true for transaction:', transaction.id);
+    }
+    
+    console.log('🔍 Transaction state after setting editing:', {
+      id: transaction.id,
+      isEditing: transaction.isEditing,
+      isEditingAmount: transaction.isEditingAmount,
+      description: transaction.description
+    });
+    
+    // Also update the timeline array to ensure the UI reflects the changes
+    const timelineIndex = this.timeline.findIndex(item => 
+      this.isTransaction(item) && item.id === transaction.id
+    );
+    if (timelineIndex !== -1) {
+      const timelineItem = this.timeline[timelineIndex] as TimelineItem;
+      if (field === 'description') {
+        timelineItem.isEditing = true;
+      }
+      if (field === 'amount') {
+        timelineItem.isEditingAmount = true;
+      }
+      timelineItem.originalValues = { ...transaction.originalValues };
+      if (originalTransaction) {
+        timelineItem.originalDatabaseId = originalTransaction.id;
+      }
+      console.log('✅ Updated timeline item editing state for:', timelineItem.id);
+    } else {
+      console.warn('⚠️ Transaction not found in timeline array:', transaction.id);
+    }
     
     // Prevent event bubbling
     event.stopPropagation();
@@ -438,6 +492,9 @@ export class TransactionsComponent implements OnInit {
       if (inputElement) {
         inputElement.focus();
         inputElement.select();
+        console.log('✅ Input element focused:', inputElement);
+      } else {
+        console.warn('⚠️ Input element not found for:', field, 'transaction ID:', transaction.id);
       }
     }, 10);
   }
@@ -445,31 +502,50 @@ export class TransactionsComponent implements OnInit {
   saveInlineEdit(transaction: Transaction) {
     console.log('🚀 EDITING: Starting inline edit for:', transaction.description);
     
+    // If this is a recurring instance (has '_' in ID), find the original transaction to update
+    let transactionToUpdate = transaction;
+    if (transaction.id.includes('_')) {
+      // This is a generated recurring instance, find the original transaction
+      const originalId = transaction.id.split('_')[0];
+      const originalTransaction = this.allTransactions.find(t => t.id === originalId);
+      if (originalTransaction) {
+        transactionToUpdate = originalTransaction;
+        // Copy the edited values to the original transaction
+        transactionToUpdate.description = transaction.description;
+        transactionToUpdate.amount = transaction.amount;
+        console.log(`🔄 Calendar save: Updating original transaction ${originalId} for recurring instance ${transaction.id}`);
+      } else {
+        console.warn(`⚠️ Calendar save: Could not find original transaction ${originalId} for recurring instance ${transaction.id}`);
+        // Fall back to updating the current transaction
+        transactionToUpdate = transaction;
+      }
+    }
+    
     // Update the transaction in the database
-    this.transactionService.updateFullTransaction(transaction).subscribe({
+    this.transactionService.updateFullTransaction(transactionToUpdate).subscribe({
       next: (result) => {
         // Check if the update was actually successful
         if (result === null) {
           console.log('⚠️ WARNING: Database update returned null result');
           // Revert to original values
-          if (transaction.originalValues) {
-            transaction.description = transaction.originalValues.description;
-            transaction.category = transaction.originalValues.category;
-            transaction.amount = transaction.originalValues.amount;
+          if (transactionToUpdate.originalValues) {
+            transactionToUpdate.description = transactionToUpdate.originalValues.description;
+            transactionToUpdate.category = transactionToUpdate.originalValues.category;
+            transactionToUpdate.amount = transactionToUpdate.originalValues.amount;
           }
-          this.cancelInlineEdit(transaction);
+          this.cancelInlineEdit(transactionToUpdate);
           alert('Failed to update transaction. Please try again.');
           return;
         }
         
         console.log('✅ SUCCESS: Database update completed');
         
-        this.cancelInlineEdit(transaction);
+        this.cancelInlineEdit(transactionToUpdate);
         
         // Update the local transaction in allTransactions array
-        const index = this.allTransactions.findIndex(t => t.id === transaction.id);
+        const index = this.allTransactions.findIndex(t => t.id === transactionToUpdate.id);
         if (index !== -1) {
-          this.allTransactions[index] = { ...transaction };
+          this.allTransactions[index] = { ...transactionToUpdate };
           console.log('🔄 LOCAL: Transaction updated in local array');
         } else {
           console.log('⚠️ WARNING: Transaction not found in local array');
@@ -481,27 +557,27 @@ export class TransactionsComponent implements OnInit {
         // Recalculate timeline with updated data
         this.calculateTimeline();
         
-        // Force refresh of calendar data to show updated transactions
-        setTimeout(() => {
-          this.refreshCalendarData();
-          console.log('🔄 REFRESH: Calendar data refreshed');
-        }, 300);
+        // Don't immediately refresh calendar data - let the user see the changes
+        // The timeline recalculation should handle updating the display
+        console.log('🔄 REFRESH: Timeline recalculated, calendar should update automatically');
       },
       error: (error) => {
         console.error('❌ ERROR: Database update failed:', error);
         // Revert to original values on error
-        if (transaction.originalValues) {
-          transaction.description = transaction.originalValues.description;
-          transaction.category = transaction.originalValues.category;
-          transaction.amount = transaction.originalValues.amount;
+        if (transactionToUpdate.originalValues) {
+          transactionToUpdate.description = transactionToUpdate.originalValues.description;
+          transactionToUpdate.category = transactionToUpdate.originalValues.category;
+          transactionToUpdate.amount = transactionToUpdate.originalValues.amount;
         }
-        this.cancelInlineEdit(transaction);
+        this.cancelInlineEdit(transactionToUpdate);
         alert('Failed to update transaction. Please try again.');
       }
     });
   }
 
   cancelInlineEdit(transaction: Transaction) {
+    console.log('🔄 cancelInlineEdit called for:', transaction.description, 'ID:', transaction.id);
+    
     // Revert to original values
     if (transaction.originalValues) {
       transaction.description = transaction.originalValues.description;
@@ -515,6 +591,22 @@ export class TransactionsComponent implements OnInit {
     transaction.isEditingCategory = false;
     transaction.originalValues = undefined;
     transaction.editPosition = undefined;
+    
+    // Also clear editing state from the timeline array
+    const timelineIndex = this.timeline.findIndex(item => 
+      this.isTransaction(item) && item.id === transaction.id
+    );
+    if (timelineIndex !== -1) {
+      const timelineItem = this.timeline[timelineIndex] as TimelineItem;
+      timelineItem.isEditing = false;
+      timelineItem.isEditingAmount = false;
+      timelineItem.isEditingCategory = false;
+      timelineItem.originalValues = undefined;
+      timelineItem.editPosition = undefined;
+      console.log('✅ Cleared timeline item editing state for:', timelineItem.id);
+    }
+    
+    console.log('✅ Editing state cleared for transaction:', transaction.id);
   }
 
   onInlineEditKeydown(event: KeyboardEvent, transaction: Transaction) {
