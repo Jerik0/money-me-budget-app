@@ -14,58 +14,63 @@ export class RecurrenceService {
    */
   shouldOccurOnDate(transaction: Transaction, date: Date): boolean {
     if (!transaction.recurringPattern) return false;
-    
+
     const pattern = transaction.recurringPattern;
     const startDate = transaction.date;
-    
+
     // Don't generate transactions before the start date
     if (date < startDate) return false;
-    
+
     switch (pattern.frequency) {
       case RecurrenceFrequency.DAILY:
         const daysDiff = Math.floor((date.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
         return daysDiff >= 0 && daysDiff % (pattern.interval || 1) === 0;
-        
+
       case RecurrenceFrequency.WEEKLY:
         const weeksDiff = Math.floor((date.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24 * 7));
         return weeksDiff >= 0 && weeksDiff % (pattern.interval || 1) === 0;
-        
+
       case RecurrenceFrequency.BI_WEEKLY:
         const daysDiffBiWeekly = Math.floor((date.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
         return daysDiffBiWeekly >= 0 && daysDiffBiWeekly % (14 * (pattern.interval || 1)) === 0;
-        
+
       case RecurrenceFrequency.MONTHLY:
         const monthsDiff = (date.getFullYear() - startDate.getFullYear()) * 12 + date.getMonth() - startDate.getMonth();
         if (monthsDiff < 0 || monthsDiff % (pattern.interval || 1) !== 0) return false;
-        
+
         // Check if this should occur on the last day of the month
         if (pattern.lastDayOfMonth) {
           const lastDayOfMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
           return date.getDate() === lastDayOfMonth;
         }
-        
+
         // Check if this should occur on the last weekday of the month
         if (pattern.lastWeekdayOfMonth) {
           const lastDayOfMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0);
           const lastWeekday = new Date(lastDayOfMonth);
-          
+
           // Find the last weekday (Monday-Friday) of the month
           while (lastWeekday.getDay() === 0 || lastWeekday.getDay() === 6) {
             lastWeekday.setDate(lastWeekday.getDate() - 1);
           }
-          
+
           return date.getDate() === lastWeekday.getDate();
         }
-        
-        // Regular monthly occurrence on specific date
+
+        // Check if dayOfMonth is specified in monthly_options
+        if (pattern.dayOfMonth && pattern.dayOfMonth > 0) {
+          return date.getDate() === pattern.dayOfMonth;
+        }
+
+        // Fallback to original logic if no dayOfMonth is specified
         return date.getDate() === startDate.getDate();
-        
+
       case RecurrenceFrequency.YEARLY:
         const yearsDiff = date.getFullYear() - startDate.getFullYear();
-        return yearsDiff >= 0 && yearsDiff % (pattern.interval || 1) === 0 && 
-               date.getMonth() === startDate.getMonth() && 
+        return yearsDiff >= 0 && yearsDiff % (pattern.interval || 1) === 0 &&
+               date.getMonth() === startDate.getMonth() &&
                date.getDate() === startDate.getDate();
-               
+
       default:
         return false;
     }
@@ -77,7 +82,7 @@ export class RecurrenceService {
   getProjectionEndDate(projectionInterval: ProjectionInterval): Date {
     const today = new Date();
     const endDate = new Date(today);
-    
+
     switch (projectionInterval) {
       case ProjectionInterval.DAILY:
         endDate.setDate(today.getDate() + 30); // 1 month
@@ -100,7 +105,7 @@ export class RecurrenceService {
       default:
         endDate.setFullYear(today.getFullYear() + 1);
     }
-    
+
     return endDate;
   }
 

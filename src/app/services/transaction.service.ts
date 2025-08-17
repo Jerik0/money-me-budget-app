@@ -65,7 +65,8 @@ export class TransactionService {
           frequency: item.frequency as any, // The enum values match the database strings
           interval: monthlyOptions.interval || 1,
           lastDayOfMonth: monthlyOptions.lastDayOfMonth || false,
-          lastWeekdayOfMonth: monthlyOptions.lastWeekdayOfMonth || false
+          lastWeekdayOfMonth: monthlyOptions.lastWeekdayOfMonth || false,
+          dayOfMonth: monthlyOptions.dayOfMonth || null
         };
       }
       

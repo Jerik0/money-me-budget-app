@@ -246,6 +246,15 @@ export class TimelineService {
     // Generate instances for the entire projection period from the original date
     while (currentDate <= endDate) {
       if (this.recurrenceService.shouldOccurOnDate(transaction, currentDate)) {
+        // Skip the original transaction date to avoid duplicates
+        // The original transaction is already added separately in generateRecurringTransactions
+        if (currentDate.getTime() === originalTransactionDate.getTime()) {
+          console.log(`🔄 TimelineService: Skipping original date ${currentDate.toDateString()} to avoid duplicate`);
+          // Move to next date and continue
+          currentDate = this.getNextDateForFrequency(currentDate, transaction.recurringPattern);
+          continue;
+        }
+        
         const instance: Transaction = {
           ...transaction,
           id: `${transaction.id}_${currentDate.getTime()}`, // Unique ID for this instance
@@ -281,7 +290,23 @@ export class TimelineService {
         nextDate.setDate(nextDate.getDate() + (14 * interval));
         break;
       case RecurrenceFrequency.MONTHLY:
+        // Preserve the day of the month when incrementing months
+        // Use dayOfMonth from monthly_options if available, otherwise use the current date's day
+        let targetDay = currentDate.getDate();
+        if (recurringPattern.dayOfMonth && recurringPattern.dayOfMonth > 0) {
+          targetDay = recurringPattern.dayOfMonth;
+        }
+        
         nextDate.setMonth(nextDate.getMonth() + interval);
+        
+        // Handle edge case: if the target day doesn't exist in the new month,
+        // use the last day of that month instead
+        const lastDayOfNewMonth = new Date(nextDate.getFullYear(), nextDate.getMonth() + 1, 0).getDate();
+        if (targetDay > lastDayOfNewMonth) {
+          nextDate.setDate(lastDayOfNewMonth);
+        } else {
+          nextDate.setDate(targetDay);
+        }
         break;
       case RecurrenceFrequency.YEARLY:
         nextDate.setFullYear(nextDate.getFullYear() + interval);

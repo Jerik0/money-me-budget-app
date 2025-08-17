@@ -14,6 +14,7 @@ export interface Transaction {
     endDate?: Date;
     lastDayOfMonth?: boolean;
     lastWeekdayOfMonth?: boolean;
+    dayOfMonth?: number | null;
   };
   // Editing properties
   isEditing?: boolean;
