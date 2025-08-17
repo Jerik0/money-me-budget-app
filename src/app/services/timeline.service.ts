@@ -19,9 +19,10 @@ export class TimelineService {
   calculateTimeline(
     transactions: Transaction[],
     currentBalance: number,
-    projectionInterval: ProjectionInterval
+    projectionInterval: ProjectionInterval,
+    startingDate?: Date
   ): (TimelineItem | ProjectionPoint)[] {
-    console.log('🔄 TimelineService: calculateTimeline called with:', { transactions: transactions.length, currentBalance, projectionInterval });
+    console.log('🔄 TimelineService: calculateTimeline called with:', { transactions: transactions.length, currentBalance, projectionInterval, startingDate });
     
     const timeline: (TimelineItem | ProjectionPoint)[] = [];
     let runningBalance = currentBalance;
@@ -84,7 +85,8 @@ export class TimelineService {
   calculateLowestProjections(
     timeline: (TimelineItem | ProjectionPoint)[],
     currentBalance: number,
-    projectionInterval: ProjectionInterval
+    projectionInterval: ProjectionInterval,
+    startingDate?: Date
   ): ProjectionPoint[] {
     try {
       if (timeline.length === 0) {
@@ -96,8 +98,9 @@ export class TimelineService {
       // Get all transaction balance points within the chart time range
       const balancePoints: { date: Date, balance: number }[] = [];
       
-      // Add current balance as starting point
-      balancePoints.push({ date: new Date(), balance: currentBalance });
+      // Add current balance as starting point, using the provided starting date or current date
+      const startDate = startingDate || new Date();
+      balancePoints.push({ date: startDate, balance: currentBalance });
       
       // Add all transaction items within the projection range
       timeline.forEach(item => {
@@ -148,9 +151,10 @@ export class TimelineService {
   updateLowestProjections(
     timeline: (TimelineItem | ProjectionPoint)[],
     currentBalance: number,
-    projectionInterval: ProjectionInterval
+    projectionInterval: ProjectionInterval,
+    startingDate?: Date
   ): ProjectionPoint[] {
-    return this.calculateLowestProjections(timeline, currentBalance, projectionInterval);
+    return this.calculateLowestProjections(timeline, currentBalance, projectionInterval, startingDate);
   }
 
   /**
@@ -177,7 +181,7 @@ export class TimelineService {
     console.log('🔄 TimelineService: Generated', allTransactions.length, 'total transactions (including recurring)');
     
     // Create timeline from all transactions (original + generated recurring)
-    const timeline = this.calculateTimeline(allTransactions, currentBalance, projectionInterval);
+    const timeline = this.calculateTimeline(allTransactions, currentBalance, projectionInterval, startDate);
     console.log('✅ TimelineService: Generated timeline with', timeline.length, 'items');
     
     // Call completion callback if provided

@@ -193,4 +193,171 @@ export class TransactionManagementService {
       errors
     };
   }
+
+  /**
+   * Check if transaction form is valid
+   */
+  isTransactionFormValid(transaction: Partial<Transaction>): boolean {
+    if (!transaction.description || !transaction.description.trim()) {
+      return false;
+    }
+
+    if (!transaction.amount || transaction.amount <= 0) {
+      return false;
+    }
+
+    if (!transaction.category || !transaction.category.trim()) {
+      return false;
+    }
+
+    return true;
+  }
+
+  /**
+   * Validate the transaction form with detailed error tracking
+   */
+  validateForm(transaction: Partial<Transaction>): { isValid: boolean; errors: Record<string, string> } {
+    const errors: Record<string, string> = {};
+    
+    // Description validation
+    if (!transaction.description || transaction.description.trim().length === 0) {
+      errors['description'] = 'Description is required';
+    } else if (transaction.description.trim().length < 3) {
+      errors['description'] = 'Description must be at least 3 characters';
+    }
+    
+    // Amount validation
+    if (!transaction.amount && transaction.amount !== 0) {
+      errors['amount'] = 'Amount is required';
+    } else if (transaction.amount <= 0) {
+      errors['amount'] = 'Amount must be greater than 0';
+    } else if (transaction.amount > 999999) {
+      errors['amount'] = 'Amount cannot exceed $999,999';
+    }
+    
+    // Category validation
+    if (!transaction.category || transaction.category.trim().length === 0) {
+      errors['category'] = 'Category is required';
+    }
+    
+    // Date validation
+    if (!transaction.date) {
+      errors['date'] = 'Start date is required';
+    } else {
+      const selectedDate = new Date(transaction.date);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      if (selectedDate < today) {
+        errors['date'] = 'Start date cannot be in the past';
+      }
+      
+      // Check if date is more than 10 years in the future
+      const maxDate = new Date();
+      maxDate.setFullYear(maxDate.getFullYear() + 10);
+      if (selectedDate > maxDate) {
+        errors['date'] = 'Start date cannot be more than 10 years in the future';
+      }
+    }
+    
+    const isValid = Object.keys(errors).length === 0;
+    return { isValid, errors };
+  }
+
+  /**
+   * Get validation error for a specific field
+   */
+  getFieldError(errors: Record<string, string>, fieldName: string): string | null {
+    return errors[fieldName] || null;
+  }
+
+  /**
+   * Check if a field has validation errors
+   */
+  hasFieldError(errors: Record<string, string>, fieldName: string): boolean {
+    return !!errors[fieldName];
+  }
+
+  /**
+   * Get CSS classes for the save button based on current state
+   */
+  getSaveButtonClasses(isSaving: boolean, saveSuccess: boolean, isFormValid: boolean): string {
+    if (isSaving) {
+      return 'px-6 py-2 bg-teal-600 text-white font-medium rounded-lg focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 shadow-sm transition-colors duration-200 cursor-not-allowed';
+    }
+    
+    if (saveSuccess) {
+      return 'px-6 py-2 bg-green-600 text-white font-medium rounded-lg focus:ring-2 focus:ring-green-500 focus:ring-offset-2 shadow-sm transition-colors duration-200';
+    }
+    
+    if (isFormValid) {
+      return 'px-6 py-2 bg-teal-600 hover:bg-teal-700 text-white font-medium rounded-lg focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 shadow-sm hover:shadow-md transition-colors duration-200';
+    }
+    
+    return 'px-6 py-2 bg-gray-400 text-gray-200 font-medium rounded-lg cursor-not-allowed transition-colors duration-200';
+  }
+
+  /**
+   * Handle start date change
+   */
+  onStartDateChange(date: any, transaction: Partial<Transaction>): Date | null {
+    if (date) {
+      // Create date at noon to avoid timezone issues
+      const jsDate = new Date(date.year, date.month - 1, date.day, 12, 0, 0, 0);
+      transaction.date = jsDate;
+      return jsDate;
+    }
+    return null;
+  }
+
+  /**
+   * Clear start date
+   */
+  clearStartDate(transaction: Partial<Transaction>): void {
+    transaction.date = undefined;
+  }
+
+  /**
+   * Handle end date change
+   */
+  onEndDateChange(date: any, transaction: Partial<Transaction>): Date | null {
+    if (date) {
+      const jsDate = new Date(date.year, date.month - 1, date.day);
+      if (transaction.recurringPattern) {
+        transaction.recurringPattern.endDate = jsDate;
+      }
+      return jsDate;
+    }
+    return null;
+  }
+
+  /**
+   * Clear end date
+   */
+  clearEndDate(transaction: Partial<Transaction>): void {
+    if (transaction.recurringPattern) {
+      transaction.recurringPattern.endDate = undefined;
+    }
+  }
+
+  /**
+   * Pre-fill form with user preferences
+   */
+  prefillFormWithPreferences(transaction: Partial<Transaction>, preferences: any): void {
+    // Set today's date as default
+    const today = new Date();
+    transaction.date = today;
+    
+    // Pre-fill with last used values
+    if (preferences.lastTransactionType) {
+      transaction.type = preferences.lastTransactionType;
+    }
+    if (preferences.lastCategory) {
+      transaction.category = preferences.lastCategory;
+    }
+    
+    // Don't pre-fill amount - let user enter it fresh
+    transaction.amount = 0;
+    transaction.description = '';
+  }
 }

@@ -111,4 +111,34 @@ export class CalendarNavigationService {
       return `${startLabel} ${startYear} - ${endLabel} ${endYear}`;
     }
   }
+
+  /**
+   * Go to previous year
+   */
+  goToPreviousYear(currentViewMonth: Date): Date {
+    const newYear = new Date(currentViewMonth.getFullYear() - 1, currentViewMonth.getMonth(), 1);
+    return newYear;
+  }
+
+  /**
+   * Go to next year
+   */
+  goToNextYear(currentViewMonth: Date): Date {
+    const newYear = new Date(currentViewMonth.getFullYear() + 1, currentViewMonth.getMonth(), 1);
+    return newYear;
+  }
+
+  /**
+   * Get current year
+   */
+  getCurrentYear(currentViewMonth: Date): number {
+    return currentViewMonth.getFullYear();
+  }
+
+  /**
+   * Get current month label
+   */
+  getCurrentMonthLabel(currentViewMonth: Date): string {
+    return this.getMonthLabel(currentViewMonth);
+  }
 }

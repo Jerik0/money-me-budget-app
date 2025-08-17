@@ -302,4 +302,47 @@ export class CalendarDataService {
     // This method generates transactions for a specific date range with pre-loaded data
     // Implementation depends on the specific recurring transaction logic
   }
+
+  /**
+   * Get total transaction count for current month range
+   */
+  getTotalTransactionCount(
+    timeline: (TimelineItem | ProjectionPoint)[],
+    currentViewMonth: Date
+  ): number {
+    const groups = this.getGroupedTransactions(timeline, currentViewMonth);
+    return groups.reduce((sum, group) => sum + group.transactions.length, 0);
+  }
+
+  /**
+   * Helper method to determine if a row should have alternate background color
+   */
+  isEvenRow(
+    groupIndex: number, 
+    transactionIndex: number, 
+    timeline: (TimelineItem | ProjectionPoint)[],
+    currentViewMonth: Date
+  ): boolean {
+    // Calculate total row index across all groups
+    let totalRowIndex = 0;
+    const groups = this.getGroupedTransactions(timeline, currentViewMonth);
+
+    // Add up all transactions from previous groups
+    for (let i = 0; i < groupIndex; i++) {
+      totalRowIndex += groups[i].transactions.length;
+    }
+
+    // Add current transaction index
+    totalRowIndex += transactionIndex;
+
+    return totalRowIndex % 2 === 0;
+  }
+
+  /**
+   * Force refresh of calendar data
+   */
+  refreshCalendarData(): void {
+    // Clear cache but preserve specific start date
+    this.clearCachePreserveStartDate();
+  }
 }

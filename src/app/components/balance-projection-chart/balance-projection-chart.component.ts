@@ -21,6 +21,7 @@ export class BalanceProjectionChartComponent implements AfterViewInit, OnDestroy
   @Input() timeline: (TimelineItem | ProjectionPoint)[] = [];
   @Input() projectionInterval: ProjectionInterval = ProjectionInterval.MONTHLY;
   @Input() currentBalance: number = 0;
+  @Input() startingDate: Date = new Date(); // New input for starting date
 
   @Output() intervalChange = new EventEmitter<ProjectionInterval>();
   @Output() chartClick = new EventEmitter<Date>();
@@ -51,7 +52,7 @@ export class BalanceProjectionChartComponent implements AfterViewInit, OnDestroy
   }
 
   ngOnChanges(changes: SimpleChanges) {
-    if (this.chart && (changes['timeline'] || changes['projectionInterval'] || changes['currentBalance'])) {
+    if (this.chart && (changes['timeline'] || changes['projectionInterval'] || changes['currentBalance'] || changes['startingDate'])) {
       this.updateChart();
     }
   }
@@ -242,7 +243,7 @@ export class BalanceProjectionChartComponent implements AfterViewInit, OnDestroy
     const data: Point[] = [];
 
     // Add current balance as starting point
-    data.push({ x: new Date().getTime(), y: this.currentBalance } as Point);
+    data.push({ x: this.startingDate.getTime(), y: this.currentBalance } as Point);
 
     // Add all timeline items with balances (both transactions and projection points)
     this.timeline.forEach(item => {

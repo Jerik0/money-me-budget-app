@@ -19,7 +19,8 @@ import {
   FREQUENCY_OPTIONS,
   CATEGORY_OPTIONS,
   CalendarDataService,
-  TransactionManagementService
+  TransactionManagementService,
+  CalendarNavigationService
 } from './index';
 
 @Component({
@@ -44,6 +45,7 @@ export class TransactionsComponent implements OnInit {
 
   // Calendar navigation
   currentViewMonth: Date = new Date();
+  startingDate: Date = new Date(); // Add this property for balance chart
 
   constructor(
     // eslint-disable-next-line no-unused-vars
@@ -57,7 +59,9 @@ export class TransactionsComponent implements OnInit {
     // eslint-disable-next-line no-unused-vars
     private transactionManagementService: TransactionManagementService,
     // eslint-disable-next-line no-unused-vars
-    private preferencesService: PreferencesService
+    private preferencesService: PreferencesService,
+    // eslint-disable-next-line no-unused-vars
+    private calendarNavigationService: CalendarNavigationService
   ) {}
 
   // Properties for view/edit mode
@@ -235,21 +239,7 @@ export class TransactionsComponent implements OnInit {
   }
 
   isTransactionFormValid(): boolean {
-    const transaction = this.newTransaction;
-
-    if (!transaction.description || !transaction.description.trim()) {
-      return false;
-    }
-
-    if (!transaction.amount || transaction.amount <= 0) {
-      return false;
-    }
-
-    if (!transaction.category || !transaction.category.trim()) {
-      return false;
-    }
-
-    return true;
+    return this.transactionManagementService.isTransactionFormValid(this.newTransaction);
   }
 
   onCategoryAdded(newCategory: unknown): void {
@@ -277,8 +267,10 @@ export class TransactionsComponent implements OnInit {
       this.startDate = date;
       this.startDateString = `${date.month}/${date.day}/${date.year}`;
       // Create date at noon to avoid timezone issues
-      const jsDate = new Date(date.year, date.month - 1, date.day, 12, 0, 0, 0);
-      this.newTransaction.date = jsDate;
+      const jsDate = this.transactionManagementService.onStartDateChange(date, this.newTransaction);
+      if (jsDate) {
+        this.newTransaction.date = jsDate;
+      }
       this.showDatePicker = false;
       
       // Validate form after date change
@@ -289,15 +281,17 @@ export class TransactionsComponent implements OnInit {
   clearStartDate() {
     this.startDate = null;
     this.startDateString = '';
-    this.newTransaction.date = undefined;
+    this.transactionManagementService.clearStartDate(this.newTransaction);
   }
 
   onEndDateChange(date: NgbDate | null) {
     if (date) {
       this.endDate = date;
       this.endDateString = `${date.month}/${date.day}/${date.year}`;
-      const jsDate = new Date(date.year, date.month - 1, date.day);
-      this.newTransaction.recurringPattern!.endDate = jsDate;
+      const jsDate = this.transactionManagementService.onEndDateChange(date, this.newTransaction);
+      if (jsDate && this.newTransaction.recurringPattern) {
+        this.newTransaction.recurringPattern.endDate = jsDate;
+      }
       this.showEndDatePicker = false;
     }
   }
@@ -305,7 +299,7 @@ export class TransactionsComponent implements OnInit {
   clearEndDate() {
     this.endDate = null;
     this.endDateString = '';
-    this.newTransaction.recurringPattern!.endDate = undefined;
+    this.transactionManagementService.clearEndDate(this.newTransaction);
   }
 
   onDatePickerClick(event: Event) {
@@ -327,6 +321,9 @@ export class TransactionsComponent implements OnInit {
     // Set the calendar to start with today's date by default
     const today = new Date();
     this.calendarDataService.setSpecificStartDate(today);
+    
+    // Initialize the starting date for the balance chart
+    this.getCalendarStartingDate();
     
     // Set the current view month to the month containing today's date
     // This ensures the calendar shows the correct month range starting from today
@@ -645,89 +642,21 @@ export class TransactionsComponent implements OnInit {
    */
   private prefillFormWithPreferences(): void {
     const preferences = this.preferencesService.getPreferences();
+    this.transactionManagementService.prefillFormWithPreferences(this.newTransaction, preferences);
     
     // Set today's date as default
     const today = new Date();
     this.startDate = new NgbDate(today.getFullYear(), today.getMonth() + 1, today.getDate());
     this.startDateString = `${today.getMonth() + 1}/${today.getDate()}/${today.getFullYear()}`;
-    this.newTransaction.date = today;
-    
-    // Pre-fill with last used values
-    this.newTransaction.type = preferences.lastTransactionType;
-    this.newTransaction.category = preferences.lastCategory;
-    
-    // Don't pre-fill amount - let user enter it fresh
-    this.newTransaction.amount = 0;
-    this.newTransaction.description = '';
-  }
-
-  /**
-   * Get CSS classes for the save button based on current state
-   */
-  getSaveButtonClasses(): string {
-    if (this.isSaving) {
-      return 'px-6 py-2 bg-teal-600 text-white font-medium rounded-lg focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 shadow-sm transition-colors duration-200 cursor-not-allowed';
-    }
-    
-    if (this.saveSuccess) {
-      return 'px-6 py-2 bg-green-600 text-white font-medium rounded-lg focus:ring-2 focus:ring-green-500 focus:ring-offset-2 shadow-sm transition-colors duration-200';
-    }
-    
-    if (this.isFormValid) {
-      return 'px-6 py-2 bg-teal-600 hover:bg-teal-700 text-white font-medium rounded-lg focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 shadow-sm hover:shadow-md transition-colors duration-200';
-    }
-    
-    return 'px-6 py-2 bg-gray-400 text-gray-200 font-medium rounded-lg cursor-not-allowed transition-colors duration-200';
   }
 
   /**
    * Validate the transaction form
    */
   validateForm(): boolean {
-    this.validationErrors = {};
-    
-    // Description validation
-    if (!this.newTransaction.description || this.newTransaction.description.trim().length === 0) {
-      this.validationErrors['description'] = 'Description is required';
-    } else if (this.newTransaction.description.trim().length < 3) {
-      this.validationErrors['description'] = 'Description must be at least 3 characters';
-    }
-    
-    // Amount validation
-    if (!this.newTransaction.amount && this.newTransaction.amount !== 0) {
-      this.validationErrors['amount'] = 'Amount is required';
-    } else if (this.newTransaction.amount <= 0) {
-      this.validationErrors['amount'] = 'Amount must be greater than 0';
-    } else if (this.newTransaction.amount > 999999) {
-      this.validationErrors['amount'] = 'Amount cannot exceed $999,999';
-    }
-    
-    // Category validation
-    if (!this.newTransaction.category || this.newTransaction.category.trim().length === 0) {
-      this.validationErrors['category'] = 'Category is required';
-    }
-    
-    // Date validation
-    if (!this.newTransaction.date) {
-      this.validationErrors['date'] = 'Start date is required';
-    } else {
-      const selectedDate = new Date(this.newTransaction.date);
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      
-      if (selectedDate < today) {
-        this.validationErrors['date'] = 'Start date cannot be in the past';
-      }
-      
-      // Check if date is more than 10 years in the future
-      const maxDate = new Date();
-      maxDate.setFullYear(maxDate.getFullYear() + 10);
-      if (selectedDate > maxDate) {
-        this.validationErrors['date'] = 'Start date cannot be more than 10 years in the future';
-      }
-    }
-    
-    this.isFormValid = Object.keys(this.validationErrors).length === 0;
+    const result = this.transactionManagementService.validateForm(this.newTransaction);
+    this.validationErrors = result.errors;
+    this.isFormValid = result.isValid;
     return this.isFormValid;
   }
 
@@ -735,14 +664,14 @@ export class TransactionsComponent implements OnInit {
    * Get validation error for a specific field
    */
   getFieldError(fieldName: string): string | null {
-    return this.validationErrors[fieldName] || null;
+    return this.transactionManagementService.getFieldError(this.validationErrors, fieldName);
   }
 
   /**
    * Check if a field has validation errors
    */
   hasFieldError(fieldName: string): boolean {
-    return !!this.validationErrors[fieldName];
+    return this.transactionManagementService.hasFieldError(this.validationErrors, fieldName);
   }
 
   toggleViewMode() {
@@ -855,7 +784,7 @@ export class TransactionsComponent implements OnInit {
 
         // Don't save transactions here during inline editing to avoid conflicts
         // this.transactionService.saveTransactions(this.allTransactions);
-        this.lowestProjections = this.timelineService.updateLowestProjections(this.timeline, this.currentBalance, this.projectionInterval);
+        this.lowestProjections = this.timelineService.updateLowestProjections(this.timeline, this.currentBalance, this.projectionInterval, specificStartDate);
       }
     );
   }
@@ -913,6 +842,9 @@ export class TransactionsComponent implements OnInit {
     // Set the specific start date to the clicked date
     this.calendarDataService.setSpecificStartDate(clickedDate);
     
+    // Update starting date for balance chart
+    this.getCalendarStartingDate();
+    
     // Force a refresh of the calendar data
     this.refreshCalendarData();
     
@@ -933,21 +865,16 @@ export class TransactionsComponent implements OnInit {
   }
 
   getGroupedTransactions(): { date: Date, transactions: TimelineItem[] }[] {
-    const grouped = this.calendarDataService.getGroupedTransactions(this.timeline, this.currentViewMonth);
-    return grouped;
+    return this.calendarDataService.getGroupedTransactions(this.timeline, this.currentViewMonth);
   }
 
   getTotalTransactionCount(): number {
-    const groups = this.getGroupedTransactions();
-    return groups.reduce((sum, group) => sum + group.transactions.length, 0);
+    return this.calendarDataService.getTotalTransactionCount(this.timeline, this.currentViewMonth);
   }
 
-  goToCurrentMonth(): void {
-    this.currentViewMonth = new Date();
-    // Clear specific start date since this is normal navigation
-    this.calendarDataService.setSpecificStartDate(undefined);
-    // Force refresh of calendar data
-    this.refreshCalendarData();
+  // Helper method to determine if a row should have alternate background color
+  isEvenRow(groupIndex: number, transactionIndex: number): boolean {
+    return this.calendarDataService.isEvenRow(groupIndex, transactionIndex, this.timeline, this.currentViewMonth);
   }
 
   /**
@@ -959,62 +886,83 @@ export class TransactionsComponent implements OnInit {
     this.calculateTimeline();
   }
 
+  /**
+   * Get the calendar's starting date for balance projection chart
+   */
+  getCalendarStartingDate(): Date {
+    const specificStartDate = this.calendarDataService.getSpecificStartDate();
+    if (specificStartDate) {
+      this.startingDate = specificStartDate;
+      return this.startingDate;
+    }
+    // If no specific start date is set, use the current view month's start
+    const fallbackDate = new Date(this.currentViewMonth.getFullYear(), this.currentViewMonth.getMonth(), 1);
+    this.startingDate = fallbackDate;
+    return this.startingDate;
+  }
+
   // Month picker methods
   toggleMonthPicker(): void {
     this.showMonthPicker = !this.showMonthPicker;
   }
 
+  goToCurrentMonth(): void {
+    this.currentViewMonth = new Date();
+    // Clear specific start date since this is normal navigation
+    this.calendarDataService.setSpecificStartDate(undefined);
+    // Update starting date for balance chart
+    this.getCalendarStartingDate();
+    // Force refresh of calendar data
+    this.refreshCalendarData();
+  }
+
   selectMonth(monthValue: number): void {
     // Create a new date with the selected month, keeping the current year
-    this.currentViewMonth = new Date(this.currentViewMonth.getFullYear(), monthValue, 1);
+    this.currentViewMonth = this.calendarNavigationService.selectMonth(this.currentViewMonth, monthValue);
     this.showMonthPicker = false;
 
     // Clear specific start date since this is normal navigation
     this.calendarDataService.setSpecificStartDate(undefined);
+    // Update starting date for balance chart
+    this.getCalendarStartingDate();
 
     // Recalculate timeline to ensure we have transactions for the new month range
     this.calculateTimeline();
   }
 
   goToPreviousYear(): void {
-    this.currentViewMonth = new Date(this.currentViewMonth.getFullYear() - 1, this.currentViewMonth.getMonth(), 1);
+    this.currentViewMonth = this.calendarNavigationService.goToPreviousYear(this.currentViewMonth);
     // Clear specific start date since this is normal navigation
     this.calendarDataService.setSpecificStartDate(undefined);
+    // Update starting date for balance chart
+    this.getCalendarStartingDate();
     // Recalculate timeline to ensure we have transactions for the new year
     this.calculateTimeline();
   }
 
   goToNextYear(): void {
-    this.currentViewMonth = new Date(this.currentViewMonth.getFullYear() + 1, this.currentViewMonth.getMonth(), 1);
+    this.currentViewMonth = this.calendarNavigationService.goToNextYear(this.currentViewMonth);
     // Clear specific start date since this is normal navigation
     this.calendarDataService.setSpecificStartDate(undefined);
+    // Update starting date for balance chart
+    this.getCalendarStartingDate();
     // Recalculate timeline to ensure we have transactions for the new year
     this.calculateTimeline();
   }
 
   getCurrentYear(): number {
-    return this.currentViewMonth.getFullYear();
+    return this.calendarNavigationService.getCurrentYear(this.currentViewMonth);
   }
 
   getCurrentMonthLabel(): string {
-    return this.monthOptions[this.currentViewMonth.getMonth()].label;
+    return this.calendarNavigationService.getCurrentMonthLabel(this.currentViewMonth);
   }
 
-  // Helper method to determine if a row should have alternate background color
-  isEvenRow(groupIndex: number, transactionIndex: number): boolean {
-    // Calculate total row index across all groups
-    let totalRowIndex = 0;
-    const groups = this.getGroupedTransactions();
-
-    // Add up all transactions from previous groups
-    for (let i = 0; i < groupIndex; i++) {
-      totalRowIndex += groups[i].transactions.length;
-    }
-
-    // Add current transaction index
-    totalRowIndex += transactionIndex;
-
-    return totalRowIndex % 2 === 0;
+  /**
+   * Get CSS classes for the save button based on current state
+   */
+  getSaveButtonClasses(): string {
+    return this.transactionManagementService.getSaveButtonClasses(this.isSaving, this.saveSuccess, this.isFormValid);
   }
 
   // Transaction editing methods
